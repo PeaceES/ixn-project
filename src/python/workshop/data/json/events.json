@@ -1,0 +1,60 @@
+{
+  "events": [
+    {
+      "id": "event-1",
+      "title": "Student Activity: Review",
+      "description": "This is a synthetic event for testing purposes.",
+      "start_time": "2025-07-03T15:00:00",
+      "end_time": "2025-07-03T16:30:00",
+      "room_id": "room-7",
+      "calendar_id": "room-7",
+      "organizer": "IT Department",
+      "attendee_count": 25,
+      "is_recurring": false,
+      "event_type": "meeting",
+      "status": "confirmed"
+    },
+    {
+      "id": "event-2",
+      "title": "Seminar: Introduction",
+      "description": "This is a synthetic event for testing purposes.",
+      "start_time": "2025-07-09T14:00:00",
+      "end_time": "2025-07-09T17:00:00",
+      "room_id": "room-1",
+      "calendar_id": "room-1",
+      "organizer": "Dean Williams",
+      "attendee_count": 14,
+      "is_recurring": false,
+      "event_type": "meeting",
+      "status": "confirmed"
+    },
+    {
+      "id": "event-3",
+      "title": "Workshop: Introduction",
+      "description": "This is a synthetic event for testing purposes.",
+      "start_time": "2025-07-14T10:00:00",
+      "end_time": "2025-07-14T12:00:00",
+      "room_id": "computer-lab-1",
+      "calendar_id": "computer-lab-1",
+      "organizer": "Student Council",
+      "attendee_count": 59,
+      "is_recurring": true,
+      "event_type": "workshop",
+      "status": "confirmed"
+    },
+    {
+      "id": "event-4",
+      "title": "Seminar: Review",
+      "description": "This is a synthetic event for testing purposes.",
+      "start_time": "2025-07-20T09:00:00",
+      "end_time": "2025-07-20T12:00:00",
+      "room_id": "lecture-hall-a",
+      "calendar_id": "lecture-hall-a",
+      "organizer": "IT Department",
+      "attendee_count": 42,
+      "is_recurring": false,
+      "event_type": "class",
+      "status": "confirmed"
+    }
+  ]
+}

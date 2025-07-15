@@ -1,0 +1,84 @@
+{
+  "calendars": [
+    {
+      "id": "conference-room-a",
+      "name": "Conference Room A",
+      "capacity": 12,
+      "location": "Building 1, Floor 2",
+      "equipment": ["projector", "whiteboard", "video_conference"],
+      "description": "Large conference room with video conferencing capabilities"
+    },
+    {
+      "id": "conference-room-b",
+      "name": "Conference Room B",
+      "capacity": 8,
+      "location": "Building 1, Floor 2",
+      "equipment": ["projector", "whiteboard"],
+      "description": "Medium conference room with presentation equipment"
+    },
+    {
+      "id": "meeting-room-1",
+      "name": "Meeting Room 1",
+      "capacity": 6,
+      "location": "Building 1, Floor 1",
+      "equipment": ["whiteboard", "monitor"],
+      "description": "Small meeting room for team discussions"
+    },
+    {
+      "id": "meeting-room-2",
+      "name": "Meeting Room 2",
+      "capacity": 6,
+      "location": "Building 1, Floor 1",
+      "equipment": ["whiteboard", "monitor"],
+      "description": "Small meeting room for team discussions"
+    },
+    {
+      "id": "boardroom",
+      "name": "Executive Boardroom",
+      "capacity": 16,
+      "location": "Building 1, Floor 3",
+      "equipment": ["projector", "whiteboard", "video_conference", "executive_table"],
+      "description": "Executive boardroom for high-level meetings"
+    },
+    {
+      "id": "training-room",
+      "name": "Training Room",
+      "capacity": 20,
+      "location": "Building 2, Floor 1",
+      "equipment": ["projector", "whiteboard", "multiple_monitors", "training_setup"],
+      "description": "Large training room with multiple monitors and training setup"
+    },
+    {
+      "id": "focus-room-1",
+      "name": "Focus Room 1",
+      "capacity": 2,
+      "location": "Building 1, Floor 1",
+      "equipment": ["monitor"],
+      "description": "Small focus room for 1-on-1 meetings or focused work"
+    },
+    {
+      "id": "focus-room-2",
+      "name": "Focus Room 2",
+      "capacity": 2,
+      "location": "Building 1, Floor 1",
+      "equipment": ["monitor"],
+      "description": "Small focus room for 1-on-1 meetings or focused work"
+    },
+    {
+      "id": "collaboration-space",
+      "name": "Collaboration Space",
+      "capacity": 10,
+      "location": "Building 1, Floor 2",
+      "equipment": ["whiteboard", "comfortable_seating", "creative_tools"],
+      "description": "Open collaboration space for creative and brainstorming sessions"
+    },
+    {
+      "id": "phone-booth-1",
+      "name": "Phone Booth 1",
+      "capacity": 1,
+      "location": "Building 1, Floor 1",
+      "equipment": ["noise_canceling"],
+      "description": "Private phone booth for confidential calls"
+    }
+  ]
+}

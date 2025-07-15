@@ -1,0 +1,94 @@
+{
+  "rooms": [
+    {
+      "id": "lecture-hall-a",
+      "name": "Lecture Hall A",
+      "capacity": 200,
+      "location": "Main Building, Ground Floor",
+      "equipment": ["projector", "microphone", "speakers", "whiteboard"],
+      "room_type": "lecture_hall",
+      "description": "Large lecture hall with full AV setup"
+    },
+    {
+      "id": "lecture-hall-b", 
+      "name": "Lecture Hall B",
+      "capacity": 150,
+      "location": "Main Building, Ground Floor",
+      "equipment": ["projector", "microphone", "speakers"],
+      "room_type": "lecture_hall",
+      "description": "Medium lecture hall for presentations"
+    },
+    {
+      "id": "seminar-room-1",
+      "name": "Seminar Room 1",
+      "capacity": 30,
+      "location": "Academic Block, Floor 1",
+      "equipment": ["whiteboard", "projector", "tables"],
+      "room_type": "seminar",
+      "description": "Interactive seminar room with flexible seating"
+    },
+    {
+      "id": "seminar-room-2",
+      "name": "Seminar Room 2", 
+      "capacity": 25,
+      "location": "Academic Block, Floor 1",
+      "equipment": ["whiteboard", "projector", "tables"],
+      "room_type": "seminar",
+      "description": "Small seminar room for workshops"
+    },
+    {
+      "id": "computer-lab-1",
+      "name": "Computer Lab 1",
+      "capacity": 40,
+      "location": "Technology Block, Floor 2",
+      "equipment": ["computers", "projector", "network"],
+      "room_type": "lab",
+      "description": "Computer lab with 40 workstations"
+    },
+    {
+      "id": "engineering-workshop",
+      "name": "Engineering Workshop",
+      "capacity": 20,
+      "location": "Engineering Block, Floor 1", 
+      "equipment": ["workbenches", "tools", "safety_equipment"],
+      "room_type": "workshop",
+      "description": "Hands-on engineering workshop space"
+    },
+    {
+      "id": "student-union-hall",
+      "name": "Student Union Main Hall",
+      "capacity": 300,
+      "location": "Student Union Building",
+      "equipment": ["stage", "sound_system", "lighting", "projector"],
+      "room_type": "event_hall",
+      "description": "Large event hall for society events and gatherings"
+    },
+    {
+      "id": "meeting-room-a",
+      "name": "Meeting Room A",
+      "capacity": 12,
+      "location": "Administration Block, Floor 2",
+      "equipment": ["conference_table", "projector", "whiteboard"],
+      "room_type": "meeting",
+      "description": "Formal meeting room for committees"
+    },
+    {
+      "id": "study-space-1",
+      "name": "Collaborative Study Space 1",
+      "capacity": 8,
+      "location": "Library, Floor 2",
+      "equipment": ["tables", "chairs", "whiteboard"],
+      "room_type": "study",
+      "description": "Quiet collaborative study space"
+    },
+    {
+      "id": "drama-studio",
+      "name": "Drama Studio",
+      "capacity": 50,
+      "location": "Arts Block, Floor 1",
+      "equipment": ["stage", "lighting", "sound_system", "props_storage"],
+      "room_type": "studio",
+      "description": "Drama rehearsal and performance studio"
+    }
+  ]
+}

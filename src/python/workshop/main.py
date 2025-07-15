@@ -21,7 +21,6 @@ from agent.stream_event_handler import StreamEventHandler
 from utils.terminal_colors import TerminalColors as tc
 from utils.utilities import Utilities
 from services.mcp_client import CalendarMCPClient
-from services.simple_permissions import permission_checker
 
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
@@ -38,7 +37,7 @@ MAX_PROMPT_TOKENS = 20480
 # Set the temperature and top_p low to get more deterministic results.
 TEMPERATURE = 0.1
 TOP_P = 0.1
-INSTRUCTIONS_FILE = None
+INSTRUCTIONS_FILE = "../../shared/instructions/calendar_scheduling_instructions.txt"
 
 
 toolset = AsyncToolSet()
@@ -233,9 +232,6 @@ async def initialize() -> tuple[Agent, AgentThread]:
         # Load general agent instructions
         instructions = utilities.load_instructions(INSTRUCTIONS_FILE)
 
-        # Add group booking instructions
-        instructions += "\n\n" + utilities.load_instructions("instructions/group_booking_instructions.txt")
-
         # Inject font file ID if needed
         if font_file_info:
             instructions = instructions.replace("{font_file_id}", font_file_info.id)
@@ -407,30 +403,18 @@ async def schedule_event_with_notification(title: str, start_time: str, end_time
     return result
 
 
-async def schedule_group_event(user_id: str, group_id: str, room_id: str, title: str, 
-                              start_time: str, end_time: str, description: str = "") -> str:
-    """Schedule an event for a group with permission checking."""
+async def schedule_event_with_organizer(room_id: str, title: str, 
+                                     start_time: str, end_time: str, organizer: str, description: str = "") -> str:
+    """Schedule an event without permission checking - just collect organizer info."""
     try:
-        # Check permissions first
-        can_book, reason = permission_checker.can_user_book_room_for_group(user_id, room_id, group_id)
-        
-        if not can_book:
-            return json.dumps({
-                "success": False,
-                "error": f"Permission denied: {reason}",
-                "suggestion": f"Please check if you're a member of '{group_id}' and the group is authorized to use this room."
-            })
-        
-        print(f"✅ Permission check passed: {reason}")
-        
-        # If permissions are good, proceed with booking
+        # Simply proceed with booking - no permission checking
         result = await schedule_event_via_mcp(
-            title=f"[{group_id}] {title}",  # Add group prefix
+            title=title,
             start_time=start_time,
             end_time=end_time,
             room_id=room_id,
-            organizer=user_id,
-            description=f"Organized by {group_id}. {description}"
+            organizer=organizer,
+            description=description
         )
         
         return result
@@ -438,84 +422,9 @@ async def schedule_group_event(user_id: str, group_id: str, room_id: str, title:
     except Exception as e:
         return json.dumps({
             "success": False,
-            "error": f"Error scheduling group event: {str(e)}"
+            "error": f"Error scheduling event: {str(e)}"
         })
 
-
-async def get_user_groups(user_id: str) -> str:
-    """Get groups that a user belongs to."""
-    try:
-        groups = permission_checker.get_user_groups(user_id)
-        if not groups:
-            return json.dumps({
-                "success": False,
-                "message": f"User '{user_id}' is not a member of any groups"
-            })
-        
-        # Get detailed group info
-        group_info = []
-        for group_id in groups:
-            if group_id in permission_checker.groups:
-                group = permission_checker.groups[group_id]
-                group_info.append({
-                    "id": group_id,
-                    "name": group.get("name", group_id),
-                    "type": group.get("type", "unknown"),
-                    "description": group.get("description", "")
-                })
-        
-        return json.dumps({
-            "success": True,
-            "user_groups": group_info
-        })
-        
-    except Exception as e:
-        return json.dumps({
-            "success": False,
-            "error": f"Error getting user groups: {str(e)}"
-        })
-
-
-async def get_group_rooms(group_id: str) -> str:
-    """Get rooms that a group can book."""
-    try:
-        if group_id not in permission_checker.groups:
-            return json.dumps({
-                "success": False,
-                "error": f"Group '{group_id}' not found"
-            })
-        
-        room_ids = permission_checker.get_group_rooms(group_id)
-        if not room_ids:
-            return json.dumps({
-                "success": False,
-                "message": f"Group '{group_id}' has no authorized rooms"
-            })
-        
-        # Get detailed room info
-        room_info = []
-        for room_id in room_ids:
-            if room_id in permission_checker.rooms:
-                room = permission_checker.rooms[room_id]
-                room_info.append({
-                    "id": room_id,
-                    "name": room.get("name", room_id),
-                    "capacity": room.get("capacity", 0),
-                    "location": room.get("location", ""),
-                    "room_type": room.get("room_type", "")
-                })
-        
-        return json.dumps({
-            "success": True,
-            "group_name": permission_checker.groups[group_id].get("name", group_id),
-            "authorized_rooms": room_info
-        })
-        
-    except Exception as e:
-        return json.dumps({
-            "success": False,
-            "error": f"Error getting group rooms: {str(e)}"
-        })
 
 
 # Define functions list after all function definitions
@@ -524,21 +433,19 @@ functions = AsyncFunctionTool([
     get_events_via_mcp,
     check_room_availability_via_mcp,
     get_rooms_via_mcp,
-    # Permission-aware group booking functions
-    schedule_group_event,
-    get_user_groups,
-    get_group_rooms,
+    # Simple booking function without permission checking
+    schedule_event_with_organizer,
 ])
 
 
 async def main() -> None:
     """
-    Example questions for GROUP-BASED booking system:
-    - "My user ID is john.doe and I want to book a room"
-    - "What groups can alice.chen book for?"
-    - "What rooms can engineering-society use?"
-    - "I'm sarah.jones, can I book the drama studio for drama-club?"
-    - "Schedule a meeting for engineering-society in lecture hall A tomorrow at 2pm"
+    Example questions for SIMPLIFIED booking system:
+    - "Show me all available rooms"
+    - "Check if the Main Conference Room is available tomorrow at 2pm"
+    - "Schedule a meeting in the Alpha Meeting Room for tomorrow at 3pm"
+    - "I want to book the Drama Studio for a rehearsal next Friday"
+    - "What events are scheduled for this week?"
     """
     async with project_client:
         agent, thread = await initialize()

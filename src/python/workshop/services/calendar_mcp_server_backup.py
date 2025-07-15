@@ -14,7 +14,6 @@ app = FastAPI(title="Enhanced Calendar MCP Server", version="2.0.0")
 
 # Global storage
 rooms_data = {}
-calendars_data = {}  # Room-based calendars
 events_data = {"events": []}
 user_directory = {}
 
@@ -28,7 +27,8 @@ USER_DIRECTORY_URL = os.getenv("USER_DIRECTORY_URL")
 # Request schema
 class CreateEventRequest(BaseModel):
     user_id: str
-    calendar_id: str  # This will be the room_id (simplified)
+    group_id: str  # Changed from calendar_id to group_id
+    room_id: str   # Added explicit room_id
     title: str
     start_time: str  # ISO 8601 format
     end_time: str
@@ -50,32 +50,6 @@ async def load_rooms():
     except Exception as e:
         print(f"❌ Error loading rooms: {e}")
         rooms_data = {"rooms": []}
-
-
-async def load_calendars():
-    """Load calendars - simplified to only use rooms as calendars."""
-    global calendars_data
-    try:
-        # Create calendars based on rooms (each room is essentially a calendar)
-        calendars = []
-        for room in rooms_data.get("rooms", []):
-            calendars.append({
-                "id": room["id"],
-                "name": room.get("name", f"Room {room['id']}"),
-                "type": "room",
-                "location": room.get("location", ""),
-                "capacity": room.get("capacity", 0)
-            })
-        
-        calendars_data = {"calendars": calendars}
-        print(f"✅ Created {len(calendars)} room-based calendars")
-        
-    except Exception as e:
-        print(f"❌ Error creating calendars from rooms: {e}")
-        calendars_data = {"calendars": []}
-    except Exception as e:
-        print(f"❌ Error loading calendars: {e}")
-        calendars_data = {"calendars": []}
 
 
 async def load_events():
@@ -137,31 +111,16 @@ async def load_user_directory():
 
 
 def validate_user_exists(user_id: str) -> tuple[bool, str, dict]:
-    """Validate if user exists in directory with flexible matching."""
+    """Validate if user exists in directory."""
     if not user_directory:
-        # If no user directory, deny access
-        return False, "No user directory configured", {}
+        # If no user directory, allow all operations (fallback mode)
+        return True, "No user directory configured, allowing access", {}
     
-    # Try exact match first
-    if user_id in user_directory:
-        return True, "User found", user_directory[user_id]
+    user_info = user_directory.get(user_id)
+    if not user_info:
+        return False, f"User '{user_id}' not found in directory", {}
     
-    # Try converting spaces to dots (e.g., "alice chen" → "alice.chen")
-    user_id_with_dots = user_id.lower().replace(" ", ".")
-    if user_id_with_dots in user_directory:
-        return True, "User found", user_directory[user_id_with_dots]
-    
-    # Try searching by name field (e.g., "Alice Chen" matches user with name "Alice Chen")
-    for uid, user_info in user_directory.items():
-        if user_info.get("name", "").lower() == user_id.lower():
-            return True, "User found", user_info
-    
-    return False, f"User '{user_id}' not found in directory", {}
-
-
-def validate_group_exists(group_id: str) -> tuple[bool, str, dict]:
-    """Validate if group exists - disabled since we removed group calendars."""
-    return False, f"Group calendars are disabled", {}
+    return True, "User found", user_info
 
 
 def validate_room_exists(room_id: str) -> tuple[bool, str, dict]:
@@ -171,26 +130,6 @@ def validate_room_exists(room_id: str) -> tuple[bool, str, dict]:
             return True, "Room found", room
     
     return False, f"Room '{room_id}' not found", {}
-
-
-def validate_user_permissions(user_id: str, calendar_id: str) -> tuple[bool, str]:
-    """Validate if user has permission to access the calendar - simplified for room-only system."""
-    user_exists, user_msg, user_info = validate_user_exists(user_id)
-    if not user_exists:
-        return False, user_msg
-    
-    # For room-based system, all users can access all rooms
-    return True, "User has access to room calendars"
-
-
-def validate_calendar_exists(calendar_id: str) -> tuple[bool, str, dict]:
-    """Validate if calendar exists and return calendar info - simplified for room-only system."""
-    # Check in room-based calendars
-    for calendar in calendars_data.get("calendars", []):
-        if calendar["id"] == calendar_id:
-            return True, "Calendar found", calendar
-    
-    return False, f"Calendar '{calendar_id}' not found", {}
 
 
 def check_time_conflicts(calendar_id: str, start_time: str, end_time: str, exclude_event_id: str = None) -> tuple[bool, list]:
@@ -266,19 +205,9 @@ def check_room_conflicts(room_id: str, start_time: str, end_time: str, exclude_e
 async def startup_event():
     """Initialize the MCP server with data from files."""
     print("Starting Enhanced Calendar MCP Server...")
-    
-    # Load rooms first (required for calendars)
     await load_rooms()
-    
-    # Load calendars (creates room-based calendars)
-    await load_calendars()
-    
-    # Load events
     await load_events()
-    
-    # Load user directory
     await load_user_directory()
-    
     print("Enhanced Calendar MCP Server ready!")
 
 
@@ -514,6 +443,4 @@ async def list_rooms():
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 if __name__ == "__main__":
-    import asyncio
-    asyncio.run(startup_event())
     uvicorn.run(app, host="0.0.0.0", port=8000)

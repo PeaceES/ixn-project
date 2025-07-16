@@ -1,0 +1,59 @@
+{
+  "evaluation_metadata": {
+    "timestamp": "2025-07-16T05:34:13.296526",
+    "total_scenarios": 3,
+    "evaluator_version": "azure-ai-evaluation-sdk",
+    "agent_type": "calendar_scheduling_agent"
+  },
+  "summary": {
+    "successful": 1,
+    "failed": 2,
+    "average_scores": {}
+  },
+  "detailed_results": [
+    {
+      "scenario": {
+        "name": "Basic Room Availability Check",
+        "query": "Is the Main Conference Room available tomorrow at 2 PM?",
+        "expected_tools": [
+          "check_room_availability_via_mcp"
+        ],
+        "expected_outcome": "availability_check",
+        "complexity": "simple"
+      },
+      "evaluation": {
+        "error": "'coroutine' object has no attribute 'has_more'"
+      },
+      "success": true
+    },
+    {
+      "scenario": {
+        "name": "List Available Rooms",
+        "query": "Show me all available rooms for meetings",
+        "expected_tools": [
+          "get_rooms_via_mcp"
+        ],
+        "expected_outcome": "room_list",
+        "complexity": "simple"
+      },
+      "error": "Tool of type {type(tool).__name__} already exists in the ToolSet.",
+      "success": false
+    },
+    {
+      "scenario": {
+        "name": "Schedule Meeting",
+        "query": "Schedule a team meeting in the Alpha Meeting Room for tomorrow at 3 PM to 4 PM",
+        "expected_tools": [
+          "schedule_event_with_organizer"
+        ],
+        "expected_outcome": "event_creation",
+        "complexity": "medium"
+      },
+      "error": "Tool of type {type(tool).__name__} already exists in the ToolSet.",
+      "success": false
+    }
+  ],
+  "recommendations": [
+    "Overall performance is satisfactory. Continue monitoring and consider expanding test scenarios."
+  ]
+}

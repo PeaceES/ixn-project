@@ -73,7 +73,7 @@ def test_booking_scenarios():
                 failed += 1
             print()
         
-        print(f"📊 Scenario Results: {passed} passed, {failed} failed")
+        print(f"Scenario Results: {passed} passed, {failed} failed")
         return failed == 0
         
     except Exception as e:

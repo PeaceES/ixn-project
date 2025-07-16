@@ -1,4 +1,5 @@
 from typing import Any
+import os
 
 from azure.ai.projects.aio import AIProjectClient
 from azure.ai.projects.models import (
@@ -15,6 +16,7 @@ from azure.ai.projects.models import (
 )
 
 from utils.utilities import Utilities
+from evaluation.working_evaluator import quick_evaluate_response
 
 
 class StreamEventHandler(AsyncAgentEventHandler[str]):
@@ -24,10 +26,16 @@ class StreamEventHandler(AsyncAgentEventHandler[str]):
         self.functions = functions
         self.project_client = project_client
         self.util = utilities
+        self.current_thread_id = None
+        self.current_run_id = None
+        self.current_response_text = ""
+        self.current_user_query = ""
         super().__init__()
 
     async def on_message_delta(self, delta: MessageDeltaChunk) -> None:
         """Handle message delta events. This will be the streamed token"""
+        if delta.text:
+            self.current_response_text += delta.text
         self.util.log_token_blue(delta.text)
 
     async def on_thread_message(self, message: ThreadMessage) -> None:
@@ -41,6 +49,14 @@ class StreamEventHandler(AsyncAgentEventHandler[str]):
 
     async def on_thread_run(self, run: ThreadRun) -> None:
         """Handle thread run events"""
+        
+        # Store current run info for evaluation
+        self.current_thread_id = run.thread_id
+        self.current_run_id = run.id
+        
+        # Only reset response text at the beginning of a new run (not during completion)
+        if run.status not in [RunStatus.COMPLETED, RunStatus.FAILED, RunStatus.CANCELLED]:
+            self.current_response_text = ""
 
         if run.status == RunStatus.FAILED:
             print(f"Run failed. Error: {run.last_error}")
@@ -61,8 +77,53 @@ class StreamEventHandler(AsyncAgentEventHandler[str]):
 
     async def on_done(self) -> None:
         """Handle stream completion."""
-        pass
-        # self.util.log_msg_purple(f"\nStream completed.")
+        # Auto-evaluate if enabled and we have run info
+        if (os.getenv("ENABLE_AUTO_EVALUATION", "false").lower() == "true" and 
+            self.current_thread_id and self.current_run_id):
+            
+            # Only evaluate if we have response text
+            if not self.current_response_text.strip():
+                return
+            
+            print("\n" + "="*50)
+            print("🔍 EVALUATING RESPONSE...")
+            
+            try:
+                eval_result = await quick_evaluate_response(
+                    self.project_client, 
+                    self.current_thread_id, 
+                    self.current_run_id,
+                    response_text=self.current_response_text,
+                    user_query=self.current_user_query
+                )
+                
+                if eval_result.get("enabled"):
+                    if eval_result.get("error"):
+                        print(f"❌ Evaluation failed: {eval_result['error']}")
+                    else:
+                        avg_score = eval_result.get("average_score", 0)
+                        summary = eval_result.get("summary", "No summary available")
+                        method = eval_result.get("method", "unknown")
+                        
+                        # Color-coded score display
+                        if avg_score >= 4.0:
+                            score_color = "🟢"
+                        elif avg_score >= 3.0:
+                            score_color = "🟡"
+                        else:
+                            score_color = "🔴"
+                        
+                        print(f"{score_color} Overall Score: {avg_score:.1f}/5.0")
+                        print(f"📊 Details: {summary}")
+                        print(f"✅ Evaluated with {eval_result.get('successful_evaluators', 0)} metrics ({method})")
+                        
+                else:
+                    print("📋 Auto-evaluation disabled")
+                    
+            except Exception as e:
+                print(f"⚠️ Evaluation error: {e}")
+            
+            print("="*50)
 
     async def on_unhandled_event(self, event_type: str, event_data: Any) -> None:
         """Handle unhandled events."""

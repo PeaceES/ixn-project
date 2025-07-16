@@ -1,0 +1,18 @@
+Help on function convert in module azure.ai.evaluation._converters._ai_services:
+
+ccoonnvveerrtt(
+    self,
+    thread_id: str,
+    run_id: str,
+    exclude_tool_calls_previous_runs: bool = False
+) -> dict
+    Converts the agent run to a format suitable for the OpenAI API.
+
+    :param thread_id: The ID of the thread.
+    :type thread_id: str
+    :param run_id: The ID of the run.
+    :type run_id: str
+    :param exclude_tool_calls_previous_runs: Whether to exclude tool calls from previous runs in the conversion.
+    :type exclude_tool_calls_previous_runs: bool
+    :return: The converted data in dictionary format.
+    :rtype: dict

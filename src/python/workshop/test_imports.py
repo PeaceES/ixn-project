@@ -3,7 +3,7 @@
 Test script to verify that all imports work correctly after reorganization.
 """
 
-print("🧪 Testing imports after file reorganization...")
+print("Testing imports after file reorganization...")
 
 try:
     # Test utils imports

@@ -22,8 +22,18 @@ from utils.terminal_colors import TerminalColors as tc
 from utils.utilities import Utilities
 from services.mcp_client import CalendarMCPClient
 
-logging.basicConfig(level=logging.ERROR)
+# Configure logging to reduce verbosity
+logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
+
+# Suppress verbose Azure SDK logging
+logging.getLogger('azure.core.pipeline.policies.http_logging_policy').setLevel(logging.WARNING)
+logging.getLogger('azure.identity').setLevel(logging.WARNING)
+logging.getLogger('httpx').setLevel(logging.WARNING)
+logging.getLogger('azure.ai.projects').setLevel(logging.WARNING)
+
+# Suppress evaluation logging for cleaner output
+logging.getLogger('evaluation.working_evaluator').setLevel(logging.WARNING)
 
 load_dotenv()
 
@@ -328,11 +338,15 @@ async def post_message(thread_id: str, content: str, agent: Agent, thread: Agent
             content=content,
         )
 
+        # Create stream handler and set the user query
+        stream_handler = StreamEventHandler(
+            functions=functions, project_client=project_client, utilities=utilities)
+        stream_handler.current_user_query = content
+
         stream = await project_client.agents.create_stream(
             thread_id=thread.id,
             agent_id=agent.id,
-            event_handler=StreamEventHandler(
-                functions=functions, project_client=project_client, utilities=utilities),
+            event_handler=stream_handler,
             max_completion_tokens=MAX_COMPLETION_TOKENS,
             max_prompt_tokens=MAX_PROMPT_TOKENS,
             temperature=TEMPERATURE,

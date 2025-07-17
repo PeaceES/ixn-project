@@ -25,6 +25,7 @@ from azure.identity import DefaultAzureCredential
 from agent.stream_event_handler import StreamEventHandler
 from utils.utilities import Utilities
 from services.mcp_client import CalendarMCPClient
+from services.microsoft_docs_mcp_client import MicrosoftDocsMCPClient
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -41,7 +42,7 @@ MAX_COMPLETION_TOKENS = 10240
 MAX_PROMPT_TOKENS = 20480
 TEMPERATURE = 0.1
 TOP_P = 0.1
-INSTRUCTIONS_FILE = "instructions/general_instructions.txt"
+INSTRUCTIONS_FILE = "../shared/instructions/general_instructions.txt"
 
 
 class StreamlitEventHandler(StreamEventHandler):
@@ -75,6 +76,7 @@ class CalendarAgentCore:
         self.toolset = AsyncToolSet()
         self.utilities = Utilities()
         self.mcp_client = CalendarMCPClient()
+        self.microsoft_docs_client = MicrosoftDocsMCPClient()
         self.shared_thread_id: Optional[str] = None
         self.functions = None
         self._initialize_functions()
@@ -86,6 +88,7 @@ class CalendarAgentCore:
             self.check_room_availability_via_mcp,
             self.get_rooms_via_mcp,
             self.schedule_event_with_organizer,
+            self.search_microsoft_documentation,
         ])
     
     async def get_events_via_mcp(self) -> str:
@@ -401,6 +404,15 @@ class CalendarAgentCore:
             except Exception as e:
                 logger.error(f"Error during cleanup: {e}")
             finally:
+                # Close MCP client connections
+                try:
+                    if hasattr(self.mcp_client, 'cleanup'):
+                        await self.mcp_client.cleanup()
+                    if hasattr(self.microsoft_docs_client, 'cleanup'):
+                        await self.microsoft_docs_client.cleanup()
+                except Exception as e:
+                    logger.warning(f"Error cleaning up MCP clients: {e}")
+                
                 # Close the project client connection
                 if hasattr(self.project_client, 'close'):
                     await self.project_client.close()
@@ -429,6 +441,13 @@ class CalendarAgentCore:
         except Exception:
             status["mcp_status"] = "unreachable"
         
+        # Check Microsoft Docs MCP health
+        try:
+            docs_health = await self.microsoft_docs_client.health_check()
+            status["microsoft_docs_mcp_status"] = "healthy" if docs_health.get("status") == "healthy" else "unhealthy"
+        except Exception:
+            status["microsoft_docs_mcp_status"] = "unreachable"
+        
         # Check user directory
         users = self.fetch_user_directory()
         status["user_directory"] = {
@@ -437,3 +456,68 @@ class CalendarAgentCore:
         }
         
         return status
+
+    async def search_microsoft_documentation(self, query: str) -> str:
+        """
+        Search Microsoft's official documentation including Azure docs, Microsoft Learn, 
+        and other Microsoft technical documentation.
+        
+        Use this function when you need to:
+        - Get official Microsoft documentation about Azure services
+        - Find authoritative information about Microsoft technologies
+        - Get up-to-date information about Microsoft APIs, SDKs, or services
+        - Answer questions about Microsoft best practices or implementation details
+        
+        Args:
+            query (str): The search query for Microsoft documentation.
+                        Examples: "Azure Container Apps", "Azure CLI commands", 
+                        "ASP.NET Core authentication", "Azure Functions deployment"
+        
+        Returns:
+            str: JSON string containing search results from Microsoft documentation
+        """
+        try:
+            # Check if Microsoft Docs MCP server is available
+            health = await self.microsoft_docs_client.health_check()
+            if health.get("status") != "healthy":
+                return json.dumps({
+                    "success": False,
+                    "error": "Microsoft Docs MCP server not available",
+                    "message": f"Cannot search Microsoft documentation for: {query}",
+                    "health_status": health
+                })
+            
+            # Perform the search
+            result = await self.microsoft_docs_client.search_microsoft_docs(query)
+            
+            if result.get("success"):
+                # Format the results for better readability
+                formatted_results = []
+                for doc in result.get("results", []):
+                    formatted_results.append({
+                        "content": doc.get("content", ""),
+                        "type": doc.get("type", "documentation"),
+                        "source": "Microsoft Learn Docs"
+                    })
+                
+                return json.dumps({
+                    "success": True,
+                    "query": query,
+                    "results": formatted_results,
+                    "source": "Microsoft Learn Docs MCP Server",
+                    "message": f"Found {len(formatted_results)} documentation results for: {query}"
+                })
+            else:
+                return json.dumps({
+                    "success": False,
+                    "error": result.get("error", "Unknown error"),
+                    "message": f"Could not search Microsoft documentation for: {query}"
+                })
+                
+        except Exception as e:
+            logger.error(f"Error searching Microsoft documentation: {e}")
+            return json.dumps({
+                "success": False,
+                "error": f"Microsoft Docs search failed: {str(e)}",
+                "message": f"Could not search Microsoft documentation for: {query}"
+            })

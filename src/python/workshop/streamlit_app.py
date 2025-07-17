@@ -6,11 +6,15 @@ This provides a web interface for testing and interacting with the agent.
 import streamlit as st
 import asyncio
 import json
+import logging
 import concurrent.futures
 from datetime import datetime, timedelta
 from typing import Dict, Any
 
 from agent_core import CalendarAgentCore
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 # Configure page
 st.set_page_config(
@@ -96,13 +100,28 @@ def run_async_in_streamlit(coroutine):
                     for task in pending:
                         task.cancel()
                     
-                    # Wait for all tasks to complete cancellation
+                    # Wait for all tasks to complete cancellation with timeout
                     if pending:
-                        new_loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+                        try:
+                            new_loop.run_until_complete(
+                                asyncio.wait_for(
+                                    asyncio.gather(*pending, return_exceptions=True),
+                                    timeout=2.0  # 2 second timeout for cleanup
+                                )
+                            )
+                        except asyncio.TimeoutError:
+                            # Force close if tasks don't finish in time
+                            logger.warning("Some tasks didn't complete cleanup in time")
+                            pass
+                    
+                    # Give a small delay to allow any remaining I/O to complete
+                    import time
+                    time.sleep(0.1)
                     
                     # Close the loop
                     new_loop.close()
-                except Exception:
+                except Exception as e:
+                    logger.warning(f"Error during event loop cleanup: {e}")
                     pass  # Ignore cleanup errors
         
         # Run in a separate thread
@@ -232,7 +251,7 @@ def main():
                 
                 # Add welcome message
                 welcome_msg = """
-                🎉 **Welcome to the Calendar Scheduling Agent!**
+                 **Welcome to the Calendar Scheduling Agent!**
                 
                 I can help you with:
                 - 📋 Listing available rooms
@@ -329,7 +348,10 @@ def main():
             st.rerun()
     
     with col2:
-        if st.button("🔄 Refresh Status", key="refresh_status"):
+        if st.button("🔄 Refresh Agent", key="refresh_agent"):
+            # Clear the cached agent and force recreation
+            get_agent.clear()
+            st.session_state.agent_initialized = False
             st.rerun()
     
     with col3:

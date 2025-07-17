@@ -32,6 +32,13 @@ async def main() -> None:
     - "Schedule a meeting in the Alpha Meeting Room for tomorrow at 3pm"
     - "I want to book the Drama Studio for a rehearsal next Friday"
     - "What events are scheduled for this week?"
+    
+    NEW: Microsoft Documentation Search Examples (via Microsoft Learn Docs MCP Server):
+    - "How do I create an Azure Container App?"
+    - "What are the best practices for Azure Functions?"
+    - "Show me the Azure CLI commands for managing resources"
+    - "How do I implement authentication in ASP.NET Core?"
+    - "Search Microsoft docs for Azure Key Vault usage"
     """
     
     # Initialize the agent core
@@ -52,6 +59,7 @@ async def main() -> None:
     status = await agent_core.get_agent_status()
     print(f"{tc.BLUE}📊 Agent Status:{tc.RESET}")
     print(f"  - MCP Server: {status.get('mcp_status', 'unknown')}")
+    print(f"  - Microsoft Docs MCP: {status.get('microsoft_docs_mcp_status', 'unknown')}")
     print(f"  - User Directory: {'loaded' if status.get('user_directory', {}).get('loaded') else 'not loaded'}")
     print(f"  - Agent ID: {status.get('agent_id', 'N/A')}")
     

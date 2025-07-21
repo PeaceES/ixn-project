@@ -12,7 +12,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from services.mcp_client import CalendarMCPClient
-from services.microsoft_docs_mcp_client import MicrosoftDocsMCPClient
 from tests.test_framework import (
     AsyncTestCase, MockResponseBuilder, TestDataFactory, AssertionHelpers,
     TEST_USER_ID, TEST_CALENDAR_ID, TEST_ROOM_ID, TEST_EVENT_ID
@@ -242,104 +241,6 @@ class TestCalendarMCPClient(AsyncTestCase):
             assert result == event_data
 
 
-@pytest.mark.unit
-@pytest.mark.mcp
-class TestMicrosoftDocsMCPClient(AsyncTestCase):
-    """Test the MicrosoftDocsMCPClient class."""
-    
-    def setup_mocks(self):
-        """Setup mocks for Microsoft Docs MCP client tests."""
-        self.client = MicrosoftDocsMCPClient("http://localhost:8001")
-        
-    def cleanup_mocks(self):
-        """Cleanup mocks after tests."""
-        pass
-    
-    @pytest.mark.asyncio
-    async def test_client_initialization(self):
-        """Test Microsoft Docs client initialization."""
-        # Test default URL
-        client1 = MicrosoftDocsMCPClient()
-        assert hasattr(client1, 'base_url')
-        
-        # Test custom URL
-        client2 = MicrosoftDocsMCPClient("https://docs.api.example.com")
-        assert hasattr(client2, 'base_url')
-    
-    @pytest.mark.asyncio
-    async def test_search_documentation_success(self):
-        """Test successful documentation search."""
-        with patch('httpx.AsyncClient') as mock_client_class:
-            mock_client_instance = AsyncMock()
-            mock_response = AsyncMock()
-            
-            # Mock successful search response
-            search_results = {
-                "results": [
-                    {
-                        "title": "Azure AI Services Overview",
-                        "url": "https://docs.microsoft.com/azure/ai-services/",
-                        "snippet": "Learn about Azure AI Services and how to use them.",
-                        "relevance": 0.95
-                    }
-                ],
-                "total": 1
-            }
-            mock_response.json.return_value = search_results
-            mock_response.status_code = 200
-            mock_client_instance.get.return_value = mock_response
-            mock_client_class.return_value = mock_client_instance
-            
-            result = await self.client.search_documentation("Azure AI Services")
-            
-            # Verify the request was made correctly
-            mock_client_instance.get.assert_called_once()
-            call_args = mock_client_instance.get.call_args
-            
-            # Verify the result
-            assert result == search_results
-            assert len(result['results']) == 1
-            assert result['results'][0]['title'] == "Azure AI Services Overview"
-    
-    @pytest.mark.asyncio
-    async def test_search_documentation_empty_results(self):
-        """Test documentation search with no results."""
-        with patch('httpx.AsyncClient') as mock_client_class:
-            mock_client_instance = AsyncMock()
-            mock_response = AsyncMock()
-            
-            # Mock empty search response
-            search_results = {
-                "results": [],
-                "total": 0
-            }
-            mock_response.json.return_value = search_results
-            mock_response.status_code = 200
-            mock_client_instance.get.return_value = mock_response
-            mock_client_class.return_value = mock_client_instance
-            
-            result = await self.client.search_documentation("NonexistentTopic")
-            
-            assert result == search_results
-            assert len(result['results']) == 0
-            assert result['total'] == 0
-    
-    @pytest.mark.asyncio
-    async def test_search_documentation_network_error(self):
-        """Test documentation search with network error."""
-        with patch('httpx.AsyncClient') as mock_client_class:
-            mock_client_instance = AsyncMock()
-            
-            # Mock network error
-            mock_client_instance.get.side_effect = httpx.ConnectError("Network error")
-            mock_client_class.return_value = mock_client_instance
-            
-            with pytest.raises(Exception) as exc_info:
-                await self.client.search_documentation("Azure AI Services")
-            
-            assert "Network error" in str(exc_info.value)
-
-
 @pytest.mark.integration
 @pytest.mark.mcp
 class TestMCPClientIntegration:
@@ -371,7 +272,7 @@ class TestMCPClientIntegration:
     async def test_multiple_mcp_clients(self):
         """Test creating and managing multiple MCP clients."""
         client1 = CalendarMCPClient("http://localhost:8000")
-        client2 = MicrosoftDocsMCPClient("http://localhost:8001")
+        client2 = CalendarMCPClient("http://localhost:8001")
         
         try:
             # Both clients should be independently configurable

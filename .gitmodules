@@ -1,0 +1,3 @@
+[submodule "microsoft_docs_mcp"]
+	path = microsoft_docs_mcp
+	url = https://github.com/microsoftdocs/mcp.git

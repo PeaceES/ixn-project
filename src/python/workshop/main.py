@@ -59,7 +59,6 @@ async def main() -> None:
     status = await agent_core.get_agent_status()
     print(f"{tc.BLUE}Agent Status:{tc.RESET}")
     print(f"  - MCP Server: {status.get('mcp_status', 'unknown')}")
-    print(f"  - Microsoft Docs MCP: {status.get('microsoft_docs_mcp_status', 'unknown')}")
     print(f"  - User Directory: {'loaded' if status.get('user_directory', {}).get('loaded') else 'not loaded'}")
     print(f"  - Agent ID: {status.get('agent_id', 'N/A')}")
     

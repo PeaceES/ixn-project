@@ -29,20 +29,20 @@ async def test_azure_evaluator():
             
             # Create evaluator
             evaluator = RealTimeEvaluator(project_client)
-            print(f"✅ Evaluator created with project client")
-            print(f"📊 Enabled: {evaluator.enabled}")
-            print(f"🔧 Metrics: {evaluator.metrics}")
+            print(f"Evaluator created with project client")
+            print(f"Enabled: {evaluator.enabled}")
+            print(f"Metrics: {evaluator.metrics}")
             
             # Test initialization
-            print("\n🔧 Testing evaluator initialization...")
+            print("\nTesting evaluator initialization...")
             await evaluator._initialize_evaluators()
             
-            print(f"✅ Initialization completed")
-            print(f"📊 Initialized: {evaluator.initialized}")
-            print(f"🔧 Evaluators: {list(evaluator.evaluators.keys())}")
+            print(f"Initialization completed")
+            print(f"Initialized: {evaluator.initialized}")
+            print(f"Evaluators: {list(evaluator.evaluators.keys())}")
             
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"Error: {e}")
         import traceback
         traceback.print_exc()
 

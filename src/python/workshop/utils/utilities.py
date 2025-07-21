@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from azure.ai.projects.aio import AIProjectClient
-from azure.ai.projects.models import ThreadMessage
+from azure.ai.agents.models import ThreadMessage
 
 from utils.terminal_colors import TerminalColors as tc
 
@@ -78,7 +78,7 @@ class Utilities:
     async def upload_file(self, project_client: AIProjectClient, file_path: Path, purpose: str = "assistants") -> None:
         """Upload a file to the project."""
         self.log_msg_purple(f"Uploading file: {file_path}")
-        file_info = await project_client.agents.upload_file(file_path=file_path, purpose=purpose)
+        file_info = await project_client.agents.files.upload(file_path=file_path, purpose=purpose)
         self.log_msg_purple(f"File uploaded with ID: {file_info.id}")
         return file_info
 

@@ -44,12 +44,12 @@ async def main() -> None:
     # Initialize the agent core
     agent_core = CalendarAgentCore()
     
-    print(f"{tc.CYAN}🚀 Starting Calendar Scheduling Agent...{tc.RESET}")
+    print(f"{tc.CYAN}Starting Calendar Scheduling Agent...{tc.RESET}")
     
     # Initialize the agent
     success, message = await agent_core.initialize_agent()
     if not success:
-        print(f"{tc.BG_BRIGHT_RED}❌ Initialization failed: {message}{tc.RESET}")
+        print(f"{tc.BG_BRIGHT_RED}Initialization failed: {message}{tc.RESET}")
         print("Exiting...")
         return
     
@@ -57,7 +57,7 @@ async def main() -> None:
     
     # Get agent status for display
     status = await agent_core.get_agent_status()
-    print(f"{tc.BLUE}📊 Agent Status:{tc.RESET}")
+    print(f"{tc.BLUE}Agent Status:{tc.RESET}")
     print(f"  - MCP Server: {status.get('mcp_status', 'unknown')}")
     print(f"  - Microsoft Docs MCP: {status.get('microsoft_docs_mcp_status', 'unknown')}")
     print(f"  - User Directory: {'loaded' if status.get('user_directory', {}).get('loaded') else 'not loaded'}")
@@ -78,18 +78,18 @@ async def main() -> None:
             break
         
         # Process the message
-        print(f"{tc.YELLOW}🤔 Processing your request...{tc.RESET}")
+        print(f"{tc.YELLOW}Processing your request...{tc.RESET}")
         success, response = await agent_core.process_message(prompt, for_streamlit=False)
         
         if not success:
-            print(f"{tc.RED}❌ Error: {response}{tc.RESET}")
+            print(f"{tc.RED}Error: {response}{tc.RESET}")
     
     # Handle cleanup
     if cmd == "save":
-        print(f"{tc.CYAN}💾 The agent has not been deleted, so you can continue experimenting with it in the Azure AI Foundry.{tc.RESET}")
+        print(f"{tc.CYAN}The agent has not been deleted, so you can continue experimenting with it in the Azure AI Foundry.{tc.RESET}")
         print(f"Navigate to https://ai.azure.com, select your project, then playgrounds, agents playground, then select agent id: {status.get('agent_id', 'N/A')}")
     else:
-        print(f"{tc.YELLOW}🧹 Cleaning up agent resources...{tc.RESET}")
+        print(f"{tc.YELLOW}Cleaning up agent resources...{tc.RESET}")
         await agent_core.cleanup()
         print(f"{tc.GREEN}✅ Agent resources have been cleaned up.{tc.RESET}")
 

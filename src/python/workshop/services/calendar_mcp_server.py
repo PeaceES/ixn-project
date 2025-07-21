@@ -43,12 +43,12 @@ async def load_rooms():
     try:
         with open(ROOMS_FILE, 'r') as f:
             rooms_data = json.load(f)
-        print(f"✅ Loaded {len(rooms_data.get('rooms', []))} rooms from {ROOMS_FILE}")
+        print(f"Loaded {len(rooms_data.get('rooms', []))} rooms from {ROOMS_FILE}")
     except FileNotFoundError:
-        print(f"⚠️ {ROOMS_FILE} not found, using empty rooms list")
+        print(f"Warning: {ROOMS_FILE} not found, using empty rooms list")
         rooms_data = {"rooms": []}
     except Exception as e:
-        print(f"❌ Error loading rooms: {e}")
+        print(f"Error loading rooms: {e}")
         rooms_data = {"rooms": []}
 
 
@@ -68,13 +68,13 @@ async def load_calendars():
             })
         
         calendars_data = {"calendars": calendars}
-        print(f"✅ Created {len(calendars)} room-based calendars")
+        print(f"Created {len(calendars)} room-based calendars")
         
     except Exception as e:
-        print(f"❌ Error creating calendars from rooms: {e}")
+        print(f"Error creating calendars from rooms: {e}")
         calendars_data = {"calendars": []}
     except Exception as e:
-        print(f"❌ Error loading calendars: {e}")
+        print(f"Error loading calendars: {e}")
         calendars_data = {"calendars": []}
 
 
@@ -84,13 +84,13 @@ async def load_events():
     try:
         with open(EVENTS_FILE, 'r') as f:
             events_data = json.load(f)
-        print(f"✅ Loaded {len(events_data.get('events', []))} events from {EVENTS_FILE}")
+        print(f"Loaded {len(events_data.get('events', []))} events from {EVENTS_FILE}")
     except FileNotFoundError:
-        print(f"⚠️ {EVENTS_FILE} not found, creating empty events file")
+        print(f"Warning: {EVENTS_FILE} not found, creating empty events file")
         events_data = {"events": []}
         await save_events()
     except Exception as e:
-        print(f"❌ Error loading events: {e}")
+        print(f"Error loading events: {e}")
         events_data = {"events": []}
 
 
@@ -99,9 +99,9 @@ async def save_events():
     try:
         with open(EVENTS_FILE, 'w') as f:
             json.dump(events_data, f, indent=2)
-        print(f"💾 Saved {len(events_data.get('events', []))} events to {EVENTS_FILE}")
+        print(f"Saved {len(events_data.get('events', []))} events to {EVENTS_FILE}")
     except Exception as e:
-        print(f"❌ Error saving events: {e}")
+        print(f"Error saving events: {e}")
 
 
 async def load_user_directory():
@@ -112,16 +112,16 @@ async def load_user_directory():
     try:
         with open(USER_DIRECTORY_LOCAL_FILE, 'r') as f:
             user_directory = json.load(f)
-        print(f"✅ Loaded {len(user_directory)} users from local file")
+        print(f"Loaded {len(user_directory)} users from local file")
         return
     except FileNotFoundError:
-        print(f"⚠️ {USER_DIRECTORY_LOCAL_FILE} not found, trying remote URL")
+        print(f"Warning: {USER_DIRECTORY_LOCAL_FILE} not found, trying remote URL")
     except Exception as e:
-        print(f"❌ Error loading local user directory: {e}")
+        print(f"Error loading local user directory: {e}")
     
     # Fallback to remote URL
     if not USER_DIRECTORY_URL:
-        print("⚠️ USER_DIRECTORY_URL not configured, using empty user directory")
+        print("Warning: USER_DIRECTORY_URL not configured, using empty user directory")
         user_directory = {}
         return
     
@@ -130,9 +130,9 @@ async def load_user_directory():
             response = await client.get(USER_DIRECTORY_URL, timeout=10)
             response.raise_for_status()
             user_directory = response.json()
-        print(f"✅ Loaded {len(user_directory)} users from remote URL")
+        print(f"Loaded {len(user_directory)} users from remote URL")
     except Exception as e:
-        print(f"⚠️ Failed to load remote user directory: {e}")
+        print(f"Warning: Failed to load remote user directory: {e}")
         user_directory = {}
 
 

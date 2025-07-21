@@ -77,67 +77,26 @@ def get_agent():
     return CalendarAgentCore()
 
 def run_async_in_streamlit(coroutine):
-    """Run an async function in a way compatible with Streamlit."""
+    """
+    Run an async function in a way compatible with Streamlit.
+    
+    Streamlit runs in its own event loop, so we need to run async functions
+    in a separate thread with their own event loop to avoid conflicts.
+    
+    Note: This is where the "Event loop is closed" error occurs due to
+    cleanup timing issues between Streamlit and Azure SDK HTTP connections.
+    """
     try:
-        # Try to get the running event loop
-        loop = asyncio.get_running_loop()
-        
-        # If we're in a running loop, use a thread executor
-        import concurrent.futures
-        
-        def run_in_thread():
-            # Create a new event loop for this thread
-            new_loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(new_loop)
-            try:
-                result = new_loop.run_until_complete(coroutine)
-                return result
-            finally:
-                # Clean up the loop properly
-                try:
-                    # Cancel all pending tasks
-                    pending = asyncio.all_tasks(new_loop)
-                    for task in pending:
-                        task.cancel()
-                    
-                    # Wait for all tasks to complete cancellation with timeout
-                    if pending:
-                        try:
-                            new_loop.run_until_complete(
-                                asyncio.wait_for(
-                                    asyncio.gather(*pending, return_exceptions=True),
-                                    timeout=2.0  # 2 second timeout for cleanup
-                                )
-                            )
-                        except asyncio.TimeoutError:
-                            # Force close if tasks don't finish in time
-                            logger.warning("Some tasks didn't complete cleanup in time")
-                            pass
-                    
-                    # Give a small delay to allow any remaining I/O to complete
-                    import time
-                    time.sleep(0.1)
-                    
-                    # Close the loop
-                    new_loop.close()
-                except Exception as e:
-                    logger.warning(f"Error during event loop cleanup: {e}")
-                    pass  # Ignore cleanup errors
-        
-        # Run in a separate thread
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            future = executor.submit(run_in_thread)
-            return future.result(timeout=60)  # 60 second timeout
-            
-    except RuntimeError as e:
-        if "no running event loop" in str(e):
-            # No event loop is running, safe to use asyncio.run
+        def run_with_asyncio():
             return asyncio.run(coroutine)
-        else:
-            # Re-raise other RuntimeErrors
-            raise
+        
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(run_with_asyncio)
+            return future.result(timeout=120)  # 2 minute timeout
+            
     except Exception as e:
-        st.error(f"Error running async function: {e}")
+        logger.error(f"Error in run_async_in_streamlit: {e}")
+        st.error(f"Error running async operation: {e}")
         raise
 
 def format_status_badge(status: str) -> str:
@@ -148,17 +107,10 @@ def format_status_badge(status: str) -> str:
         return f'<span class="status-unhealthy">🔴 {status.upper()}</span>'
     else:
         return f'<span class="status-unreachable">🟡 {status.upper()}</span>'
-    """Format status as colored badge."""
-    if status == "healthy":
-        return f'<span class="status-healthy">🟢 {status.upper()}</span>'
-    elif status == "unhealthy":
-        return f'<span class="status-unhealthy">🔴 {status.upper()}</span>'
-    else:
-        return f'<span class="status-unreachable">🟡 {status.upper()}</span>'
 
 def display_sidebar_status(agent_status: Dict[str, Any]):
     """Display agent status in sidebar."""
-    st.sidebar.markdown("## 🔧 Agent Status")
+    st.sidebar.markdown("## Agent Status")
     
     # Agent initialization status
     if agent_status.get("agent_initialized"):
@@ -188,20 +140,20 @@ def display_quick_actions():
     col1, col2 = st.sidebar.columns(2)
     
     with col1:
-        if st.button("📋 List Rooms", key="list_rooms"):
+        if st.button("List Rooms", key="list_rooms"):
             st.session_state.quick_query = "Show me all available rooms"
-        if st.button("📅 Today's Events", key="today_events"):
+        if st.button("Today's Events", key="today_events"):
             st.session_state.quick_query = "What events are scheduled for today?"
     
     with col2:
-        if st.button("🔍 Check Availability", key="check_availability"):
+        if st.button("Check Availability", key="check_availability"):
             st.session_state.quick_query = "Check if the Main Conference Room is available tomorrow at 2pm"
-        if st.button("➕ Schedule Meeting", key="schedule_meeting"):
+        if st.button("Schedule Meeting", key="schedule_meeting"):
             st.session_state.quick_query = "Schedule a meeting in the Alpha Meeting Room for tomorrow at 3pm"
 
 def display_example_queries():
     """Display example queries."""
-    st.sidebar.markdown("## 💡 Example Queries")
+    st.sidebar.markdown("## Example Queries")
     
     examples = [
         "Show me all available rooms",
@@ -214,7 +166,7 @@ def display_example_queries():
     ]
     
     for i, example in enumerate(examples):
-        if st.sidebar.button(f"📝 {example[:30]}...", key=f"example_{i}"):
+        if st.sidebar.button(f"{example[:30]}...", key=f"example_{i}"):
             st.session_state.quick_query = example
 
 def initialize_agent_async():
@@ -227,7 +179,7 @@ def main():
     """Main Streamlit application."""
     
     # Header
-    st.markdown('<div class="main-header">📅 Calendar Scheduling Agent</div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-header">Calendar Scheduling Agent</div>', unsafe_allow_html=True)
     
     # Initialize session state
     if 'messages' not in st.session_state:
@@ -242,7 +194,7 @@ def main():
     
     # Initialize agent if not already done
     if not st.session_state.agent_initialized:
-        with st.spinner("🔄 Initializing Calendar Agent..."):
+        with st.spinner("Initializing Calendar Agent..."):
             success, message = initialize_agent_async()
             
             if success:
@@ -254,11 +206,11 @@ def main():
                  **Welcome to the Calendar Scheduling Agent!**
                 
                 I can help you with:
-                - 📋 Listing available rooms
-                - 🔍 Checking room availability
-                - 📅 Scheduling meetings and events
-                - 📊 Viewing current events
-                - 🗓️ Managing your calendar
+                - Listing available rooms
+                - Checking room availability
+                - Scheduling meetings and events
+                - Viewing current events
+                - Managing your calendar
                 
                 Try asking me something like "Show me all available rooms" or use the quick actions in the sidebar!
                 """
@@ -268,7 +220,7 @@ def main():
                     "timestamp": datetime.now()
                 })
             else:
-                st.error(f"❌ {message}")
+                st.error(f"{message}")
                 st.stop()
     
     # Get current agent status
@@ -279,7 +231,7 @@ def main():
         display_example_queries()
     
     # Main chat interface
-    st.markdown("## 💬 Chat with Agent")
+    st.markdown("## Chat with Agent")
     
     # Display chat history
     chat_container = st.container()
@@ -348,23 +300,23 @@ def main():
             st.rerun()
     
     with col2:
-        if st.button("🔄 Refresh Agent", key="refresh_agent"):
+        if st.button("Refresh Agent", key="refresh_agent"):
             # Clear the cached agent and force recreation
             get_agent.clear()
             st.session_state.agent_initialized = False
             st.rerun()
     
     with col3:
-        if st.button("🧹 Cleanup Agent", key="cleanup_agent"):
+        if st.button("Cleanup Agent", key="cleanup_agent"):
             if st.session_state.agent_initialized:
-                with st.spinner("🧹 Cleaning up agent resources..."):
+                with st.spinner("Cleaning up agent resources..."):
                     run_async_in_streamlit(agent.cleanup())
                     st.session_state.agent_initialized = False
                     st.success("✅ Agent resources cleaned up")
                     st.rerun()
     
     # Debug info (collapsible)
-    with st.expander("🔍 Debug Information"):
+    with st.expander("Debug Information"):
         if st.session_state.agent_initialized:
             agent_status = run_async_in_streamlit(agent.get_agent_status())
             st.json(agent_status)

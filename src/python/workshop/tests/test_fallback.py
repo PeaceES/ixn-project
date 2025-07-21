@@ -20,7 +20,7 @@ def test_fallback_evaluation():
         evaluator = HybridRealTimeEvaluator(project_client=None)
         print(f"✅ Evaluator created")
         print(f"📊 Enabled: {evaluator.enabled}")
-        print(f"🔧 Metrics: {evaluator.metrics}")
+        print(f"Metrics: {evaluator.metrics}")
         
         # Test fallback evaluation
         test_response = "Yes, there is one event scheduled for today, July 16th, 2025: Competition rehearsal from 10:00 AM - 12:00 PM in Main Lecture Hall organized by Alice Chen."

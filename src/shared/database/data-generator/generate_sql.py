@@ -97,5 +97,5 @@ cur.executemany("INSERT INTO tutorials (module_code, tutor_id, room_id, timeslot
 conn.commit()
 conn.close()
 
-print(f"✅ Created database at: {db_path}")
+print(f"Created database at: {db_path}")
 

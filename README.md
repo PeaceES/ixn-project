@@ -1,6 +1,6 @@
 # Calendar Scheduler Agent
 
-An intelligent calendar scheduling assistant built with Azure AI Agent Service, designed specifically for university campus environments with group-based booking permissions.
+My intelligent calendar scheduling assistant built with Azure AI Agent Service, designed specifically for university campus environments with group-based booking permissions.
 
 ## Overview
 
@@ -60,13 +60,13 @@ Agent: "What group are you booking for? You belong to:
 
 User: "Engineering Society"
 
-Agent: "✅ Permission verified! Engineering Society can book Lecture Hall A.
+Agent: "Permission verified! Engineering Society can book Lecture Hall A.
 When would you like to schedule your meeting?"
 ```
 
 ## Demo Users
 
-The system includes sample users for testing:
+I've included sample users for testing:
 - **john.doe** - Engineering Society, Computer Science Dept
 - **alice.chen** - Engineering Society, Robotics Club, Computer Science Dept
 - **sarah.jones** - Drama Club

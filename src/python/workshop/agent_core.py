@@ -13,7 +13,7 @@ from typing import Optional, Tuple, Dict, Any
 from dotenv import load_dotenv
 
 from azure.ai.projects.aio import AIProjectClient
-from azure.ai.projects.models import (
+from azure.ai.agents.models import (
     Agent,
     AgentThread,
     AsyncFunctionTool,
@@ -269,10 +269,17 @@ class CalendarAgentCore:
             return False, "Instructions file not specified"
 
         try:
+            # Parse connection string to get endpoint
+            parts = PROJECT_CONNECTION_STRING.split(';')
+            if len(parts) != 4:
+                return False, f"Invalid connection string format: {PROJECT_CONNECTION_STRING}"
+            
+            endpoint = f"https://{parts[0]}/agents/v1.0/subscriptions/{parts[1]}/resourceGroups/{parts[2]}/providers/Microsoft.MachineLearningServices/workspaces/{parts[3]}"
+            
             # Initialize project client
-            self.project_client = AIProjectClient.from_connection_string(
+            self.project_client = AIProjectClient(
+                endpoint=endpoint,
                 credential=DefaultAzureCredential(),
-                conn_str=PROJECT_CONNECTION_STRING,
             )
 
             # Add agent tools
@@ -304,13 +311,13 @@ class CalendarAgentCore:
             user_dir_status = f"loaded ({len(users)} entries)" if users else "empty/inaccessible"
 
             # Enable auto function calls
-            self.project_client.agents.enable_auto_function_calls(toolset=self.toolset)
+            self.project_client.agents.enable_auto_function_calls(tools=self.toolset)
 
             # Create thread
-            self.thread = await self.project_client.agents.create_thread()
+            self.thread = await self.project_client.agents.threads.create()
 
             # Create shared communication thread
-            shared_thread = await self.project_client.agents.create_thread()
+            shared_thread = await self.project_client.agents.threads.create()
             self.shared_thread_id = shared_thread.id
 
             # Post initialization message
@@ -319,7 +326,7 @@ class CalendarAgentCore:
                 "message": "Calendar agent is now active and ready to schedule events",
                 "updated_by": "calendar-agent"
             }
-            await self.project_client.agents.create_message(
+            await self.project_client.agents.messages.create(
                 thread_id=shared_thread.id,
                 role="user",
                 content=json.dumps(event_payload)
@@ -340,7 +347,7 @@ class CalendarAgentCore:
 
         try:
             # Create message
-            await self.project_client.agents.create_message(
+            await self.project_client.agents.messages.create(
                 thread_id=self.thread.id,
                 role="user",
                 content=message,
@@ -363,7 +370,7 @@ class CalendarAgentCore:
             stream_handler.current_user_query = message
 
             # Create and process stream
-            stream = await self.project_client.agents.create_stream(
+            stream = await self.project_client.agents.runs.stream(
                 thread_id=self.thread.id,
                 agent_id=self.agent.id,
                 event_handler=stream_handler,
@@ -392,12 +399,12 @@ class CalendarAgentCore:
         if self.project_client and self.agent and self.thread:
             try:
                 # Delete files
-                existing_files = await self.project_client.agents.list_files()
+                existing_files = await self.project_client.agents.files.list()
                 for f in existing_files.data:
-                    await self.project_client.agents.delete_file(f.id)
+                    await self.project_client.agents.files.delete(f.id)
                 
                 # Delete thread and agent
-                await self.project_client.agents.delete_thread(self.thread.id)
+                await self.project_client.agents.threads.delete(self.thread.id)
                 await self.project_client.agents.delete_agent(self.agent.id)
                 
                 logger.info("Agent resources cleaned up successfully")
@@ -413,11 +420,17 @@ class CalendarAgentCore:
                 except Exception as e:
                     logger.warning(f"Error cleaning up MCP clients: {e}")
                 
-                # Close the project client connection
-                if hasattr(self.project_client, 'close'):
-                    await self.project_client.close()
-                elif hasattr(self.project_client, '_client') and hasattr(self.project_client._client, 'close'):
-                    await self.project_client._client.close()
+                # Close the project client connection properly
+                try:
+                    if hasattr(self.project_client, 'close'):
+                        await self.project_client.close()
+                    elif hasattr(self.project_client, '_client'):
+                        if hasattr(self.project_client._client, 'close'):
+                            await self.project_client._client.close()
+                        if hasattr(self.project_client._client, '_session'):
+                            await self.project_client._client._session.close()
+                except Exception as e:
+                    logger.warning(f"Error closing project client: {e}")
                 
                 # Reset state
                 self.agent = None

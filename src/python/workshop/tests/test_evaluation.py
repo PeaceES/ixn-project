@@ -15,9 +15,9 @@ def test_real_time_evaluator():
         
         # Create evaluator instance
         evaluator = RealTimeEvaluator()
-        print(f"✅ Evaluator created successfully")
-        print(f"📊 Enabled: {evaluator.enabled}")
-        print(f"🔧 Metrics: {evaluator.metrics}")
+        print(f"Evaluator created successfully")
+        print(f"Enabled: {evaluator.enabled}")
+        print(f"Metrics: {evaluator.metrics}")
         
         # Test evaluation
         if evaluator.enabled:
@@ -80,13 +80,13 @@ def test_environment():
         enable_eval = os.getenv('ENABLE_AUTO_EVALUATION', 'false').lower() == 'true'
         metrics = os.getenv('AUTO_EVAL_METRICS', 'intent,coherence,tools').split(',')
         
-        print(f"📊 ENABLE_AUTO_EVALUATION: {enable_eval}")
-        print(f"🔧 AUTO_EVAL_METRICS: {metrics}")
+        print(f"ENABLE_AUTO_EVALUATION: {enable_eval}")
+        print(f"AUTO_EVAL_METRICS: {metrics}")
         
         if enable_eval:
-            print("✅ Auto-evaluation is enabled")
+            print("Auto-evaluation is enabled")
         else:
-            print("⚠️ Auto-evaluation is disabled")
+            print("Warning: Auto-evaluation is disabled")
             
     except Exception as e:
         print(f"❌ Error: {e}")

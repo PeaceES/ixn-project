@@ -1,0 +1,164 @@
+{
+  "evaluation_metadata": {
+    "timestamp": "2025-07-22T14:54:13.830886",
+    "total_scenarios": 3,
+    "evaluator_version": "azure-ai-evaluation-sdk",
+    "agent_type": "calendar_scheduling_agent"
+  },
+  "summary": {
+    "successful": 3,
+    "failed": 0,
+    "average_scores": {
+      "RelevanceEvaluator": 4.333333333333333,
+      "CoherenceEvaluator": 4.0,
+      "FluencyEvaluator": 3.6666666666666665,
+      "GroundednessEvaluator": 4.666666666666667
+    }
+  },
+  "detailed_results": [
+    {
+      "scenario": {
+        "name": "Basic Room Availability Check",
+        "query": "Is the Main Conference Room available tomorrow at 2 PM?",
+        "expected_tools": [
+          "check_room_availability_via_mcp"
+        ],
+        "expected_outcome": "availability_check",
+        "complexity": "simple"
+      },
+      "evaluation": {
+        "query": "Is the Main Conference Room available tomorrow at 2 PM?",
+        "response": "The **Main Conference Room** is available tomorrow, July 23, 2025, from 2:00 PM to 3:00 PM. \n\nWould you like to book this room? If so, please provide the event details, including the title, organizer's name, and any additional description.",
+        "timestamp": "2025-07-22T14:54:27.182417",
+        "evaluation_results": {
+          "RelevanceEvaluator": {
+            "relevance": 5.0,
+            "gpt_relevance": 5.0,
+            "relevance_reason": "The RESPONSE fully answers the QUERY with accurate details and includes additional relevant insights, such as the follow-up question about booking the room, enhancing the overall usefulness of the response.",
+            "relevance_result": "pass",
+            "relevance_threshold": 3
+          },
+          "CoherenceEvaluator": {
+            "coherence": 4.0,
+            "gpt_coherence": 4.0,
+            "coherence_reason": "The RESPONSE is coherent, directly answers the QUERY, and provides additional relevant information in a logical and organized way.",
+            "coherence_result": "pass",
+            "coherence_threshold": 3
+          },
+          "FluencyEvaluator": {
+            "fluency": 3.0,
+            "gpt_fluency": 3.0,
+            "fluency_reason": "The RESPONSE is clear, grammatically correct, and coherent, but it does not exhibit advanced vocabulary or complex sentence structures, placing it at a competent level of fluency.",
+            "fluency_result": "pass",
+            "fluency_threshold": 3
+          },
+          "GroundednessEvaluator": {
+            "groundedness": 5.0,
+            "gpt_groundedness": 5.0,
+            "groundedness_reason": "The RESPONSE is fully correct and complete, directly addressing the QUERY with all relevant details from the CONTEXT.",
+            "groundedness_result": "pass",
+            "groundedness_threshold": 3
+          }
+        }
+      },
+      "success": true
+    },
+    {
+      "scenario": {
+        "name": "List Available Rooms",
+        "query": "Show me all available rooms for meetings",
+        "expected_tools": [
+          "get_rooms_via_mcp"
+        ],
+        "expected_outcome": "room_list",
+        "complexity": "simple"
+      },
+      "evaluation": {
+        "query": "Show me all available rooms for meetings",
+        "response": "Here are all the rooms available for meetings on campus:\n\n1. **Main Lecture Hall**  \n   - Location: Main Building, Ground Floor  \n   - Capacity: 200  \n\n2. **Secondary Lecture Hall**  \n   - Location: Main Building, Ground Floor  \n   - Capacity: 150  \n\n3. **Alpha Seminar Room**  \n   - Location: Academic Block, Floor 1  \n   - Capacity: 30  \n\n4. **Beta Seminar Room**  \n   - Location: Academic Block, Floor 1  \n   - Capacity: 25  \n\n5. **Programming Lab**  \n   - Location: Technology Block, Floor 2  \n   - Capacity: 40  \n\n6. **Mechanical Engineering Workshop**  \n   - Location: Engineering Block, Floor 1  \n   - Capacity: 20  \n\n7. **Student Union Main Hall**  \n   - Location: Student Union Building  \n   - Capacity: 300  \n\n8. **Main Conference Room**  \n   - Location: Building 1, Floor 2  \n   - Capacity: 12  \n\n9. **Secondary Conference Room**  \n   - Location: Building 1, Floor 2  \n   - Capacity: 8  \n\n10. **Alpha Meeting Room**  \n    - Location: Building 1, Floor 1  \n    - Capacity: 6  \n\n11. **Beta Meeting Room**  \n    - Location: Building 1, Floor 1  \n    - Capacity: 6  \n\n12. **Executive Boardroom**  \n    - Location: Building 1, Floor 3  \n    - Capacity: 16  \n\n13. **Technology Training Room**  \n    - Location: Building 2, Floor 1  \n    - Capacity: 20  \n\n14. **Alpha Focus Room**  \n    - Location: Building 1, Floor 1  \n    - Capacity: 2  \n\n15. **Beta Focus Room**  \n    - Location: Building 1, Floor 1  \n    - Capacity: 2  \n\n16. **Creative Collaboration Space**  \n    - Location: Building 1, Floor 2  \n    - Capacity: 10  \n\n17. **Private Phone Booth**  \n    - Location: Building 1, Floor 1  \n    - Capacity: 1  \n\n18. **Collaborative Study Space**  \n    - Location: Library, Floor 2  \n    - Capacity: 8  \n\n19. **Main Drama Studio**  \n    - Location: Arts Block, Floor 1  \n    - Capacity: 50  \n\nLet me know if you'd like to check the availability of any specific room or schedule an event!",
+        "timestamp": "2025-07-22T14:54:48.550812",
+        "evaluation_results": {
+          "RelevanceEvaluator": {
+            "relevance": 5.0,
+            "gpt_relevance": 5.0,
+            "relevance_reason": "The RESPONSE fully answers the QUERY with all necessary details and includes additional insights about checking availability or scheduling events, making it comprehensive.",
+            "relevance_result": "pass",
+            "relevance_threshold": 3
+          },
+          "CoherenceEvaluator": {
+            "coherence": 4.0,
+            "gpt_coherence": 4.0,
+            "coherence_reason": "The RESPONSE is coherent and effectively addresses the QUERY with a logical sequence of ideas and clear organization, making it easy to understand and follow.",
+            "coherence_result": "pass",
+            "coherence_threshold": 3
+          },
+          "FluencyEvaluator": {
+            "fluency": 4.0,
+            "gpt_fluency": 4.0,
+            "fluency_reason": "The RESPONSE is well-articulated, grammatically accurate, and highly readable, but it lacks the sophisticated vocabulary and nuanced expression required for the highest score.",
+            "fluency_result": "pass",
+            "fluency_threshold": 3
+          },
+          "GroundednessEvaluator": {
+            "groundedness": 5.0,
+            "gpt_groundedness": 5.0,
+            "groundedness_reason": "The RESPONSE fully and accurately lists all available rooms for meetings, aligning perfectly with the CONTEXT and QUERY. It is comprehensive and grounded in the provided data.",
+            "groundedness_result": "pass",
+            "groundedness_threshold": 3
+          }
+        }
+      },
+      "success": true
+    },
+    {
+      "scenario": {
+        "name": "Schedule Meeting",
+        "query": "Schedule a team meeting in the Alpha Meeting Room for tomorrow at 3 PM to 4 PM",
+        "expected_tools": [
+          "schedule_event_with_organizer"
+        ],
+        "expected_outcome": "event_creation",
+        "complexity": "medium"
+      },
+      "evaluation": {
+        "query": "Schedule a team meeting in the Alpha Meeting Room for tomorrow at 3 PM to 4 PM",
+        "response": "To schedule the team meeting in the **Alpha Meeting Room** for tomorrow, July 23, 2025, from 3:00 PM to 4:00 PM, I will need the following details:\n\n1. **Event Title**: What should the meeting be called?  \n2. **Organizer's Name**: Who is organizing the meeting?  \n3. **Description (Optional)**: Any additional details about the meeting?  \n\nPlease provide this information, and I will proceed with the booking!",
+        "timestamp": "2025-07-22T14:55:08.434615",
+        "evaluation_results": {
+          "RelevanceEvaluator": {
+            "relevance": 3.0,
+            "gpt_relevance": 3.0,
+            "relevance_reason": "The RESPONSE addresses the QUERY but omits key details necessary for completing the scheduling task, such as confirming the meeting or directly scheduling it. It requires additional input to proceed, making it an incomplete response.",
+            "relevance_result": "pass",
+            "relevance_threshold": 3
+          },
+          "CoherenceEvaluator": {
+            "coherence": 4.0,
+            "gpt_coherence": 4.0,
+            "coherence_reason": "The RESPONSE is coherent, logically structured, and easy to follow, but the inclusion of an unrequested date slightly affects its alignment with the QUERY.",
+            "coherence_result": "pass",
+            "coherence_threshold": 3
+          },
+          "FluencyEvaluator": {
+            "fluency": 4.0,
+            "gpt_fluency": 4.0,
+            "fluency_reason": "The RESPONSE is articulate, grammatically accurate, and coherent, with varied sentence structures and logical connections. It effectively conveys the intended message but lacks the advanced vocabulary and stylistic sophistication needed for the highest score.",
+            "fluency_result": "pass",
+            "fluency_threshold": 3
+          },
+          "GroundednessEvaluator": {
+            "groundedness": 4.0,
+            "gpt_groundedness": 4.0,
+            "groundedness_reason": "The RESPONSE is partially correct because it repeats the meeting details accurately but does not fully address the QUERY by scheduling the meeting or explaining why additional details are required.",
+            "groundedness_result": "pass",
+            "groundedness_threshold": 3
+          }
+        }
+      },
+      "success": true
+    }
+  ],
+  "recommendations": [
+    "Overall performance is satisfactory. Continue monitoring and consider expanding test scenarios."
+  ]
+}

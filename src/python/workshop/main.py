@@ -26,19 +26,15 @@ load_dotenv()
 
 async def main() -> None:
     """
-    Example questions for SIMPLIFIED booking system:
+    Example questions for the Calendar Scheduling Agent:
     - "Show me all available rooms"
     - "Check if the Main Conference Room is available tomorrow at 2pm"
     - "Schedule a meeting in the Alpha Meeting Room for tomorrow at 3pm"
     - "I want to book the Drama Studio for a rehearsal next Friday"
     - "What events are scheduled for this week?"
     
-    NEW: Microsoft Documentation Search Examples (via Microsoft Learn Docs MCP Server):
-    - "How do I create an Azure Container App?"
-    - "What are the best practices for Azure Functions?"
-    - "Show me the Azure CLI commands for managing resources"
-    - "How do I implement authentication in ASP.NET Core?"
-    - "Search Microsoft docs for Azure Key Vault usage"
+    Note: Microsoft Documentation Search functionality has been removed from this agent.
+    The Microsoft Docs MCP server is available as a submodule for reference if needed.
     """
     
     # Initialize the agent core

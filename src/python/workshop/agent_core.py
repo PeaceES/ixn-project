@@ -37,6 +37,8 @@ AGENT_NAME = "Calendar Scheduler"
 FONTS_ZIP = "fonts/fonts.zip"
 API_DEPLOYMENT_NAME = os.getenv("MODEL_DEPLOYMENT_NAME")
 PROJECT_CONNECTION_STRING = os.environ["PROJECT_CONNECTION_STRING"]
+print("[AGENT] PROJECT_CONNECTION_STRING:", PROJECT_CONNECTION_STRING)
+print("[AGENT] MODEL_DEPLOYMENT_NAME:", API_DEPLOYMENT_NAME)
 MAX_COMPLETION_TOKENS = 10240
 MAX_PROMPT_TOKENS = 20480
 TEMPERATURE = 0.1
@@ -384,7 +386,11 @@ class CalendarAgentCore:
             if for_streamlit:
                 return True, stream_handler.captured_response
             else:
-                return True, "Response printed to console"
+                response_text = (
+                    getattr(stream_handler, "captured_response", None)
+                    or getattr(stream_handler, "current_response_text", "")
+                )
+                return True, response_text
 
         except Exception as e:
             error_msg = f"Error processing message: {str(e)}"

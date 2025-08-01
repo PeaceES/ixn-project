@@ -14,26 +14,6 @@ class CalendarMCPClient:
     
     def __init__(self, base_url: str = MCP_BASE_URL):
         self.base_url = base_url.rstrip('/')
-        self._client = None
-    
-    async def _get_client(self) -> httpx.AsyncClient:
-        """Get or create the HTTP client."""
-        if self._client is None:
-            self._client = httpx.AsyncClient(
-                timeout=httpx.Timeout(30.0, connect=10.0),
-                limits=httpx.Limits(max_keepalive_connections=5, max_connections=10)
-            )
-        return self._client
-    
-    async def cleanup(self) -> None:
-        """Cleanup the HTTP client."""
-        if self._client:
-            try:
-                await self._client.aclose()
-            except Exception as e:
-                logger.warning(f"Error closing Calendar MCP HTTP client: {e}")
-            finally:
-                self._client = None
     
     async def create_event_via_mcp(
         self, 
@@ -55,24 +35,23 @@ class CalendarMCPClient:
             "location": location,
             "description": description
         }
-        
         try:
-            client = await self._get_client()
-            response = await client.post(
-                f"{self.base_url}/calendars/{calendar_id}/events", 
-                json=payload,
-                timeout=30.0
-            )
-            
-            if response.status_code == 403:
-                return {"success": False, "error": "Permission denied"}
-            elif response.status_code == 400:
-                error_detail = response.json().get("detail", "Invalid request data")
-                return {"success": False, "error": error_detail}
-            
-            response.raise_for_status()
-            return response.json()
-            
+            async with httpx.AsyncClient(
+                timeout=httpx.Timeout(30.0, connect=10.0),
+                limits=httpx.Limits(max_keepalive_connections=5, max_connections=10)
+            ) as client:
+                response = await client.post(
+                    f"{self.base_url}/calendars/{calendar_id}/events", 
+                    json=payload,
+                    timeout=30.0
+                )
+                if response.status_code == 403:
+                    return {"success": False, "error": "Permission denied"}
+                elif response.status_code == 400:
+                    error_detail = response.json().get("detail", "Invalid request data")
+                    return {"success": False, "error": error_detail}
+                response.raise_for_status()
+                return response.json()
         except httpx.TimeoutException:
             return {"success": False, "error": "Request timeout"}
         except httpx.RequestError as e:
@@ -83,14 +62,16 @@ class CalendarMCPClient:
     async def list_events_via_mcp(self, calendar_id: str) -> dict:
         """List events via the MCP server."""
         try:
-            client = await self._get_client()
-            response = await client.get(
-                f"{self.base_url}/calendars/{calendar_id}/events",
-                timeout=30.0
-            )
-            response.raise_for_status()
-            return response.json()
-            
+            async with httpx.AsyncClient(
+                timeout=httpx.Timeout(30.0, connect=10.0),
+                limits=httpx.Limits(max_keepalive_connections=5, max_connections=10)
+            ) as client:
+                response = await client.get(
+                    f"{self.base_url}/calendars/{calendar_id}/events",
+                    timeout=30.0
+                )
+                response.raise_for_status()
+                return response.json()
         except httpx.TimeoutException:
             return {"success": False, "error": "Request timeout"}
         except httpx.RequestError as e:
@@ -101,14 +82,16 @@ class CalendarMCPClient:
     async def get_rooms_via_mcp(self) -> dict:
         """Get available calendars via the MCP server."""
         try:
-            client = await self._get_client()
-            response = await client.get(
-                f"{self.base_url}/calendars",
-                timeout=30.0
-            )
-            response.raise_for_status()
-            return response.json()
-            
+            async with httpx.AsyncClient(
+                timeout=httpx.Timeout(30.0, connect=10.0),
+                limits=httpx.Limits(max_keepalive_connections=5, max_connections=10)
+            ) as client:
+                response = await client.get(
+                    f"{self.base_url}/calendars",
+                    timeout=30.0
+                )
+                response.raise_for_status()
+                return response.json()
         except httpx.TimeoutException:
             return {"success": False, "error": "Request timeout"}
         except httpx.RequestError as e:
@@ -124,18 +107,20 @@ class CalendarMCPClient:
     ) -> dict:
         """Check calendar availability via the MCP server."""
         try:
-            client = await self._get_client()
-            response = await client.get(
-                f"{self.base_url}/calendars/{room_id}/availability",
-                params={
-                    "start_time": start_time,
-                    "end_time": end_time
-                },
-                timeout=30.0
-            )
-            response.raise_for_status()
-            return response.json()
-            
+            async with httpx.AsyncClient(
+                timeout=httpx.Timeout(30.0, connect=10.0),
+                limits=httpx.Limits(max_keepalive_connections=5, max_connections=10)
+            ) as client:
+                response = await client.get(
+                    f"{self.base_url}/calendars/{room_id}/availability",
+                    params={
+                        "start_time": start_time,
+                        "end_time": end_time
+                    },
+                    timeout=30.0
+                )
+                response.raise_for_status()
+                return response.json()
         except httpx.TimeoutException:
             return {"success": False, "error": "Request timeout"}
         except httpx.RequestError as e:
@@ -146,14 +131,16 @@ class CalendarMCPClient:
     async def health_check(self) -> dict:
         """Check if the MCP server is healthy."""
         try:
-            client = await self._get_client()
-            response = await client.get(
-                f"{self.base_url}/health",
-                timeout=10.0
-            )
-            response.raise_for_status()
-            return response.json()
-            
+            async with httpx.AsyncClient(
+                timeout=httpx.Timeout(10.0, connect=5.0),
+                limits=httpx.Limits(max_keepalive_connections=5, max_connections=10)
+            ) as client:
+                response = await client.get(
+                    f"{self.base_url}/health",
+                    timeout=10.0
+                )
+                response.raise_for_status()
+                return response.json()
         except httpx.TimeoutException:
             return {"status": "unhealthy", "error": "Health check timeout"}
         except httpx.RequestError as e:

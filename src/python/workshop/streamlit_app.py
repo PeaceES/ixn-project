@@ -76,7 +76,7 @@ def get_agent():
     """Get or create the agent instance."""
     return CalendarAgentCore()
 
-def run_async_in_streamlit(coroutine):
+def run_async_in_streamlit(coroutine, *args, **kwargs):
     """
     Run an async function in a way compatible with Streamlit.
     
@@ -86,14 +86,20 @@ def run_async_in_streamlit(coroutine):
     Note: This is where the "Event loop is closed" error occurs due to
     cleanup timing issues between Streamlit and Azure SDK HTTP connections.
     """
+    """
+    Run an async function in a way compatible with Streamlit.
+    Uses a dedicated event loop per call to avoid 'event loop closed' errors.
+    """
+    def run_with_new_loop(coro_func, *args, **kwargs):
+        loop = asyncio.new_event_loop()
+        try:
+            return loop.run_until_complete(coro_func(*args, **kwargs))
+        finally:
+            loop.close()
     try:
-        def run_with_asyncio():
-            return asyncio.run(coroutine)
-        
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(run_with_asyncio)
-            return future.result(timeout=120)  # 2 minute timeout
-            
+            future = executor.submit(run_with_new_loop, coroutine, *args, **kwargs)
+            return future.result(timeout=120)
     except Exception as e:
         logger.error(f"Error in run_async_in_streamlit: {e}")
         st.error(f"Error running async operation: {e}")
@@ -172,7 +178,7 @@ def display_example_queries():
 def initialize_agent_async():
     """Initialize the agent asynchronously."""
     agent = get_agent()
-    success, message = run_async_in_streamlit(agent.initialize_agent())
+    success, message = run_async_in_streamlit(agent.initialize_agent)
     return success, message
 
 def main():
@@ -225,7 +231,7 @@ def main():
     
     # Get current agent status
     if st.session_state.agent_initialized:
-        agent_status = run_async_in_streamlit(agent.get_agent_status())
+        agent_status = run_async_in_streamlit(agent.get_agent_status)
         display_sidebar_status(agent_status)
         display_quick_actions()
         display_example_queries()
@@ -266,11 +272,9 @@ def main():
         # Process with agent
         with st.chat_message("assistant"):
             with st.spinner("🤔 Thinking..."):
-                success, response = run_async_in_streamlit(agent.process_message(prompt, for_streamlit=True))
-                
+                success, response = run_async_in_streamlit(agent.process_message, prompt, True)
                 if success:
                     st.write(response)
-                    
                     # Add assistant response to chat history
                     st.session_state.messages.append({
                         "role": "assistant",
@@ -280,14 +284,12 @@ def main():
                 else:
                     error_msg = f"❌ Error: {response}"
                     st.error(error_msg)
-                    
                     # Add error to chat history
                     st.session_state.messages.append({
                         "role": "assistant",
                         "content": error_msg,
                         "timestamp": datetime.now()
                     })
-                
                 st.caption(f"🕒 {datetime.now().strftime('%H:%M:%S')}")
     
     # Footer with additional controls
@@ -310,7 +312,7 @@ def main():
         if st.button("Cleanup Agent", key="cleanup_agent"):
             if st.session_state.agent_initialized:
                 with st.spinner("Cleaning up agent resources..."):
-                    run_async_in_streamlit(agent.cleanup())
+                    run_async_in_streamlit(agent.cleanup)
                     st.session_state.agent_initialized = False
                     st.success("✅ Agent resources cleaned up")
                     st.rerun()
@@ -318,7 +320,7 @@ def main():
     # Debug info (collapsible)
     with st.expander("Debug Information"):
         if st.session_state.agent_initialized:
-            agent_status = run_async_in_streamlit(agent.get_agent_status())
+            agent_status = run_async_in_streamlit(agent.get_agent_status)
             st.json(agent_status)
         else:
             st.info("Agent not initialized")

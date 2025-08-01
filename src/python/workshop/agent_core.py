@@ -73,7 +73,6 @@ class CalendarAgentCore:
     def __init__(self):
         self.agent: Optional[Agent] = None
         self.thread: Optional[AgentThread] = None
-        self.project_client: Optional[AIProjectClient] = None
         self.toolset = AsyncToolSet()
         self.utilities = Utilities()
         self.mcp_client = CalendarMCPClient()
@@ -239,7 +238,7 @@ class CalendarAgentCore:
             logger.warning(f"Failed to load user directory: {e}")
             return {}
 
-    async def add_agent_tools(self) -> Optional[Any]:
+    async def add_agent_tools(self, project_client) -> Optional[Any]:
         """Add tools for the agent."""
         font_file_info = None
 
@@ -253,7 +252,7 @@ class CalendarAgentCore:
         # Add multilingual support to the code interpreter
         try:
             font_file_info = await self.utilities.upload_file(
-                self.project_client, 
+                project_client, 
                 self.utilities.shared_files_path / FONTS_ZIP
             )
             code_interpreter.add_file(file_id=font_file_info.id)
@@ -272,67 +271,65 @@ class CalendarAgentCore:
             parts = PROJECT_CONNECTION_STRING.split(';')
             if len(parts) != 4:
                 return False, f"Invalid connection string format: {PROJECT_CONNECTION_STRING}"
-            
+
             endpoint = f"https://{parts[0]}/agents/v1.0/subscriptions/{parts[1]}/resourceGroups/{parts[2]}/providers/Microsoft.MachineLearningServices/workspaces/{parts[3]}"
-            
-            # Initialize project client
-            self.project_client = AIProjectClient(
+
+            async with AIProjectClient(
                 endpoint=endpoint,
                 credential=DefaultAzureCredential(),
-            )
+            ) as project_client:
+                # Add agent tools
+                font_file_info = await self.add_agent_tools(project_client)
 
-            # Add agent tools
-            font_file_info = await self.add_agent_tools()
+                # Load instructions
+                instructions = self.utilities.load_instructions(INSTRUCTIONS_FILE)
+                if font_file_info:
+                    instructions = instructions.replace("{font_file_id}", font_file_info.id)
 
-            # Load instructions
-            instructions = self.utilities.load_instructions(INSTRUCTIONS_FILE)
-            if font_file_info:
-                instructions = instructions.replace("{font_file_id}", font_file_info.id)
+                # Create agent
+                self.agent = await project_client.agents.create_agent(
+                    model=API_DEPLOYMENT_NAME,
+                    name=AGENT_NAME,
+                    instructions=instructions,
+                    toolset=self.toolset,
+                    temperature=TEMPERATURE,
+                )
 
-            # Create agent
-            self.agent = await self.project_client.agents.create_agent(
-                model=API_DEPLOYMENT_NAME,
-                name=AGENT_NAME,
-                instructions=instructions,
-                toolset=self.toolset,
-                temperature=TEMPERATURE,
-            )
+                # Test MCP server connectivity
+                try:
+                    health = await self.mcp_client.health_check()
+                    mcp_status = "healthy" if health.get("status") == "healthy" else "unhealthy"
+                except Exception:
+                    mcp_status = "unreachable"
 
-            # Test MCP server connectivity
-            try:
-                health = await self.mcp_client.health_check()
-                mcp_status = "healthy" if health.get("status") == "healthy" else "unhealthy"
-            except Exception:
-                mcp_status = "unreachable"
+                # Test user directory access
+                users = self.fetch_user_directory()
+                user_dir_status = f"loaded ({len(users)} entries)" if users else "empty/inaccessible"
 
-            # Test user directory access
-            users = self.fetch_user_directory()
-            user_dir_status = f"loaded ({len(users)} entries)" if users else "empty/inaccessible"
+                # Enable auto function calls
+                project_client.agents.enable_auto_function_calls(tools=self.toolset)
 
-            # Enable auto function calls
-            self.project_client.agents.enable_auto_function_calls(tools=self.toolset)
+                # Create thread
+                self.thread = await project_client.agents.threads.create()
 
-            # Create thread
-            self.thread = await self.project_client.agents.threads.create()
+                # Create shared communication thread
+                shared_thread = await project_client.agents.threads.create()
+                self.shared_thread_id = shared_thread.id
 
-            # Create shared communication thread
-            shared_thread = await self.project_client.agents.threads.create()
-            self.shared_thread_id = shared_thread.id
+                # Post initialization message
+                event_payload = {
+                    "event": "initialized",
+                    "message": "Calendar agent is now active and ready to schedule events",
+                    "updated_by": "calendar-agent"
+                }
+                await project_client.agents.messages.create(
+                    thread_id=shared_thread.id,
+                    role="user",
+                    content=json.dumps(event_payload)
+                )
 
-            # Post initialization message
-            event_payload = {
-                "event": "initialized",
-                "message": "Calendar agent is now active and ready to schedule events",
-                "updated_by": "calendar-agent"
-            }
-            await self.project_client.agents.messages.create(
-                thread_id=shared_thread.id,
-                role="user",
-                content=json.dumps(event_payload)
-            )
-
-            success_msg = f"Agent initialized successfully. MCP: {mcp_status}, User Directory: {user_dir_status}"
-            return True, success_msg
+                success_msg = f"Agent initialized successfully. MCP: {mcp_status}, User Directory: {user_dir_status}"
+                return True, success_msg
 
         except Exception as e:
             error_msg = f"Failed to initialize agent: {str(e)}"
@@ -345,52 +342,60 @@ class CalendarAgentCore:
             return False, "Agent not initialized"
 
         try:
-            # Create message
-            await self.project_client.agents.messages.create(
-                thread_id=self.thread.id,
-                role="user",
-                content=message,
-            )
+            # Parse connection string to get endpoint
+            parts = PROJECT_CONNECTION_STRING.split(';')
+            endpoint = f"https://{parts[0]}/agents/v1.0/subscriptions/{parts[1]}/resourceGroups/{parts[2]}/providers/Microsoft.MachineLearningServices/workspaces/{parts[3]}"
 
-            # Choose appropriate event handler
-            if for_streamlit:
-                stream_handler = StreamlitEventHandler(
-                    functions=self.functions,
-                    project_client=self.project_client,
-                    utilities=self.utilities
-                )
-            else:
-                stream_handler = StreamEventHandler(
-                    functions=self.functions,
-                    project_client=self.project_client,
-                    utilities=self.utilities
+            async with AIProjectClient(
+                endpoint=endpoint,
+                credential=DefaultAzureCredential(),
+            ) as project_client:
+                # Create message
+                await project_client.agents.messages.create(
+                    thread_id=self.thread.id,
+                    role="user",
+                    content=message,
                 )
 
-            stream_handler.current_user_query = message
+                # Choose appropriate event handler
+                if for_streamlit:
+                    stream_handler = StreamlitEventHandler(
+                        functions=self.functions,
+                        project_client=project_client,
+                        utilities=self.utilities
+                    )
+                else:
+                    stream_handler = StreamEventHandler(
+                        functions=self.functions,
+                        project_client=project_client,
+                        utilities=self.utilities
+                    )
 
-            # Create and process stream
-            stream = await self.project_client.agents.runs.stream(
-                thread_id=self.thread.id,
-                agent_id=self.agent.id,
-                event_handler=stream_handler,
-                max_completion_tokens=MAX_COMPLETION_TOKENS,
-                max_prompt_tokens=MAX_PROMPT_TOKENS,
-                temperature=TEMPERATURE,
-                top_p=TOP_P,
-                instructions=self.agent.instructions,
-            )
+                stream_handler.current_user_query = message
 
-            async with stream as s:
-                await s.until_done()
-
-            if for_streamlit:
-                return True, stream_handler.captured_response
-            else:
-                response_text = (
-                    getattr(stream_handler, "captured_response", None)
-                    or getattr(stream_handler, "current_response_text", "")
+                # Create and process stream
+                stream = await project_client.agents.runs.stream(
+                    thread_id=self.thread.id,
+                    agent_id=self.agent.id,
+                    event_handler=stream_handler,
+                    max_completion_tokens=MAX_COMPLETION_TOKENS,
+                    max_prompt_tokens=MAX_PROMPT_TOKENS,
+                    temperature=TEMPERATURE,
+                    top_p=TOP_P,
+                    instructions=self.agent.instructions,
                 )
-                return True, response_text
+
+                async with stream as s:
+                    await s.until_done()
+
+                if for_streamlit:
+                    return True, stream_handler.captured_response
+                else:
+                    response_text = (
+                        getattr(stream_handler, "captured_response", None)
+                        or getattr(stream_handler, "current_response_text", "")
+                    )
+                    return True, response_text
 
         except Exception as e:
             error_msg = f"Error processing message: {str(e)}"
@@ -399,18 +404,24 @@ class CalendarAgentCore:
 
     async def cleanup(self) -> None:
         """Cleanup agent resources."""
-        if self.project_client and self.agent and self.thread:
+        if self.agent and self.thread:
             try:
-                # Delete files
-                existing_files = await self.project_client.agents.files.list()
-                for f in existing_files.data:
-                    await self.project_client.agents.files.delete(f.id)
-                
-                # Delete thread and agent
-                await self.project_client.agents.threads.delete(self.thread.id)
-                await self.project_client.agents.delete_agent(self.agent.id)
-                
-                logger.info("Agent resources cleaned up successfully")
+                # Parse connection string to get endpoint
+                parts = PROJECT_CONNECTION_STRING.split(';')
+                endpoint = f"https://{parts[0]}/agents/v1.0/subscriptions/{parts[1]}/resourceGroups/{parts[2]}/providers/Microsoft.MachineLearningServices/workspaces/{parts[3]}"
+
+                async with AIProjectClient(
+                    endpoint=endpoint,
+                    credential=DefaultAzureCredential(),
+                ) as project_client:
+                    # Delete files
+                    existing_files = await project_client.agents.files.list()
+                    for f in existing_files.data:
+                        await project_client.agents.files.delete(f.id)
+                    # Delete thread and agent
+                    await project_client.agents.threads.delete(self.thread.id)
+                    await project_client.agents.delete_agent(self.agent.id)
+                    logger.info("Agent resources cleaned up successfully")
             except Exception as e:
                 logger.error(f"Error during cleanup: {e}")
             finally:
@@ -420,23 +431,9 @@ class CalendarAgentCore:
                         await self.mcp_client.cleanup()
                 except Exception as e:
                     logger.warning(f"Error cleaning up MCP clients: {e}")
-                
-                # Close the project client connection properly
-                try:
-                    if hasattr(self.project_client, 'close'):
-                        await self.project_client.close()
-                    elif hasattr(self.project_client, '_client'):
-                        if hasattr(self.project_client._client, 'close'):
-                            await self.project_client._client.close()
-                        if hasattr(self.project_client._client, '_session'):
-                            await self.project_client._client._session.close()
-                except Exception as e:
-                    logger.warning(f"Error closing project client: {e}")
-                
                 # Reset state
                 self.agent = None
                 self.thread = None
-                self.project_client = None
 
     async def get_agent_status(self) -> Dict[str, Any]:
         """Get current agent status for UI display."""

@@ -30,15 +30,26 @@ class StreamEventHandler(AsyncAgentEventHandler[str]):
         self.current_run_id = None
         self.current_response_text = ""
         self.current_user_query = ""
+        # For tool call handling, we'll submit outputs differently in hub-based API
         super().__init__()
 
     async def on_message_delta(self, delta: MessageDeltaChunk) -> None:
         """Handle message delta events. This will be the streamed token"""
         try:
             print(f"[StreamEventHandler][DEBUG] on_message_delta: type={type(delta)}, text={getattr(delta, 'text', None)}, delta={delta}")
-            if delta.text:
+            if hasattr(delta, 'text') and delta.text:
                 self.current_response_text += delta.text
-            self.util.log_token_blue(delta.text)
+                self.util.log_token_blue(delta.text)
+            # Also check for content attribute which might contain the text
+            elif hasattr(delta, 'content') and delta.content:
+                for content_item in delta.content:
+                    if hasattr(content_item, 'text') and content_item.text:
+                        if hasattr(content_item.text, 'value'):
+                            text_value = content_item.text.value
+                        else:
+                            text_value = str(content_item.text)
+                        self.current_response_text += text_value
+                        self.util.log_token_blue(text_value)
         except Exception as e:
             print(f"[StreamEventHandler] Exception in on_message_delta: {e}")
 
@@ -82,6 +93,40 @@ class StreamEventHandler(AsyncAgentEventHandler[str]):
             pass
         except Exception as e:
             print(f"[StreamEventHandler] Exception in on_run_step_delta: {e}")
+
+    async def on_tool_call_created(self, tool_call) -> None:
+        """Handle tool call creation."""
+        try:
+            print(f"[StreamEventHandler] Tool call created: {tool_call.type}")
+        except Exception as e:
+            print(f"[StreamEventHandler] Exception in on_tool_call_created: {e}")
+
+    async def on_tool_call_delta(self, delta, snapshot) -> None:
+        """Handle tool call delta events."""
+        try:
+            if delta.type == "function":
+                if delta.function.name:
+                    print(f"[StreamEventHandler] Calling function: {delta.function.name}")
+                if delta.function.arguments:
+                    print(f"[StreamEventHandler] Function arguments: {delta.function.arguments}")
+        except Exception as e:
+            print(f"[StreamEventHandler] Exception in on_tool_call_delta: {e}")
+
+    async def on_tool_call_done(self, tool_call) -> None:
+        """Handle tool call completion - just log for now, main handler will process."""
+        try:
+            if tool_call.type == "function":
+                function_name = tool_call.function.name
+                function_args = tool_call.function.arguments
+                
+                print(f"[StreamEventHandler] Tool call completed: {function_name}")
+                print(f"[StreamEventHandler] Function arguments: {function_args}")
+                
+                # Note: Tool execution and output submission will be handled by the main agent_core
+                # when it detects the REQUIRES_ACTION status
+                    
+        except Exception as e:
+            print(f"[StreamEventHandler] Exception in on_tool_call_done: {e}")
 
     async def on_error(self, data: str) -> None:
         try:

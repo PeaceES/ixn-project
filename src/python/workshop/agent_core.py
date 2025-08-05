@@ -447,6 +447,14 @@ class CalendarAgentCore:
                 await s.until_done()
             logger.info(f"[AgentCore] Run completed for thread ID: {self.thread.id}")
             
+            # Check if run is stuck in REQUIRES_ACTION and handle it manually
+            runs_paged = await self.project_client.agents.list_runs(thread_id=self.thread.id)
+            if hasattr(runs_paged, 'data') and runs_paged.data:
+                latest_run = runs_paged.data[0]  # Most recent run
+                if getattr(latest_run, 'status', None) == 'requires_action':
+                    logger.warning(f"[AgentCore] Run {latest_run.id} is stuck in REQUIRES_ACTION, handling manually")
+                    await self._handle_required_action(latest_run)
+            
             # Diagnostic logging for stream_handler state
             logger.warning(f"[AgentCore][DEBUG] stream_handler.captured_response: {getattr(stream_handler, 'captured_response', None)}")
             logger.warning(f"[AgentCore][DEBUG] stream_handler.current_response_text: {getattr(stream_handler, 'current_response_text', None)}")
@@ -456,13 +464,14 @@ class CalendarAgentCore:
             try:
                 # Hub-based: list_messages()
                 # Endpoint-based: messages.list()
-                thread_messages_paged = self.project_client.agents.list_messages(thread_id=self.thread.id)
+                thread_messages_paged = await self.project_client.agents.list_messages(thread_id=self.thread.id)
                 logger.warning(f"[AgentCore][DEBUG] Thread messages for thread {self.thread.id}:")
                 # For hub-based API, messages might be in .data attribute
                 if hasattr(thread_messages_paged, 'data'):
                     for msg in thread_messages_paged.data:
                         logger.warning(f"[AgentCore][DEBUG] Message: id={getattr(msg, 'id', None)}, role={getattr(msg, 'role', None)}, status={getattr(msg, 'status', None)}, content={getattr(msg, 'content', None)}")
                 else:
+                    # If it's an async iterator, iterate properly
                     async for msg in thread_messages_paged:
                         logger.warning(f"[AgentCore][DEBUG] Message: id={getattr(msg, 'id', None)}, role={getattr(msg, 'role', None)}, status={getattr(msg, 'status', None)}, content={getattr(msg, 'content', None)}")
             except Exception as e:
@@ -472,7 +481,7 @@ class CalendarAgentCore:
             try:
                 # Hub-based: list_runs()
                 # Endpoint-based: runs.list()
-                runs_paged = self.project_client.agents.list_runs(thread_id=self.thread.id)
+                runs_paged = await self.project_client.agents.list_runs(thread_id=self.thread.id)
                 logger.warning(f"[AgentCore][DEBUG] Runs for thread {self.thread.id}:")
                 # For hub-based API, runs might be in .data attribute
                 if hasattr(runs_paged, 'data'):
@@ -485,6 +494,7 @@ class CalendarAgentCore:
                             tool_calls = getattr(run, 'tool_calls', None)
                             logger.warning(f"[AgentCore][DEBUG] Run tool_calls: {tool_calls}")
                 else:
+                    # If it's an async iterator, iterate properly
                     async for run in runs_paged:
                         logger.warning(f"[AgentCore][DEBUG] Run: id={getattr(run, 'id', None)}, status={getattr(run, 'status', None)}, last_error={getattr(run, 'last_error', None)}")
             except Exception as e:
@@ -497,6 +507,40 @@ class CalendarAgentCore:
                     getattr(stream_handler, "captured_response", None)
                     or getattr(stream_handler, "current_response_text", "")
                 )
+                
+                # If we still don't have a response, try to get the latest assistant message from the thread
+                if not response_text.strip():
+                    try:
+                        thread_messages = await self.project_client.agents.list_messages(thread_id=self.thread.id)
+                        if hasattr(thread_messages, 'data') and thread_messages.data:
+                            # Look for the most recent assistant message
+                            for message in thread_messages.data:
+                                if getattr(message, 'role', None) == 'assistant':
+                                    content = getattr(message, 'content', [])
+                                    for content_item in content:
+                                        if hasattr(content_item, 'text') and content_item.text:
+                                            if hasattr(content_item.text, 'value'):
+                                                response_text += content_item.text.value
+                                            else:
+                                                response_text += str(content_item.text)
+                                    if response_text.strip():  # If we found content, stop looking
+                                        break
+                        else:
+                            # Handle async iterator
+                            async for message in thread_messages:
+                                if getattr(message, 'role', None) == 'assistant':
+                                    content = getattr(message, 'content', [])
+                                    for content_item in content:
+                                        if hasattr(content_item, 'text') and content_item.text:
+                                            if hasattr(content_item.text, 'value'):
+                                                response_text += content_item.text.value
+                                            else:
+                                                response_text += str(content_item.text)
+                                    if response_text.strip():  # If we found content, stop looking
+                                        break
+                    except Exception as e:
+                        logger.warning(f"[AgentCore] Could not fetch latest message: {e}")
+                
                 return True, response_text
         except Exception as e:
             self._cleanup_run_thread()
@@ -506,6 +550,123 @@ class CalendarAgentCore:
         finally:
             self._operation_active = False
             logger.info(f"[AgentCore] Operation complete. Agent ID: {self.agent.id if self.agent else None}, Thread ID: {self.thread.id if self.thread else None}")
+
+    async def _handle_required_action(self, run):
+        """Handle runs that require action (tool calls)."""
+        try:
+            import json
+            if hasattr(run, 'required_action') and run.required_action:
+                required_action = run.required_action
+                if hasattr(required_action, 'submit_tool_outputs') and required_action.submit_tool_outputs:
+                    tool_calls = required_action.submit_tool_outputs.tool_calls
+                    logger.info(f"[AgentCore] Handling {len(tool_calls)} tool calls")
+                    
+                    tool_outputs = []
+                    for tool_call in tool_calls:
+                        if tool_call.type == "function":
+                            function_name = tool_call.function.name
+                            function_args = tool_call.function.arguments
+                            
+                            logger.info(f"[AgentCore] Executing function: {function_name}")
+                            logger.info(f"[AgentCore] Function arguments: {function_args}")
+                            
+                            try:
+                                # Parse arguments
+                                args = json.loads(function_args) if function_args else {}
+                                
+                                # Execute the function directly by name
+                                if function_name == "get_rooms_via_mcp":
+                                    result = await self.get_rooms_via_mcp()
+                                elif function_name == "get_events_via_mcp":
+                                    result = await self.get_events_via_mcp()
+                                elif function_name == "check_room_availability_via_mcp":
+                                    result = await self.check_room_availability_via_mcp(
+                                        args.get("room_id", ""),
+                                        args.get("start_time", ""),
+                                        args.get("end_time", "")
+                                    )
+                                elif function_name == "schedule_event_with_organizer":
+                                    result = await self.schedule_event_with_organizer(
+                                        args.get("room_id", ""),
+                                        args.get("title", ""),
+                                        args.get("start_time", ""),
+                                        args.get("end_time", ""),
+                                        args.get("organizer", ""),
+                                        args.get("description", "")
+                                    )
+                                else:
+                                    result = json.dumps({
+                                        "success": False,
+                                        "error": f"Unknown function: {function_name}"
+                                    })
+                                
+                                tool_outputs.append({
+                                    "tool_call_id": tool_call.id,
+                                    "output": str(result)
+                                })
+                                logger.info(f"[AgentCore] Function {function_name} executed successfully")
+                            except Exception as e:
+                                logger.error(f"[AgentCore] Error executing function {function_name}: {e}")
+                                tool_outputs.append({
+                                    "tool_call_id": tool_call.id,
+                                    "output": json.dumps({
+                                        "success": False,
+                                        "error": f"Function execution failed: {str(e)}"
+                                    })
+                                })
+                    
+                    # Submit tool outputs using the correct method
+                    if tool_outputs:
+                        try:
+                            # Try different possible method names for hub-based API
+                            submit_method = None
+                            for method_name in ["submit_tool_outputs_to_run", "submit_tool_outputs", "submit_tool_outputs_stream"]:
+                                if hasattr(self.project_client.agents, method_name):
+                                    submit_method = getattr(self.project_client.agents, method_name)
+                                    logger.info(f"[AgentCore] Using method: {method_name}")
+                                    break
+                            
+                            if submit_method:
+                                await submit_method(
+                                    thread_id=self.thread.id,
+                                    run_id=run.id,
+                                    tool_outputs=tool_outputs
+                                )
+                                logger.info(f"[AgentCore] Submitted {len(tool_outputs)} tool outputs")
+                                
+                                # Wait for the run to complete after submitting tool outputs
+                                await self._wait_for_run_completion(run.id)
+                                
+                            else:
+                                logger.error(f"[AgentCore] No suitable method found to submit tool outputs")
+                        except Exception as e:
+                            logger.error(f"[AgentCore] Error submitting tool outputs: {e}")
+        except Exception as e:
+            logger.error(f"[AgentCore] Error in _handle_required_action: {e}")
+
+    async def _wait_for_run_completion(self, run_id: str, max_wait: int = 30):
+        """Wait for a run to complete after tool outputs are submitted."""
+        import asyncio
+        for attempt in range(max_wait):
+            try:
+                run = await self.project_client.agents.get_run(
+                    thread_id=self.thread.id,
+                    run_id=run_id
+                )
+                status = getattr(run, 'status', None)
+                logger.info(f"[AgentCore] Run {run_id} status: {status}")
+                
+                if status in ['completed', 'failed', 'cancelled', 'expired']:
+                    logger.info(f"[AgentCore] Run {run_id} finished with status: {status}")
+                    break
+                elif status == 'requires_action':
+                    logger.warning(f"[AgentCore] Run {run_id} still requires action after {attempt + 1} seconds")
+                    break
+                
+                await asyncio.sleep(1)
+            except Exception as e:
+                logger.warning(f"[AgentCore] Error checking run status: {e}")
+                break
 
     async def cleanup(self) -> None:
         """Cleanup agent resources. Idempotent."""

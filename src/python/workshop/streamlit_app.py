@@ -92,6 +92,7 @@ def run_async_in_streamlit(coroutine, *args, **kwargs):
     """
     def run_with_new_loop(coro_func, *args, **kwargs):
         loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
         try:
             return loop.run_until_complete(coro_func(*args, **kwargs))
         finally:

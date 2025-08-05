@@ -246,7 +246,7 @@ class CalendarAgentCore:
             logger.warning(f"Failed to load user directory: {e}")
             return {}
 
-    async def add_agent_tools(self, project_client) -> Optional[Any]:
+    async def add_agent_tools(self) -> Optional[Any]:
         """Add tools for the agent."""
         font_file_info = None
 
@@ -281,59 +281,104 @@ class CalendarAgentCore:
         self._cleanup_run_thread()
 
         try:
+            # Parse connection string format: host;subscription_id;resource_group_name;project_name
             parts = PROJECT_CONNECTION_STRING.split(';')
             if len(parts) != 4:
                 return False, f"Invalid PROJECT_CONNECTION_STRING format. Expected 4 parts, got {len(parts)}"
+            
+            host = parts[0]              # uksouth.api.azureml.ms
+            subscription_id = parts[1]   # 6797c788-362f-45f5-a36e-6b8d83b7121c
+            resource_group_name = parts[2]  # azure_for_students_agents_hub  
+            project_name = parts[3]      # new_ixn_agents_resources
+            
+            logger.info(f"[AgentCore] Parsed connection string:")
+            logger.info(f"[AgentCore]   Host: {host}")
+            logger.info(f"[AgentCore]   Subscription ID: {subscription_id}")
+            logger.info(f"[AgentCore]   Resource Group: {resource_group_name}")
+            logger.info(f"[AgentCore]   Project: {project_name}")
 
-            endpoint = f"https://{parts[0]}/agents/v1.0/subscriptions/{parts[1]}/resourceGroups/{parts[2]}/providers/Microsoft.MachineLearningServices/workspaces/{parts[3]}"
-            logger.info(f"[AgentCore] Constructed endpoint: {endpoint}")
-            logger.info(f"[AgentCore] Subscription: {parts[1]}, Resource Group: {parts[2]}, Project: {parts[3]}")
+            # Your project is hub-based, so we should use the from_connection_string method
+            # According to the migration guide, hub-based projects use this format:
+            # project_client = AIProjectClient.from_connection_string(
+            #     credential=DefaultAzureCredential(),
+            #     conn_str=connection_string,
+            # )
+            
+            logger.info(f"[AgentCore] Using hub-based project with connection string")
+            logger.info(f"[AgentCore] This matches your Azure AI Projects SDK version 1.0.0b10")
 
-            async with AIProjectClient(
-                endpoint=endpoint,
-                subscription_id=parts[1],
-                resource_group_name=parts[2], 
-                project_name=parts[3],
+            # Initialize AIProjectClient using the hub-based connection string method
+            self.project_client = AIProjectClient.from_connection_string(
                 credential=DefaultAzureCredential(),
-            ) as project_client:
-                font_file_info = await self.add_agent_tools(project_client)
-                instructions = self.utilities.load_instructions(INSTRUCTIONS_FILE)
-                if font_file_info:
-                    instructions = instructions.replace("{font_file_id}", font_file_info.id)
-                self.agent = await project_client.agents.create_agent(
-                    model=API_DEPLOYMENT_NAME,
-                    name=AGENT_NAME,
-                    instructions=instructions,
-                    toolset=self.toolset,
-                    temperature=TEMPERATURE,
-                )
-                logger.info(f"[AgentCore] Created agent with ID: {self.agent.id}")
-                try:
-                    health = await self.mcp_client.health_check()
-                    mcp_status = "healthy" if health.get("status") == "healthy" else "unhealthy"
-                except Exception:
-                    mcp_status = "unreachable"
-                users = self.fetch_user_directory()
-                user_dir_status = f"loaded ({len(users)} entries)" if users else "empty/inaccessible"
-                project_client.agents.enable_auto_function_calls(tools=self.toolset)
-                self.thread = await project_client.agents.threads.create()
-                logger.info(f"[AgentCore] Created thread with ID: {self.thread.id}")
-                shared_thread = await project_client.agents.threads.create()
-                self.shared_thread_id = shared_thread.id
-                logger.info(f"[AgentCore] Created shared thread with ID: {self.shared_thread_id}")
-                event_payload = {
-                    "event": "initialized",
-                    "message": "Calendar agent is now active and ready to schedule events",
-                    "updated_by": "calendar-agent"
-                }
-                await project_client.agents.messages.create(
-                    thread_id=shared_thread.id,
-                    role="user",
-                    content=json.dumps(event_payload)
-                )
-                success_msg = f"Agent initialized successfully. MCP: {mcp_status}, User Directory: {user_dir_status}"
-                logger.info(f"[AgentCore] Initialization complete. Agent ID: {self.agent.id}, Thread ID: {self.thread.id}")
-                return True, success_msg
+                conn_str=PROJECT_CONNECTION_STRING,
+            )
+
+            # Add agent tools
+            font_file_info = await self.add_agent_tools()
+
+            # Load instructions
+            instructions = self.utilities.load_instructions(INSTRUCTIONS_FILE)
+            if font_file_info:
+                instructions = instructions.replace("{font_file_id}", font_file_info.id)
+
+            # Create agent
+            self.agent = await self.project_client.agents.create_agent(
+                model=API_DEPLOYMENT_NAME,
+                name=AGENT_NAME,
+                instructions=instructions,
+                toolset=self.toolset,
+                temperature=TEMPERATURE,
+            )
+            logger.info(f"[AgentCore] Created agent with ID: {self.agent.id}")
+
+            # Check MCP health status
+            try:
+                health = await self.mcp_client.health_check()
+                mcp_status = "healthy" if health.get("status") == "healthy" else "unhealthy"
+            except Exception:
+                mcp_status = "unreachable"
+
+            # Check user directory status  
+            users = self.fetch_user_directory()
+            user_dir_status = f"loaded ({len(users)} entries)" if users else "empty/inaccessible"
+
+            # Enable auto function calls - this might be causing the toolset issue
+            # For hub-based projects, we might need to handle this differently
+            try:
+                await self.project_client.agents.enable_auto_function_calls(toolset=self.toolset)
+                logger.info(f"[AgentCore] Auto function calls enabled successfully")
+            except Exception as e:
+                logger.warning(f"[AgentCore] Could not enable auto function calls: {e}")
+                # Continue without auto function calls for now
+
+            # Create thread - using hub-based API structure
+            # Hub-based: project_client.agents.create_thread()
+            # Endpoint-based: project_client.agents.threads.create()
+            self.thread = await self.project_client.agents.create_thread()
+            logger.info(f"[AgentCore] Created thread with ID: {self.thread.id}")
+
+            # Create shared thread for system events - using hub-based API
+            shared_thread = await self.project_client.agents.create_thread()
+            self.shared_thread_id = shared_thread.id
+            logger.info(f"[AgentCore] Created shared thread with ID: {self.shared_thread_id}")
+
+            # Send initialization event to shared thread - using hub-based API
+            # Hub-based: project_client.agents.create_message()
+            # Endpoint-based: project_client.agents.messages.create()
+            event_payload = {
+                "event": "initialized",
+                "message": "Calendar agent is now active and ready to schedule events",
+                "updated_by": "calendar-agent"
+            }
+            await self.project_client.agents.create_message(
+                thread_id=shared_thread.id,
+                role="user",
+                content=json.dumps(event_payload)
+            )
+
+            success_msg = f"Agent initialized successfully. MCP: {mcp_status}, User Directory: {user_dir_status}"
+            logger.info(f"[AgentCore] Initialization complete. Agent ID: {self.agent.id}, Thread ID: {self.thread.id}")
+            return True, success_msg
         except Exception as e:
             self._cleanup_run_thread()
             error_msg = f"Failed to initialize agent: {str(e)}"
@@ -351,38 +396,42 @@ class CalendarAgentCore:
         self._operation_active = True
         logger.info(f"[AgentCore] Processing message. Agent ID: {self.agent.id}, Thread ID: {self.thread.id}")
         try:
-            parts = PROJECT_CONNECTION_STRING.split(';')
-            endpoint = f"https://{parts[0]}/agents/v1.0/subscriptions/{parts[1]}/resourceGroups/{parts[2]}/providers/Microsoft.MachineLearningServices/workspaces/{parts[3]}"
-            async with AIProjectClient(
-                endpoint=endpoint,
-                subscription_id=parts[1],
-                resource_group_name=parts[2], 
-                project_name=parts[3],
-                credential=DefaultAzureCredential(),
-            ) as project_client:
-                # Enable auto function calls for this scoped client
-                await project_client.agents.enable_auto_function_calls(toolset=self.toolset)
+            # Use the already initialized project client
+            if not self.project_client:
+                return False, "Project client not initialized"
                 
-                await project_client.agents.messages.create(
-                    thread_id=self.thread.id,
-                    role="user",
-                    content=message,
+            # Enable auto function calls for this client
+            try:
+                await self.project_client.agents.enable_auto_function_calls(toolset=self.toolset)
+            except Exception as e:
+                logger.warning(f"[AgentCore] Could not enable auto function calls: {e}")
+            
+            # Create message using hub-based API
+            await self.project_client.agents.create_message(
+                thread_id=self.thread.id,
+                role="user",
+                content=message,
+            )
+            logger.info(f"[AgentCore] Message created for thread ID: {self.thread.id}")
+
+            if for_streamlit:
+                stream_handler = StreamlitEventHandler(
+                    functions=self.functions,
+                    project_client=self.project_client,
+                    utilities=self.utilities
                 )
-                logger.info(f"[AgentCore] Message created for thread ID: {self.thread.id}")
-                if for_streamlit:
-                    stream_handler = StreamlitEventHandler(
-                        functions=self.functions,
-                        project_client=project_client,
-                        utilities=self.utilities
-                    )
-                else:
-                    stream_handler = StreamEventHandler(
-                        functions=self.functions,
-                        project_client=project_client,
-                        utilities=self.utilities
-                    )
-                stream_handler.current_user_query = message
-                stream = await project_client.agents.runs.stream(
+            else:
+                stream_handler = StreamEventHandler(
+                    functions=self.functions,
+                    project_client=self.project_client,
+                    utilities=self.utilities
+                )
+
+            stream_handler.current_user_query = message
+            # Create stream using hub-based API
+            # Hub-based: project_client.agents.create_stream()
+            # Endpoint-based: project_client.agents.runs.stream()
+            stream = await self.project_client.agents.create_stream(
                     thread_id=self.thread.id,
                     agent_id=self.agent.id,
                     event_handler=stream_handler,
@@ -391,30 +440,43 @@ class CalendarAgentCore:
                     temperature=TEMPERATURE,
                     top_p=TOP_P,
                     instructions=self.agent.instructions,
-                )
-                logger.info(f"[AgentCore] Run started for thread ID: {self.thread.id}, Agent ID: {self.agent.id}")
-                async with stream as s:
-                    await s.until_done()
-                logger.info(f"[AgentCore] Run completed for thread ID: {self.thread.id}")
-                # Diagnostic logging for stream_handler state
-                logger.warning(f"[AgentCore][DEBUG] stream_handler.captured_response: {getattr(stream_handler, 'captured_response', None)}")
-                logger.warning(f"[AgentCore][DEBUG] stream_handler.current_response_text: {getattr(stream_handler, 'current_response_text', None)}")
-                logger.warning(f"[AgentCore][DEBUG] stream_handler.__dict__: {stream_handler.__dict__}")
+            )
+            logger.info(f"[AgentCore] Run started for thread ID: {self.thread.id}, Agent ID: {self.agent.id}")
+            
+            async with stream as s:
+                await s.until_done()
+            logger.info(f"[AgentCore] Run completed for thread ID: {self.thread.id}")
+            
+            # Diagnostic logging for stream_handler state
+            logger.warning(f"[AgentCore][DEBUG] stream_handler.captured_response: {getattr(stream_handler, 'captured_response', None)}")
+            logger.warning(f"[AgentCore][DEBUG] stream_handler.current_response_text: {getattr(stream_handler, 'current_response_text', None)}")
+            logger.warning(f"[AgentCore][DEBUG] stream_handler.__dict__: {stream_handler.__dict__}")
 
-                # Fetch and log all thread messages for this thread
-                try:
-                    thread_messages_paged = project_client.agents.messages.list(thread_id=self.thread.id)
-                    logger.warning(f"[AgentCore][DEBUG] Thread messages for thread {self.thread.id}:")
+            # Fetch and log all thread messages for this thread - using hub-based API
+            try:
+                # Hub-based: list_messages()
+                # Endpoint-based: messages.list()
+                thread_messages_paged = self.project_client.agents.list_messages(thread_id=self.thread.id)
+                logger.warning(f"[AgentCore][DEBUG] Thread messages for thread {self.thread.id}:")
+                # For hub-based API, messages might be in .data attribute
+                if hasattr(thread_messages_paged, 'data'):
+                    for msg in thread_messages_paged.data:
+                        logger.warning(f"[AgentCore][DEBUG] Message: id={getattr(msg, 'id', None)}, role={getattr(msg, 'role', None)}, status={getattr(msg, 'status', None)}, content={getattr(msg, 'content', None)}")
+                else:
                     async for msg in thread_messages_paged:
                         logger.warning(f"[AgentCore][DEBUG] Message: id={getattr(msg, 'id', None)}, role={getattr(msg, 'role', None)}, status={getattr(msg, 'status', None)}, content={getattr(msg, 'content', None)}")
-                except Exception as e:
-                    logger.error(f"[AgentCore][DEBUG] Error fetching thread messages: {e}")
+            except Exception as e:
+                logger.error(f"[AgentCore][DEBUG] Error fetching thread messages: {e}")
 
-                # Optionally log the final run object if available
-                try:
-                    runs_paged = project_client.agents.runs.list(thread_id=self.thread.id)
-                    logger.warning(f"[AgentCore][DEBUG] Runs for thread {self.thread.id}:")
-                    async for run in runs_paged:
+            # Optionally log the final run object if available - using hub-based API
+            try:
+                # Hub-based: list_runs()
+                # Endpoint-based: runs.list()
+                runs_paged = self.project_client.agents.list_runs(thread_id=self.thread.id)
+                logger.warning(f"[AgentCore][DEBUG] Runs for thread {self.thread.id}:")
+                # For hub-based API, runs might be in .data attribute
+                if hasattr(runs_paged, 'data'):
+                    for run in runs_paged.data:
                         logger.warning(f"[AgentCore][DEBUG] Run: id={getattr(run, 'id', None)}, status={getattr(run, 'status', None)}, last_error={getattr(run, 'last_error', None)}")
                         # If run requires action, log the required action/tool
                         if getattr(run, 'status', None) == 'REQUIRES_ACTION':
@@ -422,22 +484,20 @@ class CalendarAgentCore:
                             logger.warning(f"[AgentCore][DEBUG] Run requires action: {required_action}")
                             tool_calls = getattr(run, 'tool_calls', None)
                             logger.warning(f"[AgentCore][DEBUG] Run tool_calls: {tool_calls}")
-                            # Print full run object for inspection
-                            logger.warning(f"[AgentCore][DEBUG] Full run object (vars): {vars(run)}")
-                            logger.warning(f"[AgentCore][DEBUG] Full run object (repr): {repr(run)}")
-                            # Print all available methods and attributes for run
-                            logger.warning(f"[AgentCore][DEBUG] Run dir: {dir(run)}")
-                except Exception as e:
-                    logger.error(f"[AgentCore][DEBUG] Error fetching runs: {e}")
-
-                if for_streamlit:
-                    return True, getattr(stream_handler, 'captured_response', None)
                 else:
-                    response_text = (
-                        getattr(stream_handler, "captured_response", None)
-                        or getattr(stream_handler, "current_response_text", "")
-                    )
-                    return True, response_text
+                    async for run in runs_paged:
+                        logger.warning(f"[AgentCore][DEBUG] Run: id={getattr(run, 'id', None)}, status={getattr(run, 'status', None)}, last_error={getattr(run, 'last_error', None)}")
+            except Exception as e:
+                logger.error(f"[AgentCore][DEBUG] Error fetching runs: {e}")
+
+            if for_streamlit:
+                return True, getattr(stream_handler, 'captured_response', None)
+            else:
+                response_text = (
+                    getattr(stream_handler, "captured_response", None)
+                    or getattr(stream_handler, "current_response_text", "")
+                )
+                return True, response_text
         except Exception as e:
             self._cleanup_run_thread()
             error_msg = f"Error processing message: {str(e)}"
@@ -451,24 +511,21 @@ class CalendarAgentCore:
         """Cleanup agent resources. Idempotent."""
         try:
             if self.agent and self.thread:
-                parts = PROJECT_CONNECTION_STRING.split(';')
-                # Extract components from connection string
-                endpoint = f"https://{parts[0]}"
-                subscription_id = parts[1]
-                resource_group_name = parts[2]
-                project_name = parts[3]
-                
-                async with AIProjectClient(
-                    endpoint=endpoint,
+                # Use the hub-based connection string format for cleanup
+                async with AIProjectClient.from_connection_string(
                     credential=DefaultAzureCredential(),
-                    subscription_id=subscription_id,
-                    resource_group_name=resource_group_name,
-                    project_name=project_name,
+                    conn_str=PROJECT_CONNECTION_STRING,
                 ) as project_client:
-                    existing_files = await project_client.agents.files.list()
-                    for f in existing_files.data:
-                        await project_client.agents.files.delete(f.id)
-                    await project_client.agents.threads.delete(self.thread.id)
+                    # Hub-based cleanup APIs
+                    existing_files = await project_client.agents.list_files()
+                    if hasattr(existing_files, 'data'):
+                        for f in existing_files.data:
+                            await project_client.agents.delete_file(f.id)
+                    else:
+                        async for f in existing_files:
+                            await project_client.agents.delete_file(f.id)
+                    
+                    await project_client.agents.delete_thread(self.thread.id)
                     await project_client.agents.delete_agent(self.agent.id)
                     logger.info("Agent resources cleaned up successfully")
         except Exception as e:

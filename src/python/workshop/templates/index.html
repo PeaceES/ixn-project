@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar Scheduling Agent</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Socket.IO client library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🗓️ Calendar Scheduling Agent</h1>
+            <p class="subtitle">AI-powered room booking and calendar management</p>
+        </header>
+
+        <div class="dashboard">
+            <!-- Status Panel -->
+            <div class="card status-card">
+                <h2>System Status</h2>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <span class="status-label">Web Interface:</span>
+                        <span class="status-value status-active">Active</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Agent Process:</span>
+                        <span class="status-value status-pending" id="agent-status">Not Started</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Calendar Server:</span>
+                        <span class="status-value status-pending" id="calendar-status">Checking...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Control Panel -->
+            <div class="card control-card">
+                <h2>Agent Controls</h2>
+                <div class="button-group">
+                    <button id="start-agent" class="btn btn-primary" disabled>
+                        🚀 Start Agent
+                    </button>
+                    <button id="stop-agent" class="btn btn-secondary" disabled>
+                        🛑 Stop Agent
+                    </button>
+                    <button id="restart-agent" class="btn btn-warning" disabled>
+                        🔄 Restart Agent
+                    </button>
+                </div>
+                <p class="help-text">
+                    <strong>Coming in Stage 2:</strong> Agent process management
+                </p>
+            </div>
+
+            <!-- Chat Interface Placeholder -->
+            <div class="card chat-card">
+                <h2>Real-time Agent Output</h2>
+                <div class="chat-container">
+                    <div class="chat-output" id="chat-output">
+                        <div class="message system-message">
+                            <strong>System:</strong> WebSocket connection status: <span id="connection-status">Connecting...</span>
+                        </div>
+                        <div class="message info-message">
+                            <strong>Info:</strong> Agent output will stream here in real-time when running.
+                        </div>
+                    </div>
+                    <div class="chat-input-container">
+                        <input 
+                            type="text" 
+                            id="chat-input" 
+                            placeholder="Type your message... (Coming in Stage 4)"
+                            disabled
+                        >
+                        <button id="send-message" class="btn btn-primary" disabled>Send</button>
+                    </div>
+                    <div class="output-controls">
+                        <button id="clear-output" class="btn btn-secondary">Clear Output</button>
+                        <button id="scroll-to-bottom" class="btn btn-secondary">Scroll to Bottom</button>
+                    </div>
+                </div>
+                <p class="help-text">
+                    <strong>Stage 3 Complete:</strong> Real-time output streaming active! Agent logs will appear here.
+                </p>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card actions-card">
+                <h2>Quick Actions</h2>
+                <div class="quick-actions">
+                    <button class="action-btn" disabled>
+                        📅 View Calendar
+                    </button>
+                    <button class="action-btn" disabled>
+                        🏢 Check Rooms
+                    </button>
+                    <button class="action-btn" disabled>
+                        ➕ Book Meeting
+                    </button>
+                    <button class="action-btn" disabled>
+                        📊 View Events
+                    </button>
+                </div>
+                <p class="help-text">
+                    <strong>Coming in Stage 5:</strong> Calendar integration features
+                </p>
+            </div>
+        </div>
+
+        <footer>
+            <p>Calendar Scheduling Agent v1.0 | Built with Flask + SocketIO + HTML/JS</p>
+            <p class="stage-info">🚧 <strong>Stage 3 Complete:</strong> Real-time WebSocket streaming is active!</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

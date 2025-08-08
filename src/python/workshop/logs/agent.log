@@ -1,0 +1,28 @@
+INFO:agent_core:[AgentCore] Initializing agent...
+INFO:agent_core:[AgentCore] Parsed connection string:
+INFO:agent_core:[AgentCore]   Host: uksouth.api.azureml.ms
+INFO:agent_core:[AgentCore]   Subscription ID: 6797c788-362f-45f5-a36e-6b8d83b7121c
+INFO:agent_core:[AgentCore]   Resource Group: azure_for_students_agents_hub
+INFO:agent_core:[AgentCore]   Project: new_ixn_agents_resources
+INFO:agent_core:[AgentCore] Using hub-based project with connection string
+INFO:agent_core:[AgentCore] This matches your Azure AI Projects SDK version 1.0.0b10
+INFO:agent_core:Font file upload skipped for debugging.
+INFO:agent_core:[AgentCore] Created agent with ID: asst_E2fYKhRIPMJBdqZnCtJyAux0
+WARNING:agent_core:[AgentCore] Could not enable auto function calls: Tool of type AsyncFunctionTool not found in the ToolSet.
+INFO:agent_core:[AgentCore] Created thread with ID: thread_vTC8yM7ftXsLyuvVkIJSmxBf
+INFO:agent_core:[AgentCore] Created shared thread with ID: thread_9tKicLY9QHmX8DMZVjbL5E6l
+INFO:agent_core:[AgentCore] Initialization complete. Agent ID: asst_E2fYKhRIPMJBdqZnCtJyAux0, Thread ID: thread_vTC8yM7ftXsLyuvVkIJSmxBf
+[AGENT] PROJECT_CONNECTION_STRING: uksouth.api.azureml.ms;6797c788-362f-45f5-a36e-6b8d83b7121c;azure_for_students_agents_hub;new_ixn_agents_resources
+[AGENT] MODEL_DEPLOYMENT_NAME: gpt-4o
+[36mStarting async program...[0m
+[36mStarting Calendar Scheduling Agent...[0m
+[32m✅ Agent initialized successfully. MCP: healthy, User Directory: loaded (2 entries)[0m
+[34mAgent Status:[0m
+  - MCP Server: healthy
+  - User Directory: loaded
+  - Agent ID: asst_E2fYKhRIPMJBdqZnCtJyAux0
+
+
+[32mEnter your query (type exit or save to finish): [0m
+
+[32mEnter your query (type exit or save to finish): [0m

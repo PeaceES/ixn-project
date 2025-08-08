@@ -16,18 +16,9 @@ python main.py
 - Direct debug information
 - Ideal for development and testing
 
-## 🌐 Streamlit Web Interface (`streamlit_app.py`)
-A modern web interface for user-friendly interaction.
+## Summary
 
-### Usage:
-```bash
-streamlit run streamlit_app.py
-```
-
-### Features:
-- Modern chat interface
-- Real-time status monitoring
-- Quick action buttons
+The agent has been migrated from Streamlit to a Flask + xterm.js architecture for better control and terminal-style interactions.
 - Example queries
 - Visual feedback and error handling
 - Responsive design
@@ -41,9 +32,8 @@ Both interfaces use the shared `agent_core.py` module which contains:
 - Reusable business logic
 
 ### Files:
-- `agent_core.py` - Core agent functionality (shared)
-- `main.py` - Terminal interface
-- `streamlit_app.py` - Web interface
+- `agent_core.py` - Core agent functionality
+- `main.py` - Terminal interface  
 - `requirements.txt` - Dependencies
 
 ## 🚀 Getting Started
@@ -61,12 +51,11 @@ USER_DIRECTORY_URL=your-user-directory-url
 ```
 
 3. Choose your interface:
-   - For development: `python main.py`
-   - For user testing: `streamlit run streamlit_app.py`
+   - For development and testing: `python main.py`
 
 ## 💬 Example Queries
 
-Try these example queries with either interface:
+Try these example queries:
 
 - "Show me all available rooms"
 - "Check if the Main Conference Room is available tomorrow at 2pm"
@@ -77,8 +66,7 @@ Try these example queries with either interface:
 ## 🔧 Development Workflow
 
 1. **Develop & Debug**: Use `main.py` for quick testing and debugging
-2. **Test Features**: Use `streamlit_app.py` for user experience testing
-3. **Share**: Deploy Streamlit app for stakeholder demos
+2. **Test Features**: Use the terminal interface for comprehensive testing
 
 ## 🛠️ Technical Details
 
@@ -98,8 +86,7 @@ Try these example queries with either interface:
 
 ## 📝 Notes
 
-- Both interfaces share the same underlying agent logic
-- Terminal interface is better for debugging
-- Streamlit interface is better for user interaction
+- The terminal interface provides comprehensive debugging capabilities
 - Agent resources are automatically managed
 - MCP server connectivity is monitored in real-time
+- Migrated from Streamlit to Flask + xterm.js for better terminal-style control

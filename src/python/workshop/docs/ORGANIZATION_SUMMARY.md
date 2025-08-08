@@ -27,7 +27,6 @@
 **Remains in root (core files):**
 - `main.py` - Terminal interface
 - `agent_core.py` - Core agent logic
-- `streamlit_app.py` - Streamlit UI
 - `README.md` - Main project README
 - Configuration files (`.env`, `pyproject.toml`, etc.)
 
@@ -46,4 +45,4 @@
 - **Core files remain in root for easy access**
 - **No breaking changes to import paths**
 
-The main files your engineer needs (`main.py`, `agent_core.py`, `streamlit_app.py`) are still in the root directory for easy access.
+The main files your engineer needs (`main.py`, `agent_core.py`) are still in the root directory for easy access.

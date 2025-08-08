@@ -1,7 +1,6 @@
 """
 Core agent functionality for the Calendar Scheduling Agent.
-This module contains the reusable agent logic that can be used by both
-the terminal interface (main.py) and the Streamlit UI (streamlit_app.py).
+This module contains the reusable agent logic that can be used by the terminal interface (main.py).
 """
 
 import asyncio
@@ -44,27 +43,6 @@ MAX_PROMPT_TOKENS = 20480
 TEMPERATURE = 0.1
 TOP_P = 0.1
 INSTRUCTIONS_FILE = "../shared/instructions/general_instructions.txt"
-
-
-class StreamlitEventHandler(StreamEventHandler):
-    """Custom event handler for Streamlit that captures responses."""
-    
-    def __init__(self, functions, project_client, utilities):
-        super().__init__(functions, project_client, utilities)
-        self.captured_response = ""
-        self.response_complete = False
-        
-    def on_message_delta(self, delta):
-        """Capture message deltas for Streamlit display."""
-        if hasattr(delta, 'content') and delta.content:
-            for content in delta.content:
-                if hasattr(content, 'text') and content.text:
-                    self.captured_response += content.text.value
-        
-    def on_message_done(self, message):
-        """Mark response as complete."""
-        self.response_complete = True
-        super().on_message_done(message)
 
 
 class CalendarAgentCore:
@@ -385,7 +363,7 @@ class CalendarAgentCore:
             logger.error(f"[AgentCore] Initialization error: {error_msg}")
             return False, error_msg
 
-    async def process_message(self, message: str, for_streamlit: bool = False) -> Tuple[bool, str]:
+    async def process_message(self, message: str) -> Tuple[bool, str]:
         """Process a message with the agent. Returns (success, response)."""
         if not self.agent or not self.thread:
             logger.warning("[AgentCore] Agent or thread not initialized.")
@@ -414,18 +392,11 @@ class CalendarAgentCore:
             )
             logger.info(f"[AgentCore] Message created for thread ID: {self.thread.id}")
 
-            if for_streamlit:
-                stream_handler = StreamlitEventHandler(
-                    functions=self.functions,
-                    project_client=self.project_client,
-                    utilities=self.utilities
-                )
-            else:
-                stream_handler = StreamEventHandler(
-                    functions=self.functions,
-                    project_client=self.project_client,
-                    utilities=self.utilities
-                )
+            stream_handler = StreamEventHandler(
+                functions=self.functions,
+                project_client=self.project_client,
+                utilities=self.utilities
+            )
 
             stream_handler.current_user_query = message
             # Create stream using hub-based API
@@ -500,48 +471,45 @@ class CalendarAgentCore:
             except Exception as e:
                 logger.error(f"[AgentCore][DEBUG] Error fetching runs: {e}")
 
-            if for_streamlit:
-                return True, getattr(stream_handler, 'captured_response', None)
-            else:
-                response_text = (
-                    getattr(stream_handler, "captured_response", None)
-                    or getattr(stream_handler, "current_response_text", "")
-                )
-                
-                # If we still don't have a response, try to get the latest assistant message from the thread
-                if not response_text.strip():
-                    try:
-                        thread_messages = await self.project_client.agents.list_messages(thread_id=self.thread.id)
-                        if hasattr(thread_messages, 'data') and thread_messages.data:
-                            # Look for the most recent assistant message
-                            for message in thread_messages.data:
-                                if getattr(message, 'role', None) == 'assistant':
-                                    content = getattr(message, 'content', [])
-                                    for content_item in content:
-                                        if hasattr(content_item, 'text') and content_item.text:
-                                            if hasattr(content_item.text, 'value'):
-                                                response_text += content_item.text.value
-                                            else:
-                                                response_text += str(content_item.text)
-                                    if response_text.strip():  # If we found content, stop looking
-                                        break
-                        else:
-                            # Handle async iterator
-                            async for message in thread_messages:
-                                if getattr(message, 'role', None) == 'assistant':
-                                    content = getattr(message, 'content', [])
-                                    for content_item in content:
-                                        if hasattr(content_item, 'text') and content_item.text:
-                                            if hasattr(content_item.text, 'value'):
-                                                response_text += content_item.text.value
-                                            else:
-                                                response_text += str(content_item.text)
-                                    if response_text.strip():  # If we found content, stop looking
-                                        break
-                    except Exception as e:
-                        logger.warning(f"[AgentCore] Could not fetch latest message: {e}")
-                
-                return True, response_text
+            response_text = (
+                getattr(stream_handler, "captured_response", None)
+                or getattr(stream_handler, "current_response_text", "")
+            )
+            
+            # If we still don't have a response, try to get the latest assistant message from the thread
+            if not response_text.strip():
+                try:
+                    thread_messages = await self.project_client.agents.list_messages(thread_id=self.thread.id)
+                    if hasattr(thread_messages, 'data') and thread_messages.data:
+                        # Look for the most recent assistant message
+                        for message in thread_messages.data:
+                            if getattr(message, 'role', None) == 'assistant':
+                                content = getattr(message, 'content', [])
+                                for content_item in content:
+                                    if hasattr(content_item, 'text') and content_item.text:
+                                        if hasattr(content_item.text, 'value'):
+                                            response_text += content_item.text.value
+                                        else:
+                                            response_text += str(content_item.text)
+                                if response_text.strip():  # If we found content, stop looking
+                                    break
+                    else:
+                        # Handle async iterator
+                        async for message in thread_messages:
+                            if getattr(message, 'role', None) == 'assistant':
+                                content = getattr(message, 'content', [])
+                                for content_item in content:
+                                    if hasattr(content_item, 'text') and content_item.text:
+                                        if hasattr(content_item.text, 'value'):
+                                            response_text += content_item.text.value
+                                        else:
+                                            response_text += str(content_item.text)
+                                if response_text.strip():  # If we found content, stop looking
+                                    break
+                except Exception as e:
+                    logger.warning(f"[AgentCore] Could not fetch latest message: {e}")
+            
+            return True, response_text
         except Exception as e:
             self._cleanup_run_thread()
             error_msg = f"Error processing message: {str(e)}"

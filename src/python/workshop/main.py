@@ -74,7 +74,7 @@ async def main() -> None:
         
         # Process the message
         print(f"{tc.YELLOW}Processing your request...{tc.RESET}")
-        success, response = await agent_core.process_message(prompt, for_streamlit=False)
+        success, response = await agent_core.process_message(prompt)
         print(f"{tc.BLUE}Raw response: {response}{tc.RESET}")
         print(f"{tc.CYAN}Response type: {type(response)}{tc.RESET}")
         print(f"{tc.CYAN}Response repr: {repr(response)}{tc.RESET}")

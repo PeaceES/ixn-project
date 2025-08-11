@@ -418,13 +418,32 @@ class CalendarAgentCore:
                 await s.until_done()
             logger.info(f"[AgentCore] Run completed for thread ID: {self.thread.id}")
             
-            # Check if run is stuck in REQUIRES_ACTION and handle it manually
+            # Handle ALL required actions in a loop until run completes
             runs_paged = await self.project_client.agents.list_runs(thread_id=self.thread.id)
             if hasattr(runs_paged, 'data') and runs_paged.data:
                 latest_run = runs_paged.data[0]  # Most recent run
-                if getattr(latest_run, 'status', None) == 'requires_action':
-                    logger.warning(f"[AgentCore] Run {latest_run.id} is stuck in REQUIRES_ACTION, handling manually")
+                iteration = 0
+                max_iterations = 10
+                
+                while getattr(latest_run, 'status', None) == 'requires_action' and iteration < max_iterations:
+                    iteration += 1
+                    logger.info(f"[AgentCore] Iteration {iteration}: Run {latest_run.id} status: {latest_run.status}")
+                    logger.info(f"[AgentCore] Handling required actions in iteration {iteration}")
+                    
                     await self._handle_required_action(latest_run)
+                    
+                    # Get updated run status
+                    await asyncio.sleep(2)  # Brief pause for processing
+                    latest_run = await self.project_client.agents.get_run(
+                        thread_id=self.thread.id, 
+                        run_id=latest_run.id
+                    )
+                    logger.info(f"[AgentCore] After iteration {iteration}: Run {latest_run.id} status: {latest_run.status}")
+                
+                if iteration >= max_iterations:
+                    logger.warning(f"[AgentCore] Reached maximum iterations ({max_iterations}) for handling required actions")
+                else:
+                    logger.info(f"[AgentCore] Run {latest_run.id} finished with status: {latest_run.status}")
             
             # Diagnostic logging for stream_handler state
             logger.warning(f"[AgentCore][DEBUG] stream_handler.captured_response: {getattr(stream_handler, 'captured_response', None)}")
@@ -476,9 +495,9 @@ class CalendarAgentCore:
                 or getattr(stream_handler, "current_response_text", "")
             )
             
-            # If we still don't have a response, try to get the latest assistant message from the thread
-            if not response_text.strip():
-                try:
+            # Always try to get the latest assistant message from the thread first
+            # This ensures we get the final response after tool execution
+            try:
                     thread_messages = await self.project_client.agents.list_messages(thread_id=self.thread.id)
                     if hasattr(thread_messages, 'data') and thread_messages.data:
                         # Look for the most recent assistant message
@@ -506,8 +525,16 @@ class CalendarAgentCore:
                                             response_text += str(content_item.text)
                                 if response_text.strip():  # If we found content, stop looking
                                     break
-                except Exception as e:
-                    logger.warning(f"[AgentCore] Could not fetch latest message: {e}")
+            except Exception as e:
+                logger.warning(f"[AgentCore] Could not fetch latest message: {e}")
+            
+            # If we couldn't get response from thread, fallback to stream handler
+            if not response_text.strip():
+                response_text = (
+                    getattr(stream_handler, "captured_response", None)
+                    or getattr(stream_handler, "current_response_text", "")
+                    or "No response available"
+                )
             
             return True, response_text
         except Exception as e:
@@ -613,7 +640,7 @@ class CalendarAgentCore:
             logger.error(f"[AgentCore] Error in _handle_required_action: {e}")
 
     async def _wait_for_run_completion(self, run_id: str, max_wait: int = 30):
-        """Wait for a run to complete after tool outputs are submitted."""
+        """Wait for a run to reach completion or requires_action after tool outputs are submitted."""
         import asyncio
         for attempt in range(max_wait):
             try:
@@ -628,8 +655,8 @@ class CalendarAgentCore:
                     logger.info(f"[AgentCore] Run {run_id} finished with status: {status}")
                     break
                 elif status == 'requires_action':
-                    logger.warning(f"[AgentCore] Run {run_id} still requires action after {attempt + 1} seconds")
-                    break
+                    logger.info(f"[AgentCore] Run {run_id} requires more actions - will handle in next iteration")
+                    break  # Let the main loop handle the next action
                 
                 await asyncio.sleep(1)
             except Exception as e:

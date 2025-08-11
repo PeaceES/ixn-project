@@ -30,6 +30,7 @@ class StreamEventHandler(AsyncAgentEventHandler[str]):
         self.current_run_id = None
         self.current_response_text = ""
         self.current_user_query = ""
+        self.captured_response = None  # Add explicit response capture
         # For tool call handling, we'll submit outputs differently in hub-based API
         super().__init__()
 
@@ -56,9 +57,20 @@ class StreamEventHandler(AsyncAgentEventHandler[str]):
     async def on_thread_message(self, message: ThreadMessage) -> None:
         """Handle thread message events."""
         try:
-            # if message.status == MessageStatus.COMPLETED:
-            #     print()
-            # self.util.log_msg_purple(f"ThreadMessage created. ID: {message.id}, " f"Status: {message.status}")
+            # Capture the final response when message is completed
+            if message.status == MessageStatus.COMPLETED and hasattr(message, 'content'):
+                response_text = ""
+                for content_item in message.content:
+                    if hasattr(content_item, 'text') and content_item.text:
+                        if hasattr(content_item.text, 'value'):
+                            response_text += content_item.text.value
+                        else:
+                            response_text += str(content_item.text)
+                
+                if response_text.strip() and not self.captured_response:
+                    self.captured_response = response_text
+                    self.current_response_text = response_text
+            
             await self.util.get_files(message, self.project_client)
         except Exception as e:
             print(f"[StreamEventHandler] Exception in on_thread_message: {e}")

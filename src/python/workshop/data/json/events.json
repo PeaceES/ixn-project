@@ -163,6 +163,134 @@
         "Alice Chen"
       ],
       "status": "confirmed"
+    },
+    {
+      "id": "6ac36e60-be93-4471-a9b3-8273aca7f541",
+      "calendar_id": "engineering-workshop-mechanical",
+      "calendar_name": "Mechanical Engineering Workshop",
+      "title": "UI's Event",
+      "start_time": "2025-08-13T16:00:00",
+      "end_time": "2025-08-13T17:00:00",
+      "organizer": "Alice Chen",
+      "location": "Engineering Block, Floor 1",
+      "description": "",
+      "created_at": "2025-08-11T10:47:47.079040",
+      "attendees": [
+        "Alice Chen"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "3819fa35-fc4a-4027-adb4-d922833ffa08",
+      "calendar_id": "central-lecture-hall-main",
+      "calendar_name": "Main Lecture Hall",
+      "title": "Meeting",
+      "start_time": "2024-08-14T15:00:00",
+      "end_time": "2024-08-14T16:00:00",
+      "organizer": "Alice Chen",
+      "location": "Main Building, Ground Floor",
+      "description": "",
+      "created_at": "2025-08-11T12:15:38.742379",
+      "attendees": [
+        "Alice Chen"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "d6b8d04d-2b59-4a5d-b07c-b524851c0a85",
+      "calendar_id": "central-lecture-hall-secondary",
+      "calendar_name": "Secondary Lecture Hall",
+      "title": "Event by Alice Chen",
+      "start_time": "2024-08-14T15:00:00",
+      "end_time": "2024-08-14T16:00:00",
+      "organizer": "Alice Chen",
+      "location": "Main Building, Ground Floor",
+      "description": "",
+      "created_at": "2025-08-11T12:23:41.335464",
+      "attendees": [
+        "Alice Chen"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "d032cf89-8ccb-4232-b2ee-4d1cd4f466a4",
+      "calendar_id": "central-seminar-room-alpha",
+      "calendar_name": "Alpha Seminar Room",
+      "title": "Event by Alice Chen",
+      "start_time": "2024-08-14T15:00:00",
+      "end_time": "2024-08-14T16:00:00",
+      "organizer": "Alice Chen",
+      "location": "Academic Block, Floor 1",
+      "description": "",
+      "created_at": "2025-08-11T12:33:28.605278",
+      "attendees": [
+        "Alice Chen"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "5223d3a3-d086-4831-97b2-c4b04389bb79",
+      "calendar_id": "central-lecture-hall-main",
+      "calendar_name": "Main Lecture Hall",
+      "title": "Meeting",
+      "start_time": "2023-08-14T15:00:00",
+      "end_time": "2023-08-14T16:00:00",
+      "organizer": "Alice Chen",
+      "location": "Main Building, Ground Floor",
+      "description": "",
+      "created_at": "2025-08-11T12:49:08.574550",
+      "attendees": [
+        "Alice Chen"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "0b89d0de-6d4e-4649-88e7-f70dd0f9600e",
+      "calendar_id": "central-seminar-room-beta",
+      "calendar_name": "Beta Seminar Room",
+      "title": "Event by Alice Chen",
+      "start_time": "2024-08-14T15:00:00",
+      "end_time": "2024-08-14T16:00:00",
+      "organizer": "Alice Chen",
+      "location": "Academic Block, Floor 1",
+      "description": "",
+      "created_at": "2025-08-11T14:08:13.791613",
+      "attendees": [
+        "Alice Chen"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "3d0e75d4-b52e-4c39-aabd-d79ca924c044",
+      "calendar_id": "cs-lab-programming",
+      "calendar_name": "Programming Lab",
+      "title": "Event by Alice Chen",
+      "start_time": "2024-08-14T15:00:00",
+      "end_time": "2024-08-14T16:00:00",
+      "organizer": "Alice Chen",
+      "location": "Technology Block, Floor 2",
+      "description": "",
+      "created_at": "2025-08-11T14:30:16.989280",
+      "attendees": [
+        "Alice Chen"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "5effe8cb-82ca-445d-be23-c2302ba215a0",
+      "calendar_id": "engineering-workshop-mechanical",
+      "calendar_name": "Mechanical Engineering Workshop",
+      "title": "Event",
+      "start_time": "2024-08-14T15:00:00",
+      "end_time": "2024-08-14T16:00:00",
+      "organizer": "Alice Chen",
+      "location": "Engineering Block, Floor 1",
+      "description": "",
+      "created_at": "2025-08-11T14:41:51.596759",
+      "attendees": [
+        "Alice Chen"
+      ],
+      "status": "confirmed"
     }
   ]
 }

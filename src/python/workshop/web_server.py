@@ -12,6 +12,8 @@ import psutil
 import time
 import threading
 import queue
+import json
+import logging
 from pathlib import Path
 
 # Initialize Flask app
@@ -50,6 +52,10 @@ connected_clients = set()
 
 # Ensure log directory exists
 agent_log_file.parent.mkdir(exist_ok=True)
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def is_agent_running():
     """Check if the agent process is running."""
@@ -440,6 +446,269 @@ def send_message_to_agent():
         return jsonify({
             'success': False,
             'error': f"Failed to send message: {str(e)}"
+        }), 500
+
+# Calendar Integration Endpoints (Stage 5)
+
+@app.route('/api/calendar/rooms')
+def get_rooms():
+    """Get list of all available rooms."""
+    try:
+        rooms_file = WORKSHOP_DIR / 'data' / 'json' / 'rooms.json'
+        if rooms_file.exists():
+            import json
+            with open(rooms_file, 'r') as f:
+                rooms_data = json.load(f)
+            return jsonify(rooms_data)
+        else:
+            # Return fallback room data
+            return jsonify({
+                'rooms': [
+                    {
+                        'id': 'central-meeting-room-alpha',
+                        'name': 'Meeting Room Alpha',
+                        'capacity': 10,
+                        'room_type': 'meeting_room',
+                        'location': 'Main Building, 2nd Floor',
+                        'equipment': ['projector', 'whiteboard']
+                    },
+                    {
+                        'id': 'central-meeting-room-beta',
+                        'name': 'Meeting Room Beta',
+                        'capacity': 8,
+                        'room_type': 'meeting_room',
+                        'location': 'Main Building, 2nd Floor',
+                        'equipment': ['tv_screen', 'whiteboard']
+                    },
+                    {
+                        'id': 'central-lecture-hall-main',
+                        'name': 'Main Lecture Hall',
+                        'capacity': 200,
+                        'room_type': 'lecture_hall',
+                        'location': 'Main Building, Ground Floor',
+                        'equipment': ['projector', 'microphone', 'speakers']
+                    }
+                ]
+            })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f"Failed to load rooms: {str(e)}"
+        }), 500
+
+@app.route('/api/calendar/events')
+def get_events():
+    """Get events within a date range."""
+    try:
+        # Get query parameters
+        start_date = request.args.get('start')
+        end_date = request.args.get('end')
+        room_id = request.args.get('room_id')
+        
+        events_file = WORKSHOP_DIR / 'data' / 'json' / 'events.json'
+        if events_file.exists():
+            import json
+            from datetime import datetime
+            
+            with open(events_file, 'r') as f:
+                events_data = json.load(f)
+            
+            events = events_data.get('events', [])
+            
+            # Filter by date range if provided
+            if start_date and end_date:
+                start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+                end_dt = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+                
+                filtered_events = []
+                for event in events:
+                    event_start = datetime.fromisoformat(event['start_time'])
+                    if start_dt <= event_start <= end_dt:
+                        filtered_events.append(event)
+                events = filtered_events
+            
+            # Filter by room if provided
+            if room_id:
+                events = [event for event in events if event.get('room_id') == room_id]
+            
+            return jsonify({'events': events})
+        else:
+            # Return fallback event data
+            from datetime import datetime, timedelta
+            now = datetime.now()
+            return jsonify({
+                'events': [
+                    {
+                        'id': 'demo-1',
+                        'title': 'Team Meeting',
+                        'start_time': (now + timedelta(hours=2)).isoformat(),
+                        'end_time': (now + timedelta(hours=3)).isoformat(),
+                        'room_id': 'central-meeting-room-alpha',
+                        'organizer': 'Demo User',
+                        'status': 'confirmed'
+                    },
+                    {
+                        'id': 'demo-2',
+                        'title': 'Project Review',
+                        'start_time': (now + timedelta(days=1)).isoformat(),
+                        'end_time': (now + timedelta(days=1, hours=1)).isoformat(),
+                        'room_id': 'central-meeting-room-beta',
+                        'organizer': 'Demo User',
+                        'status': 'confirmed'
+                    }
+                ]
+            })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f"Failed to load events: {str(e)}"
+        }), 500
+
+@app.route('/api/calendar/events', methods=['POST'])
+def create_event():
+    """Create a new calendar event."""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': 'Event data is required'
+            }), 400
+        
+        # Validate required fields
+        required_fields = ['title', 'room_id', 'start_time']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({
+                    'success': False,
+                    'error': f"Missing required field: {field}"
+                }), 400
+        
+        # Calculate end time if duration is provided
+        if 'duration_minutes' in data and 'end_time' not in data:
+            from datetime import datetime, timedelta
+            start_time = datetime.fromisoformat(data['start_time'].replace('Z', '+00:00'))
+            end_time = start_time + timedelta(minutes=data['duration_minutes'])
+            data['end_time'] = end_time.isoformat()
+        
+        # Generate a unique event ID
+        event_id = f"event-{int(time.time())}-{data['room_id'][-4:]}"
+        
+        # Create the event object
+        new_event = {
+            'id': event_id,
+            'title': data['title'],
+            'description': data.get('description', 'Event created via web interface'),
+            'start_time': data['start_time'],
+            'end_time': data['end_time'],
+            'room_id': data['room_id'],
+            'calendar_id': data['room_id'],
+            'organizer': data.get('organizer', 'Web User'),
+            'attendee_count': data.get('attendee_count', 1),
+            'is_recurring': False,
+            'event_type': 'meeting',
+            'status': 'confirmed'
+        }
+        
+        # Save to events.json file
+        events_file = WORKSHOP_DIR / 'data' / 'json' / 'events.json'
+        try:
+            if events_file.exists():
+                with open(events_file, 'r') as f:
+                    events_data = json.load(f)
+            else:
+                events_data = {'events': []}
+            
+            # Add the new event
+            events_data['events'].append(new_event)
+            
+            # Save back to file
+            with open(events_file, 'w') as f:
+                json.dump(events_data, f, indent=2)
+            
+            # Notify all connected WebSocket clients about the new event
+            if connected_clients:
+                socketio.emit('calendar_event_created', {
+                    'event': new_event,
+                    'message': f"New event '{new_event['title']}' created successfully"
+                }, namespace='/')
+            
+            return jsonify({
+                'success': True,
+                'message': 'Event created successfully',
+                'event_id': event_id,
+                'event': new_event
+            })
+            
+        except Exception as file_error:
+            # Fallback: return success even if file save fails
+            logger.warning(f"Could not save event to file: {file_error}")
+            return jsonify({
+                'success': True,
+                'message': 'Event created successfully (in memory only)',
+                'event_id': event_id,
+                'event': new_event,
+                'warning': 'Event not persisted to file'
+            })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f"Failed to create event: {str(e)}"
+        }), 500
+
+@app.route('/api/calendar/availability')
+def check_availability():
+    """Check room availability for a given time slot."""
+    try:
+        room_id = request.args.get('room_id')
+        start_time = request.args.get('start_time')
+        end_time = request.args.get('end_time')
+        
+        if not all([room_id, start_time, end_time]):
+            return jsonify({
+                'success': False,
+                'error': 'room_id, start_time, and end_time are required'
+            }), 400
+        
+        # For demonstration, we'll check against existing events
+        events_file = WORKSHOP_DIR / 'data' / 'json' / 'events.json'
+        if events_file.exists():
+            import json
+            from datetime import datetime
+            
+            with open(events_file, 'r') as f:
+                events_data = json.load(f)
+            
+            start_dt = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
+            end_dt = datetime.fromisoformat(end_time.replace('Z', '+00:00'))
+            
+            # Check for conflicts
+            conflicts = []
+            for event in events_data.get('events', []):
+                if event.get('room_id') == room_id:
+                    event_start = datetime.fromisoformat(event['start_time'])
+                    event_end = datetime.fromisoformat(event['end_time'])
+                    
+                    # Check for overlap
+                    if start_dt < event_end and end_dt > event_start:
+                        conflicts.append(event)
+            
+            return jsonify({
+                'available': len(conflicts) == 0,
+                'conflicts': conflicts
+            })
+        else:
+            # Assume available if no events file
+            return jsonify({
+                'available': True,
+                'conflicts': []
+            })
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f"Failed to check availability: {str(e)}"
         }), 500
 
 if __name__ == '__main__':

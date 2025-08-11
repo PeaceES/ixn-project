@@ -89,31 +89,103 @@
             <div class="card actions-card">
                 <h2>Quick Actions</h2>
                 <div class="quick-actions">
-                    <button class="action-btn" disabled>
+                    <button class="action-btn" id="view-calendar-btn">
                         📅 View Calendar
                     </button>
-                    <button class="action-btn" disabled>
+                    <button class="action-btn" id="check-rooms-btn">
                         🏢 Check Rooms
                     </button>
-                    <button class="action-btn" disabled>
+                    <button class="action-btn" id="book-meeting-btn">
                         ➕ Book Meeting
                     </button>
-                    <button class="action-btn" disabled>
+                    <button class="action-btn" id="view-events-btn">
                         📊 View Events
                     </button>
                 </div>
                 <p class="help-text">
-                    <strong>Coming in Stage 5:</strong> Calendar integration features
+                    <strong>Stage 5 Complete:</strong> Calendar integration features are now active!
+                </p>
+            </div>
+
+            <!-- Calendar Widget -->
+            <div class="card calendar-card">
+                <div class="calendar-header-controls">
+                    <h2>📅 Calendar Overview</h2>
+                    <button id="refresh-calendar-btn" class="btn btn-secondary btn-small">
+                        🔄 Refresh
+                    </button>
+                </div>
+                <div id="calendar-widget" class="calendar-widget">
+                    <!-- Calendar will be rendered here by JavaScript -->
+                </div>
+                <div id="selected-date-events" class="selected-date-events">
+                    <p class="help-text">Click on a date to see events</p>
+                </div>
+            </div>
+
+            <!-- Room Availability -->
+            <div class="card room-card">
+                <h2>🏢 Room Availability</h2>
+                <div id="room-availability" class="room-availability">
+                    <!-- Room list will be rendered here by JavaScript -->
+                </div>
+                <div id="room-details" class="room-details">
+                    <p class="help-text">Click on a room to see details</p>
+                </div>
+            </div>
+
+            <!-- Quick Booking -->
+            <div class="card booking-card">
+                <h2>⚡ Quick Booking</h2>
+                <form id="quick-booking-form" class="booking-form">
+                    <div class="form-group">
+                        <label for="booking-title">Meeting Title:</label>
+                        <input type="text" id="booking-title" placeholder="Enter meeting title..." required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="booking-room">Room:</label>
+                            <select id="booking-room" required>
+                                <option value="">Select a room...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="booking-duration">Duration:</label>
+                            <select id="booking-duration">
+                                <option value="30">30 minutes</option>
+                                <option value="60" selected>1 hour</option>
+                                <option value="90">1.5 hours</option>
+                                <option value="120">2 hours</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="booking-date">Date:</label>
+                            <input type="date" id="booking-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="booking-time">Time:</label>
+                            <input type="time" id="booking-time" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        📅 Book Meeting
+                    </button>
+                </form>
+                <p class="help-text">
+                    <strong>Pro tip:</strong> You can also ask the agent to book meetings for you using natural language!
                 </p>
             </div>
         </div>
 
         <footer>
             <p>Calendar Scheduling Agent v1.0 | Built with Flask + SocketIO + HTML/JS</p>
-            <p class="stage-info">🎉 <strong>Stage 4 Complete:</strong> Interactive chat interface is now live!</p>
+            <p class="stage-info">🎉 <strong>Stage 5 Complete:</strong> Calendar integration is now live!</p>
         </footer>
     </div>
 
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/calendar.js') }}"></script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 """
 Flask Web Server for Calendar Scheduling Agent
-Stage 3: Real-time Output Streaming with WebSocket
+Stage 4: Interactive Chat Interface
 """
 
 from flask import Flask, render_template, jsonify, request
@@ -192,10 +192,16 @@ def stream_output_to_clients():
                 if line:
                     line = line.rstrip()  # Already decoded due to universal_newlines=True
                     agent_output_queue.put(('stdout', line))
+                    
+                    # Try to detect if this is an agent response vs system output
+                    output_type = 'stdout'
+                    if any(keyword in line.lower() for keyword in ['assistant:', 'agent:', 'response:', 'reply:']):
+                        output_type = 'agent'
+                    
                     # Emit to all connected WebSocket clients
                     if connected_clients:
                         socketio.emit('agent_output', {
-                            'type': 'stdout',
+                            'type': output_type,
                             'data': line,
                             'timestamp': time.time()
                         }, namespace='/')
@@ -264,6 +270,48 @@ def handle_status_request():
         'pid': get_agent_pid(),
         'uptime': get_agent_uptime()
     })
+
+@socketio.on('send_message')
+def handle_send_message(data):
+    """Handle message from client to send to agent."""
+    global agent_process
+    
+    if not is_agent_running():
+        emit('chat_error', {
+            'message': 'Agent is not running. Please start the agent first.',
+            'timestamp': time.time()
+        })
+        return
+    
+    try:
+        message = data.get('message', '').strip()
+        if not message:
+            emit('chat_error', {
+                'message': 'Message cannot be empty.',
+                'timestamp': time.time()
+            })
+            return
+        
+        # Send message to agent via stdin
+        agent_process.stdin.write(message + '\n')
+        agent_process.stdin.flush()
+        
+        # Broadcast the user message to all connected clients
+        socketio.emit('chat_message', {
+            'type': 'user',
+            'message': message,
+            'timestamp': time.time()
+        }, namespace='/')
+        
+        print(f"Sent message to agent: {message}")
+        
+    except Exception as e:
+        error_msg = f"Error sending message to agent: {str(e)}"
+        print(error_msg)
+        emit('chat_error', {
+            'message': error_msg,
+            'timestamp': time.time()
+        })
 
 @app.route('/')
 def index():
@@ -344,6 +392,55 @@ def get_agent_logs():
             'success': False,
             'error': f"Failed to read logs: {str(e)}"
         })
+
+@app.route('/api/agent/send', methods=['POST'])
+def send_message_to_agent():
+    """Send a message to the running agent."""
+    global agent_process
+    
+    if not is_agent_running():
+        return jsonify({
+            'success': False,
+            'error': 'Agent is not running. Please start the agent first.'
+        }), 400
+    
+    try:
+        data = request.get_json()
+        if not data or 'message' not in data:
+            return jsonify({
+                'success': False,
+                'error': 'Message is required'
+            }), 400
+        
+        message = data['message'].strip()
+        if not message:
+            return jsonify({
+                'success': False,
+                'error': 'Message cannot be empty'
+            }), 400
+        
+        # Send message to agent via stdin
+        agent_process.stdin.write(message + '\n')
+        agent_process.stdin.flush()
+        
+        # Broadcast the user message to all connected WebSocket clients
+        if connected_clients:
+            socketio.emit('chat_message', {
+                'type': 'user',
+                'message': message,
+                'timestamp': time.time()
+            }, namespace='/')
+        
+        return jsonify({
+            'success': True,
+            'message': 'Message sent to agent successfully'
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f"Failed to send message: {str(e)}"
+        }), 500
 
 if __name__ == '__main__':
     print("🚀 Starting Calendar Agent Web Interface...")

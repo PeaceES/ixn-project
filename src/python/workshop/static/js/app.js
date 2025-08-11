@@ -50,6 +50,16 @@ class CalendarAgentUI {
         this.socket.on('agent_status', (status) => {
             this.updateAgentStatus(status);
         });
+
+        // Chat message events
+        this.socket.on('chat_message', (data) => {
+            this.addChatMessage(data.message, data.type, data.timestamp);
+        });
+
+        this.socket.on('chat_error', (data) => {
+            this.showNotification(data.message, 'error');
+            console.error('Chat error:', data.message);
+        });
     }
 
     updateConnectionStatus(status, type = 'info') {
@@ -130,6 +140,57 @@ class CalendarAgentUI {
             }
         }
 
+        // Update button states and chat interface based on agent status
+        const startBtn = document.getElementById('start-agent');
+        const stopBtn = document.getElementById('stop-agent');
+        const restartBtn = document.getElementById('restart-agent');
+        const chatInput = document.getElementById('chat-input');
+        const sendBtn = document.getElementById('send-message');
+
+        if (status.running) {
+            if (startBtn) {
+                startBtn.disabled = true;
+                startBtn.textContent = '🟢 Agent Running';
+            }
+            if (stopBtn) {
+                stopBtn.disabled = false;
+                stopBtn.textContent = '🛑 Stop Agent';
+            }
+            if (restartBtn) {
+                restartBtn.disabled = false;
+                restartBtn.textContent = '🔄 Restart Agent';
+            }
+            // Enable chat interface
+            if (chatInput) {
+                chatInput.disabled = false;
+                chatInput.placeholder = "Type your message to the agent...";
+            }
+            if (sendBtn) {
+                sendBtn.disabled = false;
+            }
+        } else {
+            if (startBtn) {
+                startBtn.disabled = false;
+                startBtn.textContent = '🚀 Start Agent';
+            }
+            if (stopBtn) {
+                stopBtn.disabled = true;
+                stopBtn.textContent = '🛑 Stop Agent';
+            }
+            if (restartBtn) {
+                restartBtn.disabled = true;
+                restartBtn.textContent = '🔄 Restart Agent';
+            }
+            // Disable chat interface
+            if (chatInput) {
+                chatInput.disabled = true;
+                chatInput.placeholder = "Start the agent to enable chat...";
+            }
+            if (sendBtn) {
+                sendBtn.disabled = true;
+            }
+        }
+
         // Show status message if provided
         if (status.message) {
             this.appendOutput('system', status.message, Date.now() / 1000);
@@ -204,12 +265,12 @@ class CalendarAgentUI {
         }
 
         document.getElementById('send-message')?.addEventListener('click', () => {
-            this.showNotImplemented('Chat functionality will be implemented in Stage 4');
+            this.sendMessage();
         });
 
         document.getElementById('chat-input')?.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                this.showNotImplemented('Chat functionality will be implemented in Stage 4');
+                this.sendMessage();
             }
         });
 
@@ -433,24 +494,77 @@ class CalendarAgentUI {
         }
     }
 
-    // Method to add chat messages (for future use)
-    addChatMessage(message, type = 'user') {
+    // Method to add chat messages (enhanced for Stage 4)
+    addChatMessage(message, type = 'user', timestamp = null) {
         const chatOutput = document.getElementById('chat-output');
         if (!chatOutput) return;
 
+        const time = timestamp ? new Date(timestamp * 1000).toLocaleTimeString() : new Date().toLocaleTimeString();
+        
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${type}-message`;
-        messageDiv.innerHTML = `<strong>${type === 'user' ? 'You' : 'Agent'}:</strong> ${message}`;
+        
+        let senderLabel = '';
+        switch(type) {
+            case 'user':
+                senderLabel = 'You';
+                break;
+            case 'agent':
+                senderLabel = 'Agent';
+                break;
+            case 'system':
+                senderLabel = 'System';
+                break;
+            default:
+                senderLabel = type.charAt(0).toUpperCase() + type.slice(1);
+        }
+        
+        messageDiv.innerHTML = `<span class="timestamp">[${time}]</span> <strong>${senderLabel}:</strong> ${this.escapeHtml(message)}`;
         
         chatOutput.appendChild(messageDiv);
-        chatOutput.scrollTop = chatOutput.scrollHeight;
+        
+        // Limit number of messages to prevent memory issues
+        const messages = chatOutput.querySelectorAll('.message');
+        if (messages.length > this.maxOutputLines) {
+            for (let i = 0; i < messages.length - this.maxOutputLines; i++) {
+                messages[i].remove();
+            }
+        }
+        
+        this.scrollToBottom();
+    }
+
+    sendMessage() {
+        const chatInput = document.getElementById('chat-input');
+        if (!chatInput) return;
+
+        const message = chatInput.value.trim();
+        if (!message) {
+            this.showNotification('Please enter a message', 'warning');
+            return;
+        }
+
+        // Check if agent is running
+        if (!this.isConnected) {
+            this.showNotification('WebSocket not connected. Please refresh the page.', 'error');
+            return;
+        }
+
+        // Send message via WebSocket
+        this.socket.emit('send_message', { message: message });
+        
+        // Clear input
+        chatInput.value = '';
+        
+        // Focus back to input for better UX
+        chatInput.focus();
     }
 }
 
 // Initialize the UI when the page loads
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 Calendar Agent Web Interface initialized');
-    console.log('📊 Stage 2: Agent Process Management is running');
+    console.log('🎉 Stage 4: Interactive Chat Interface is active');
     
     window.calendarAgentUI = new CalendarAgentUI();
     
@@ -462,7 +576,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 'system'
             );
             window.calendarAgentUI.addChatMessage(
-                'This interface will be enhanced with real-time features in upcoming stages.', 
+                'Start the agent and begin chatting to test the interactive interface.', 
                 'system'
             );
         }

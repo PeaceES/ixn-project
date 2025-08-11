@@ -147,6 +147,22 @@
         "Alice Chen"
       ],
       "status": "confirmed"
+    },
+    {
+      "id": "9cc7da4f-21c8-4273-b6db-fd26fe393520",
+      "calendar_id": "central-conference-room-main",
+      "calendar_name": "Main Conference Room",
+      "title": "Next Week's Meeting",
+      "start_time": "2025-08-17T08:00:00",
+      "end_time": "2025-08-17T08:30:00",
+      "organizer": "Alice Chen",
+      "location": "Building 1, Floor 2",
+      "description": "",
+      "created_at": "2025-08-11T10:19:28.128978",
+      "attendees": [
+        "Alice Chen"
+      ],
+      "status": "confirmed"
     }
   ]
 }

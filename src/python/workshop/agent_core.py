@@ -203,12 +203,55 @@ class CalendarAgentCore:
                 organizer=organizer,
                 description=description
             )
+            
+            # If event was successfully created, post to shared thread
+            result_data = json.loads(result) if isinstance(result, str) else result
+            if result_data.get("success"):
+                await self._post_event_to_shared_thread(
+                    title=title,
+                    start_time=start_time,
+                    end_time=end_time,
+                    room_id=room_id,
+                    organizer=organizer,
+                    description=description
+                )
+            
             return result
         except Exception as e:
             return json.dumps({
                 "success": False,
                 "error": f"Error scheduling event: {str(e)}"
             })
+
+    async def _post_event_to_shared_thread(self, title: str, start_time: str, end_time: str, 
+                                         room_id: str, organizer: str, description: str = "") -> None:
+        """Post a newly created event to the shared thread for visibility."""
+        try:
+            if not self.shared_thread_id or not self.project_client:
+                logger.warning("[AgentCore] Cannot post to shared thread - thread ID or client not available")
+                return
+                
+            event_payload = {
+                "event": "event_created",
+                "title": title,
+                "start_time": start_time,
+                "end_time": end_time,
+                "room_id": room_id,
+                "organizer": organizer,
+                "description": description,
+                "created_by": "calendar-agent",
+                "timestamp": start_time  # Using event start time as the timestamp
+            }
+            
+            await self.project_client.agents.create_message(
+                thread_id=self.shared_thread_id,
+                role="user",
+                content=json.dumps(event_payload)
+            )
+            logger.info(f"[AgentCore] Posted event '{title}' to shared thread {self.shared_thread_id}")
+            
+        except Exception as e:
+            logger.error(f"[AgentCore] Failed to post event to shared thread: {e}")
 
     def fetch_user_directory(self) -> Dict[str, Any]:
         """Fetch user directory from uploaded Azure resource."""

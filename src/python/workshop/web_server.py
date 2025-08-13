@@ -3,8 +3,9 @@ Flask Web Server for Calendar Scheduling Agent
 Stage 4: Interactive Chat Interface
 """
 
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, redirect, url_for, flash, session
 from flask_socketio import SocketIO, emit, disconnect
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 import os
 import subprocess
 import signal
@@ -23,6 +24,13 @@ app = Flask(__name__,
 
 # Initialize SocketIO
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+
+# Initialize Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+login_manager.login_message = 'Please log in to access this page.'
+login_manager.login_message_category = 'info'
 
 # Configuration
 app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY', 'dev-key-change-in-production')
@@ -48,6 +56,57 @@ agent_start_time = None
 agent_log_file = WORKSHOP_DIR / 'logs' / 'agent.log'
 agent_output_queue = queue.Queue()
 output_thread = None
+
+# User class for Flask-Login
+class User(UserMixin):
+    def __init__(self, user_id, name, email, role, calendar_permissions=None):
+        self.id = user_id
+        self.name = name
+        self.email = email
+        self.role = role
+        self.calendar_permissions = calendar_permissions or {}
+
+def load_user_directory():
+    """Load user directory from shared location."""
+    user_dir_path = Path(__file__).parent.parent.parent / 'shared' / 'user_directory.json'
+    try:
+        with open(user_dir_path, 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        print(f"Warning: User directory not found at {user_dir_path}")
+        return {}
+    except json.JSONDecodeError:
+        print(f"Warning: Invalid JSON in user directory at {user_dir_path}")
+        return {}
+
+@login_manager.user_loader
+def load_user(user_id):
+    """Load user from user directory."""
+    user_directory = load_user_directory()
+    if user_id in user_directory:
+        user_data = user_directory[user_id]
+        return User(
+            user_id=user_id,
+            name=user_data.get('name', ''),
+            email=user_data.get('email', ''),
+            role=user_data.get('role', ''),
+            calendar_permissions=user_data.get('calendar_permissions', {})
+        )
+    return None
+
+def authenticate_user(email, password=None):
+    """Simple authentication - check if email exists in user directory."""
+    user_directory = load_user_directory()
+    for user_id, user_data in user_directory.items():
+        if user_data.get('email', '').lower() == email.lower():
+            return User(
+                user_id=user_id,
+                name=user_data.get('name', ''),
+                email=user_data.get('email', ''),
+                role=user_data.get('role', ''),
+                calendar_permissions=user_data.get('calendar_permissions', {})
+            )
+    return None
 connected_clients = set()
 
 # Ensure log directory exists
@@ -319,7 +378,40 @@ def handle_send_message(data):
             'timestamp': time.time()
         })
 
+# Authentication Routes
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """Login page and authentication."""
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')  # Optional for now
+        
+        if not email:
+            flash('Please enter an email address.', 'error')
+            return render_template('login.html', users=load_user_directory())
+        
+        user = authenticate_user(email, password)
+        if user:
+            login_user(user)
+            flash(f'Welcome, {user.name}!', 'info')
+            next_page = request.args.get('next')
+            return redirect(next_page) if next_page else redirect(url_for('index'))
+        else:
+            flash('Invalid email address. Please check the available users below.', 'error')
+    
+    return render_template('login.html', users=load_user_directory())
+
+@app.route('/logout')
+@login_required
+def logout():
+    """Logout and redirect to login page."""
+    user_name = current_user.name if current_user.is_authenticated else 'User'
+    logout_user()
+    flash(f'Goodbye, {user_name}! You have been logged out.', 'info')
+    return redirect(url_for('login'))
+
 @app.route('/')
+@login_required
 def index():
     """Main dashboard page."""
     return render_template('index.html')
@@ -354,6 +446,7 @@ def api_status():
     return jsonify(status_data)
 
 @app.route('/api/agent/start', methods=['POST'])
+@login_required
 def start_agent_endpoint():
     """Start the calendar agent."""
     success, message = start_agent()
@@ -365,6 +458,7 @@ def start_agent_endpoint():
     })
 
 @app.route('/api/agent/stop', methods=['POST'])
+@login_required
 def stop_agent_endpoint():
     """Stop the calendar agent."""
     success, message = stop_agent()
@@ -400,6 +494,7 @@ def get_agent_logs():
         })
 
 @app.route('/api/agent/send', methods=['POST'])
+@login_required
 def send_message_to_agent():
     """Send a message to the running agent."""
     global agent_process
@@ -565,6 +660,7 @@ def get_events():
         }), 500
 
 @app.route('/api/calendar/events', methods=['POST'])
+@login_required
 def create_event():
     """Create a new calendar event."""
     try:

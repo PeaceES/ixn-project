@@ -291,6 +291,54 @@
         "Alice Chen"
       ],
       "status": "confirmed"
+    },
+    {
+      "id": "f8eeac4e-aa0f-4c41-8e59-0da1fa56b894",
+      "calendar_id": "central-meeting-room-alpha",
+      "calendar_name": "Alpha Meeting Room",
+      "title": "my lovely event",
+      "start_time": "2025-08-19T10:00:00",
+      "end_time": "2025-08-19T11:00:00",
+      "organizer": "alice chen",
+      "location": "Building 1, Floor 1",
+      "description": "",
+      "created_at": "2025-08-11T17:18:52.666883",
+      "attendees": [
+        "alice chen"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "d6b9a2ac-51f6-485b-818c-eec6058b9efd",
+      "calendar_id": "student-union-main-hall",
+      "calendar_name": "Student Union Main Hall",
+      "title": "Event by Alice Chen",
+      "start_time": "2024-08-14T15:00:00",
+      "end_time": "2024-08-14T16:00:00",
+      "organizer": "Alice Chen",
+      "location": "Student Union Building",
+      "description": "",
+      "created_at": "2025-08-11T17:24:54.421065",
+      "attendees": [
+        "Alice Chen"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "a5a9a0ee-ab9b-4745-a907-8dea04bdb8e7",
+      "calendar_id": "central-lecture-hall-main",
+      "calendar_name": "Main Lecture Hall",
+      "title": "Meeting",
+      "start_time": "2024-08-20T15:00:00",
+      "end_time": "2024-08-20T16:00:00",
+      "organizer": "Alice Chen",
+      "location": "Main Building, Ground Floor",
+      "description": "",
+      "created_at": "2025-08-11T17:31:09.764076",
+      "attendees": [
+        "Alice Chen"
+      ],
+      "status": "confirmed"
     }
   ]
 }

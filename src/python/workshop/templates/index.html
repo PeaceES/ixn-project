@@ -11,171 +11,186 @@
 <body>
     <div class="container">
         <header>
-            <h1>🗓️ Calendar Scheduling Agent</h1>
-            <p class="subtitle">AI-powered room booking and calendar management</p>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                <div>
+                    <h1>🗓️ Calendar Scheduling Agent</h1>
+                    <p class="subtitle">AI-powered room booking and calendar management</p>
+                </div>
+                <div style="text-align: right; min-width: 200px;">
+                    <div style="background: white; padding: 10px 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 10px;">
+                        <strong>👤 {{ current_user.name }}</strong><br>
+                        <small style="color: #6c757d;">{{ current_user.email }}</small><br>
+                        <small style="color: #007bff; text-transform: capitalize;">{{ current_user.role }}</small>
+                    </div>
+                    <a href="{{ url_for('logout') }}" style="background: #dc3545; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 0.9rem;">
+                        🚪 Logout
+                    </a>
+                </div>
+            </div>
         </header>
 
-        <div class="dashboard">
-            <!-- Status Panel -->
-            <div class="card status-card">
-                <h2>System Status</h2>
-                <div class="status-grid">
-                    <div class="status-item">
-                        <span class="status-label">Web Interface:</span>
-                        <span class="status-value status-active">Active</span>
-                    </div>
-                    <div class="status-item">
-                        <span class="status-label">Agent Process:</span>
-                        <span class="status-value status-pending" id="agent-status">Not Started</span>
-                    </div>
-                    <div class="status-item">
-                        <span class="status-label">Calendar Server:</span>
-                        <span class="status-value status-pending" id="calendar-status">Checking...</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Control Panel -->
-            <div class="card control-card">
-                <h2>Agent Controls</h2>
-                <div class="button-group">
-                    <button id="start-agent" class="btn btn-primary" disabled>
-                        🚀 Start Agent
-                    </button>
-                    <button id="stop-agent" class="btn btn-secondary" disabled>
-                        🛑 Stop Agent
-                    </button>
-                    <button id="restart-agent" class="btn btn-warning" disabled>
-                        🔄 Restart Agent
-                    </button>
-                </div>
-                <p class="help-text">
-                    <strong>Coming in Stage 2:</strong> Agent process management
-                </p>
-            </div>
-
-            <!-- Chat Interface -->
-            <div class="card chat-card">
-                <h2>Interactive Chat Interface</h2>
-                <div class="chat-container">
-                    <div class="chat-output" id="chat-output">
-                        <div class="message system-message">
-                            <strong>System:</strong> WebSocket connection status: <span id="connection-status">Connecting...</span>
+        <div class="main-layout">
+            <!-- Left Sidebar - Compact Controls -->
+            <div class="sidebar">
+                <div class="card status-card compact-card">
+                    <h2>System Status</h2>
+                    <div class="status-grid">
+                        <div class="status-item">
+                            <span class="status-label">Web Interface:</span>
+                            <span class="status-value status-active">Active</span>
                         </div>
-                        <div class="message info-message">
-                            <strong>Info:</strong> Agent output will stream here in real-time when running.
+                        <div class="status-item">
+                            <span class="status-label">Agent Process:</span>
+                            <span class="status-value status-pending" id="agent-status">Not Started</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Calendar Server:</span>
+                            <span class="status-value status-pending" id="calendar-status">Checking...</span>
                         </div>
                     </div>
-                    <div class="chat-input-container">
-                        <input 
-                            type="text" 
-                            id="chat-input" 
-                            placeholder="Type your message to the agent..."
-                            disabled
-                        >
-                        <button id="send-message" class="btn btn-primary" disabled>Send</button>
+                </div>
+                
+                <div class="card control-card compact-card">
+                    <h2>Agent Controls</h2>
+                    <div class="button-group vertical">
+                        <button id="start-agent" class="btn btn-primary" disabled>
+                            🚀 Start Agent
+                        </button>
+                        <button id="stop-agent" class="btn btn-secondary" disabled>
+                            🛑 Stop Agent
+                        </button>
+                        <button id="restart-agent" class="btn btn-warning" disabled>
+                            🔄 Restart Agent
+                        </button>
                     </div>
-                    <div class="output-controls">
-                        <button id="clear-output" class="btn btn-secondary">Clear Output</button>
-                        <button id="scroll-to-bottom" class="btn btn-secondary">Scroll to Bottom</button>
+                    <p class="help-text">
+                        <strong>Coming in Stage 2:</strong> Agent process management
+                    </p>
+                </div>
+                
+                <div class="card actions-card compact-card">
+                    <h2>Quick Actions</h2>
+                    <div class="quick-actions vertical">
+                        <button class="action-btn" id="view-calendar-btn">
+                            📅 View Calendar
+                        </button>
+                        <button class="action-btn" id="check-rooms-btn">
+                            🏢 Check Rooms
+                        </button>
+                        <button class="action-btn" id="book-meeting-btn">
+                            ➕ Book Meeting
+                        </button>
+                        <button class="action-btn" id="view-events-btn">
+                            📊 View Events
+                        </button>
                     </div>
+                    <p class="help-text">
+                        <strong>Stage 5 Complete:</strong> Calendar integration features are now active!
+                    </p>
                 </div>
-                <p class="help-text">
-                    <strong>Stage 4 Complete:</strong> Interactive chat interface is now active! You can send messages to the agent.
-                </p>
-            </div>
-
-            <!-- Quick Actions -->
-            <div class="card actions-card">
-                <h2>Quick Actions</h2>
-                <div class="quick-actions">
-                    <button class="action-btn" id="view-calendar-btn">
-                        📅 View Calendar
-                    </button>
-                    <button class="action-btn" id="check-rooms-btn">
-                        🏢 Check Rooms
-                    </button>
-                    <button class="action-btn" id="book-meeting-btn">
-                        ➕ Book Meeting
-                    </button>
-                    <button class="action-btn" id="view-events-btn">
-                        📊 View Events
-                    </button>
-                </div>
-                <p class="help-text">
-                    <strong>Stage 5 Complete:</strong> Calendar integration features are now active!
-                </p>
-            </div>
-
-            <!-- Calendar Widget -->
-            <div class="card calendar-card">
-                <div class="calendar-header-controls">
-                    <h2>📅 Calendar Overview</h2>
-                    <button id="refresh-calendar-btn" class="btn btn-secondary btn-small">
-                        🔄 Refresh
-                    </button>
-                </div>
-                <div id="calendar-widget" class="calendar-widget">
-                    <!-- Calendar will be rendered here by JavaScript -->
-                </div>
-                <div id="selected-date-events" class="selected-date-events">
-                    <p class="help-text">Click on a date to see events</p>
-                </div>
-            </div>
-
-            <!-- Room Availability -->
-            <div class="card room-card">
-                <h2>🏢 Room Availability</h2>
-                <div id="room-availability" class="room-availability">
-                    <!-- Room list will be rendered here by JavaScript -->
-                </div>
-                <div id="room-details" class="room-details">
-                    <p class="help-text">Click on a room to see details</p>
-                </div>
-            </div>
-
-            <!-- Quick Booking -->
-            <div class="card booking-card">
-                <h2>⚡ Quick Booking</h2>
-                <form id="quick-booking-form" class="booking-form">
-                    <div class="form-group">
-                        <label for="booking-title">Meeting Title:</label>
-                        <input type="text" id="booking-title" placeholder="Enter meeting title..." required>
-                    </div>
-                    <div class="form-row">
+                
+                <div class="card booking-card compact-card">
+                    <h2>⚡ Quick Booking</h2>
+                    <form id="quick-booking-form" class="booking-form">
                         <div class="form-group">
-                            <label for="booking-room">Room:</label>
-                            <select id="booking-room" required>
-                                <option value="">Select a room...</option>
-                            </select>
+                            <label for="booking-title">Meeting Title:</label>
+                            <input type="text" id="booking-title" placeholder="Enter meeting title..." required>
                         </div>
-                        <div class="form-group">
-                            <label for="booking-duration">Duration:</label>
-                            <select id="booking-duration">
-                                <option value="30">30 minutes</option>
-                                <option value="60" selected>1 hour</option>
-                                <option value="90">1.5 hours</option>
-                                <option value="120">2 hours</option>
-                            </select>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="booking-room">Room:</label>
+                                <select id="booking-room" required>
+                                    <option value="">Select a room...</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="booking-duration">Duration:</label>
+                                <select id="booking-duration">
+                                    <option value="30">30 minutes</option>
+                                    <option value="60" selected>1 hour</option>
+                                    <option value="90">1.5 hours</option>
+                                    <option value="120">2 hours</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="booking-date">Date:</label>
+                                <input type="date" id="booking-date" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="booking-time">Time:</label>
+                                <input type="time" id="booking-time" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            📅 Book Meeting
+                        </button>
+                    </form>
+                    <p class="help-text">
+                        <strong>Pro tip:</strong> You can also ask the agent to book meetings for you using natural language!
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Right Main Content - Chat Interface -->
+            <div class="main-content">
+                <div class="card chat-card">
+                    <h2>Interactive Chat Interface</h2>
+                    <div class="chat-container">
+                        <div class="chat-output" id="chat-output">
+                            <div class="message system-message">
+                                <strong>System:</strong> WebSocket connection status: <span id="connection-status">Connecting...</span>
+                            </div>
+                            <div class="message info-message">
+                                <strong>Info:</strong> Agent output will stream here in real-time when running.
+                            </div>
+                        </div>
+                        <div class="chat-input-container">
+                            <input 
+                                type="text" 
+                                id="chat-input" 
+                                placeholder="Type your message to the agent..."
+                                disabled
+                            >
+                            <button id="send-message" class="btn btn-primary" disabled>Send</button>
+                        </div>
+                        <div class="output-controls">
+                            <button id="clear-output" class="btn btn-secondary">Clear Output</button>
+                            <button id="scroll-to-bottom" class="btn btn-secondary">Scroll to Bottom</button>
                         </div>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="booking-date">Date:</label>
-                            <input type="date" id="booking-date" required>
+                    <p class="help-text">
+                        <strong>Stage 4 Complete:</strong> Interactive chat interface is now active! You can send messages to the agent.
+                    </p>
+                </div>
+                
+                <!-- Calendar and Booking Features - Below Chat -->
+                <div class="secondary-features">
+                    <div class="card calendar-card horizontal-card">
+                        <div class="calendar-header-controls">
+                            <h2>📅 Calendar Overview</h2>
+                            <button id="refresh-calendar-btn" class="btn btn-secondary btn-small">
+                                🔄 Refresh
+                            </button>
                         </div>
-                        <div class="form-group">
-                            <label for="booking-time">Time:</label>
-                            <input type="time" id="booking-time" required>
+                        <div id="calendar-widget" class="calendar-widget">
+                            <!-- Calendar will be rendered here by JavaScript -->
+                        </div>
+                        <div id="selected-date-events" class="selected-date-events">
+                            <p class="help-text">Click on a date to see events</p>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary">
-                        📅 Book Meeting
-                    </button>
-                </form>
-                <p class="help-text">
-                    <strong>Pro tip:</strong> You can also ask the agent to book meetings for you using natural language!
-                </p>
+                    <div class="card room-card horizontal-card">
+                        <h2>🏢 Room Availability</h2>
+                        <div id="room-availability" class="room-availability">
+                            <!-- Room list will be rendered here by JavaScript -->
+                        </div>
+                        <div id="room-details" class="room-details">
+                            <p class="help-text">Click on a room to see details</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 

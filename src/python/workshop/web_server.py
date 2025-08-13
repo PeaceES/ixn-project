@@ -96,15 +96,24 @@ def load_user(user_id):
 
 def authenticate_user(email, password=None):
     """Simple authentication - check if email exists in user directory."""
-    user_directory = load_user_directory()
-    for user_id, user_data in user_directory.items():
-        if user_data.get('email', '').lower() == email.lower():
+    # Load org_structure.json and check email against users
+    org_path = Path(__file__).parent.parent.parent / 'shared' / 'database' / 'data-generator' / 'org_structure.json'
+    try:
+        with open(org_path, 'r') as f:
+            org_data = json.load(f)
+    except Exception as e:
+        print(f"Warning: Could not load org_structure.json: {e}")
+        return None
+
+    for user in org_data.get('users', []):
+        if user.get('email', '').lower() == email.lower():
+            # Minimal User object, add more fields if needed
             return User(
-                user_id=user_id,
-                name=user_data.get('name', ''),
-                email=user_data.get('email', ''),
-                role=user_data.get('role', ''),
-                calendar_permissions=user_data.get('calendar_permissions', {})
+                user_id=str(user.get('id', '')),  # Use org_structure id
+                name=user.get('name', ''),
+                email=user.get('email', ''),
+                role=user.get('role_scope', ''),
+                calendar_permissions={}  # No calendar_permissions in org_structure
             )
     return None
 connected_clients = set()

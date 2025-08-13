@@ -1,0 +1,190 @@
+{
+  "departments": [
+    {
+      "id": 1,
+      "name": "Rodriguez, Figueroa and Sanchez Department",
+      "email": "rodriguez-figueroa-and-sanchez-department-dept@example.edu"
+    },
+    {
+      "id": 2,
+      "name": "Guzman, Hoffman and Baldwin Department",
+      "email": "guzman-hoffman-and-baldwin-department-dept@example.edu"
+    }
+  ],
+  "courses": [
+    {
+      "id": 1,
+      "department_id": 1,
+      "name": "Enable Sticky Methodologies 101",
+      "email": "enable-sticky-methodologies-101-course@example.edu"
+    },
+    {
+      "id": 2,
+      "department_id": 1,
+      "name": "Extend E-Business Applications 102",
+      "email": "extend-e-business-applications-102-course@example.edu"
+    },
+    {
+      "id": 3,
+      "department_id": 1,
+      "name": "Brand Robust Web-Readiness 103",
+      "email": "brand-robust-web-readiness-103-course@example.edu"
+    },
+    {
+      "id": 4,
+      "department_id": 2,
+      "name": "Scale Next-Generation E-Services 104",
+      "email": "scale-next-generation-e-services-104-course@example.edu"
+    },
+    {
+      "id": 5,
+      "department_id": 2,
+      "name": "Grow Efficient Synergies 105",
+      "email": "grow-efficient-synergies-105-course@example.edu"
+    },
+    {
+      "id": 6,
+      "department_id": 2,
+      "name": "Engineer Granular E-Commerce 106",
+      "email": "engineer-granular-e-commerce-106-course@example.edu"
+    }
+  ],
+  "societies": [
+    {
+      "id": 1,
+      "department_id": 1,
+      "name": "Better Society",
+      "email": "better-society-soc@example.edu"
+    },
+    {
+      "id": 2,
+      "department_id": 1,
+      "name": "Discover Society",
+      "email": "discover-society-soc@example.edu"
+    },
+    {
+      "id": 3,
+      "department_id": 1,
+      "name": "Early Society",
+      "email": "early-society-soc@example.edu"
+    },
+    {
+      "id": 4,
+      "department_id": 2,
+      "name": "Grow Society",
+      "email": "grow-society-soc@example.edu"
+    },
+    {
+      "id": 5,
+      "department_id": 2,
+      "name": "Fall Society",
+      "email": "fall-society-soc@example.edu"
+    },
+    {
+      "id": 6,
+      "department_id": 2,
+      "name": "Clearly Society",
+      "email": "clearly-society-soc@example.edu"
+    }
+  ],
+  "users": [
+    {
+      "id": 1,
+      "name": "Phillip Garcia",
+      "email": "wdavis@example.net",
+      "role_scope": "department",
+      "scope_id": 1
+    },
+    {
+      "id": 2,
+      "name": "Andrew Stevens",
+      "email": "dudleynicholas@example.net",
+      "role_scope": "department",
+      "scope_id": 1
+    },
+    {
+      "id": 3,
+      "name": "Mark Mcclure",
+      "email": "barbara10@example.net",
+      "role_scope": "staff",
+      "scope_id": 1
+    },
+    {
+      "id": 4,
+      "name": "Dylan Miller",
+      "email": "michellejames@example.com",
+      "role_scope": "staff",
+      "scope_id": 1
+    },
+    {
+      "id": 5,
+      "name": "Holly Wood",
+      "email": "elizabethmiles@example.net",
+      "role_scope": "department",
+      "scope_id": 2
+    },
+    {
+      "id": 6,
+      "name": "Lisa Jackson",
+      "email": "frankgray@example.net",
+      "role_scope": "department",
+      "scope_id": 2
+    },
+    {
+      "id": 7,
+      "name": "Colleen Nguyen",
+      "email": "perezantonio@example.com",
+      "role_scope": "staff",
+      "scope_id": 2
+    },
+    {
+      "id": 8,
+      "name": "Austin Gentry",
+      "email": "jason76@example.net",
+      "role_scope": "staff",
+      "scope_id": 2
+    },
+    {
+      "id": 9,
+      "name": "Derek Wright",
+      "email": "julie69@example.com",
+      "role_scope": "society_officer",
+      "scope_id": 1
+    },
+    {
+      "id": 10,
+      "name": "Zachary Taylor",
+      "email": "ddavis@example.org",
+      "role_scope": "society_officer",
+      "scope_id": 2
+    },
+    {
+      "id": 11,
+      "name": "Christopher Becker",
+      "email": "cruzcaitlin@example.com",
+      "role_scope": "society_officer",
+      "scope_id": 3
+    },
+    {
+      "id": 12,
+      "name": "Tricia Valencia",
+      "email": "frazierdanny@example.net",
+      "role_scope": "society_officer",
+      "scope_id": 4
+    },
+    {
+      "id": 13,
+      "name": "Patricia Peterson",
+      "email": "ryan70@example.net",
+      "role_scope": "society_officer",
+      "scope_id": 5
+    },
+    {
+      "id": 14,
+      "name": "Deborah Mason",
+      "email": "williamrodriguez@example.net",
+      "role_scope": "society_officer",
+      "scope_id": 6
+    }
+  ]
+}

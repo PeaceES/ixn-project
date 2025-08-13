@@ -2,189 +2,300 @@
   "departments": [
     {
       "id": 1,
-      "name": "Rodriguez, Figueroa and Sanchez Department",
-      "email": "rodriguez-figueroa-and-sanchez-department-dept@example.edu"
+      "name": "Engineering Department",
+      "email": "engineering-department-dept@example.edu"
     },
     {
       "id": 2,
-      "name": "Guzman, Hoffman and Baldwin Department",
-      "email": "guzman-hoffman-and-baldwin-department-dept@example.edu"
+      "name": "Computing Department",
+      "email": "computing-department-dept@example.edu"
+    },
+    {
+      "id": 3,
+      "name": "Literature Department",
+      "email": "literature-department-dept@example.edu"
     }
   ],
   "courses": [
     {
       "id": 1,
       "department_id": 1,
-      "name": "Enable Sticky Methodologies 101",
-      "email": "enable-sticky-methodologies-101-course@example.edu"
+      "name": "Mechanical Engineering",
+      "email": "mechanical-engineering-course@example.edu"
     },
     {
       "id": 2,
       "department_id": 1,
-      "name": "Extend E-Business Applications 102",
-      "email": "extend-e-business-applications-102-course@example.edu"
+      "name": "Civil Engineering",
+      "email": "civil-engineering-course@example.edu"
     },
     {
       "id": 3,
       "department_id": 1,
-      "name": "Brand Robust Web-Readiness 103",
-      "email": "brand-robust-web-readiness-103-course@example.edu"
+      "name": "Electrical Engineering",
+      "email": "electrical-engineering-course@example.edu"
     },
     {
       "id": 4,
       "department_id": 2,
-      "name": "Scale Next-Generation E-Services 104",
-      "email": "scale-next-generation-e-services-104-course@example.edu"
+      "name": "Computer Science",
+      "email": "computer-science-course@example.edu"
     },
     {
       "id": 5,
       "department_id": 2,
-      "name": "Grow Efficient Synergies 105",
-      "email": "grow-efficient-synergies-105-course@example.edu"
+      "name": "Software Engineering",
+      "email": "software-engineering-course@example.edu"
     },
     {
       "id": 6,
       "department_id": 2,
-      "name": "Engineer Granular E-Commerce 106",
-      "email": "engineer-granular-e-commerce-106-course@example.edu"
+      "name": "Artificial Intelligence",
+      "email": "artificial-intelligence-course@example.edu"
+    },
+    {
+      "id": 7,
+      "department_id": 3,
+      "name": "English Literature",
+      "email": "english-literature-course@example.edu"
+    },
+    {
+      "id": 8,
+      "department_id": 3,
+      "name": "Comparative Literature",
+      "email": "comparative-literature-course@example.edu"
+    },
+    {
+      "id": 9,
+      "department_id": 3,
+      "name": "Creative Writing",
+      "email": "creative-writing-course@example.edu"
     }
   ],
   "societies": [
     {
       "id": 1,
       "department_id": 1,
-      "name": "Better Society",
-      "email": "better-society-soc@example.edu"
+      "name": "Robotics Society",
+      "email": "robotics-society-soc@example.edu"
     },
     {
       "id": 2,
       "department_id": 1,
-      "name": "Discover Society",
-      "email": "discover-society-soc@example.edu"
+      "name": "Engineering Without Borders",
+      "email": "engineering-without-borders-soc@example.edu"
     },
     {
       "id": 3,
       "department_id": 1,
-      "name": "Early Society",
-      "email": "early-society-soc@example.edu"
+      "name": "Automotive Club",
+      "email": "automotive-club-soc@example.edu"
     },
     {
       "id": 4,
       "department_id": 2,
-      "name": "Grow Society",
-      "email": "grow-society-soc@example.edu"
+      "name": "AI Society",
+      "email": "ai-society-soc@example.edu"
     },
     {
       "id": 5,
       "department_id": 2,
-      "name": "Fall Society",
-      "email": "fall-society-soc@example.edu"
+      "name": "Cybersecurity Club",
+      "email": "cybersecurity-club-soc@example.edu"
     },
     {
       "id": 6,
       "department_id": 2,
-      "name": "Clearly Society",
-      "email": "clearly-society-soc@example.edu"
+      "name": "Game Development Society",
+      "email": "game-development-society-soc@example.edu"
+    },
+    {
+      "id": 7,
+      "department_id": 3,
+      "name": "Creative Writing Society",
+      "email": "creative-writing-society-soc@example.edu"
+    },
+    {
+      "id": 8,
+      "department_id": 3,
+      "name": "Poetry Club",
+      "email": "poetry-club-soc@example.edu"
+    },
+    {
+      "id": 9,
+      "department_id": 3,
+      "name": "Book Lovers Society",
+      "email": "book-lovers-society-soc@example.edu"
     }
   ],
   "users": [
     {
       "id": 1,
-      "name": "Phillip Garcia",
-      "email": "wdavis@example.net",
+      "name": "Allison Hill",
+      "email": "donaldgarcia@example.net",
       "role_scope": "department",
-      "scope_id": 1
+      "scope_id": 1,
+      "department_id": 1
     },
     {
       "id": 2,
-      "name": "Andrew Stevens",
-      "email": "dudleynicholas@example.net",
+      "name": "Angie Henderson",
+      "email": "davisjesse@example.net",
       "role_scope": "department",
-      "scope_id": 1
+      "scope_id": 1,
+      "department_id": 1
     },
     {
       "id": 3,
-      "name": "Mark Mcclure",
-      "email": "barbara10@example.net",
+      "name": "Cristian Santos",
+      "email": "lrobinson@example.com",
       "role_scope": "staff",
-      "scope_id": 1
+      "scope_id": 1,
+      "department_id": 1
     },
     {
       "id": 4,
-      "name": "Dylan Miller",
-      "email": "michellejames@example.com",
+      "name": "Abigail Shaffer",
+      "email": "jpeterson@example.org",
       "role_scope": "staff",
-      "scope_id": 1
+      "scope_id": 1,
+      "department_id": 1
     },
     {
       "id": 5,
-      "name": "Holly Wood",
-      "email": "elizabethmiles@example.net",
+      "name": "Gabrielle Davis",
+      "email": "howardmaurice@example.com",
       "role_scope": "department",
-      "scope_id": 2
+      "scope_id": 2,
+      "department_id": 2
     },
     {
       "id": 6,
-      "name": "Lisa Jackson",
-      "email": "frankgray@example.net",
+      "name": "Monica Herrera",
+      "email": "smiller@example.net",
       "role_scope": "department",
-      "scope_id": 2
+      "scope_id": 2,
+      "department_id": 2
     },
     {
       "id": 7,
-      "name": "Colleen Nguyen",
-      "email": "perezantonio@example.com",
+      "name": "Shannon Ray",
+      "email": "williamsjeremy@example.com",
       "role_scope": "staff",
-      "scope_id": 2
+      "scope_id": 2,
+      "department_id": 2
     },
     {
       "id": 8,
-      "name": "Austin Gentry",
-      "email": "jason76@example.net",
+      "name": "Dr. Sharon James",
+      "email": "xreid@example.org",
       "role_scope": "staff",
-      "scope_id": 2
+      "scope_id": 2,
+      "department_id": 2
     },
     {
       "id": 9,
-      "name": "Derek Wright",
-      "email": "julie69@example.com",
-      "role_scope": "society_officer",
-      "scope_id": 1
+      "name": "Daniel Adams",
+      "email": "lynchgeorge@example.net",
+      "role_scope": "department",
+      "scope_id": 3,
+      "department_id": 3
     },
     {
       "id": 10,
-      "name": "Zachary Taylor",
-      "email": "ddavis@example.org",
-      "role_scope": "society_officer",
-      "scope_id": 2
+      "name": "Joel Nelson",
+      "email": "gabriellecameron@example.org",
+      "role_scope": "department",
+      "scope_id": 3,
+      "department_id": 3
     },
     {
       "id": 11,
-      "name": "Christopher Becker",
-      "email": "cruzcaitlin@example.com",
-      "role_scope": "society_officer",
-      "scope_id": 3
+      "name": "Andrew Stewart",
+      "email": "carl95@example.org",
+      "role_scope": "staff",
+      "scope_id": 3,
+      "department_id": 3
     },
     {
       "id": 12,
-      "name": "Tricia Valencia",
-      "email": "frazierdanny@example.net",
-      "role_scope": "society_officer",
-      "scope_id": 4
+      "name": "Jennifer Rocha",
+      "email": "ithomas@example.org",
+      "role_scope": "staff",
+      "scope_id": 3,
+      "department_id": 3
     },
     {
       "id": 13,
-      "name": "Patricia Peterson",
-      "email": "ryan70@example.net",
+      "name": "Kimberly Burgess",
+      "email": "zhurst@example.com",
       "role_scope": "society_officer",
-      "scope_id": 5
+      "scope_id": 1,
+      "department_id": 1
     },
     {
       "id": 14,
+      "name": "Zachary Hicks",
+      "email": "camposmichelle@example.org",
+      "role_scope": "society_officer",
+      "scope_id": 2,
+      "department_id": 1
+    },
+    {
+      "id": 15,
+      "name": "Rebecca Henderson",
+      "email": "cruzcaitlin@example.com",
+      "role_scope": "society_officer",
+      "scope_id": 3,
+      "department_id": 1
+    },
+    {
+      "id": 16,
+      "name": "Tricia Valencia",
+      "email": "frazierdanny@example.net",
+      "role_scope": "society_officer",
+      "scope_id": 4,
+      "department_id": 2
+    },
+    {
+      "id": 17,
+      "name": "Patricia Peterson",
+      "email": "ryan70@example.net",
+      "role_scope": "society_officer",
+      "scope_id": 5,
+      "department_id": 2
+    },
+    {
+      "id": 18,
       "name": "Deborah Mason",
       "email": "williamrodriguez@example.net",
       "role_scope": "society_officer",
-      "scope_id": 6
+      "scope_id": 6,
+      "department_id": 2
+    },
+    {
+      "id": 19,
+      "name": "Mark Lynch",
+      "email": "nathanielmartin@example.net",
+      "role_scope": "society_officer",
+      "scope_id": 7,
+      "department_id": 3
+    },
+    {
+      "id": 20,
+      "name": "Linda Burns",
+      "email": "hickmannatasha@example.com",
+      "role_scope": "society_officer",
+      "scope_id": 8,
+      "department_id": 3
+    },
+    {
+      "id": 21,
+      "name": "David Bradley",
+      "email": "millertodd@example.org",
+      "role_scope": "society_officer",
+      "scope_id": 9,
+      "department_id": 3
     }
   ]
 }

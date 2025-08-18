@@ -51,6 +51,18 @@ class StreamEventHandler(AsyncAgentEventHandler[str]):
                             text_value = str(content_item.text)
                         self.current_response_text += text_value
                         self.util.log_token_blue(text_value)
+            # Additional fallback for delta content
+            elif hasattr(delta, 'delta') and delta.delta:
+                delta_content = delta.delta
+                if hasattr(delta_content, 'content') and delta_content.content:
+                    for content_item in delta_content.content:
+                        if hasattr(content_item, 'text') and content_item.text:
+                            if hasattr(content_item.text, 'value'):
+                                text_value = content_item.text.value
+                            else:
+                                text_value = str(content_item.text)
+                            self.current_response_text += text_value
+                            self.util.log_token_blue(text_value)
         except Exception as e:
             print(f"[StreamEventHandler] Exception in on_message_delta: {e}")
 
@@ -67,9 +79,29 @@ class StreamEventHandler(AsyncAgentEventHandler[str]):
                         else:
                             response_text += str(content_item.text)
                 
-                if response_text.strip() and not self.captured_response:
+                if response_text.strip():
+                    # Always update captured_response with the latest complete message
                     self.captured_response = response_text
-                    self.current_response_text = response_text
+                    # Also update current_response_text to ensure consistency
+                    if not self.current_response_text.strip() or len(response_text) > len(self.current_response_text):
+                        self.current_response_text = response_text
+                    print(f"[StreamEventHandler] Captured complete message: {response_text[:100]}...")
+            
+            # Also handle the case where role is assistant (our response)
+            elif getattr(message, 'role', None) == 'assistant' and hasattr(message, 'content'):
+                response_text = ""
+                for content_item in message.content:
+                    if hasattr(content_item, 'text') and content_item.text:
+                        if hasattr(content_item.text, 'value'):
+                            response_text += content_item.text.value
+                        else:
+                            response_text += str(content_item.text)
+                
+                if response_text.strip():
+                    self.captured_response = response_text
+                    if not self.current_response_text.strip() or len(response_text) > len(self.current_response_text):
+                        self.current_response_text = response_text
+                    print(f"[StreamEventHandler] Captured assistant message: {response_text[:100]}...")
             
             await self.util.get_files(message, self.project_client)
         except Exception as e:

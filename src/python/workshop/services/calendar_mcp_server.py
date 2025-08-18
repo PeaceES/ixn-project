@@ -9,8 +9,30 @@ from datetime import datetime, timedelta
 from dateutil import parser
 import uuid
 import uvicorn
+from contextlib import asynccontextmanager
 
-app = FastAPI(title="Enhanced Calendar MCP Server", version="2.0.0")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Initialize the MCP server with data from files on startup."""
+    print("Starting Enhanced Calendar MCP Server...")
+    
+    # Load rooms first (required for calendars)
+    await load_rooms()
+    
+    # Load calendars (creates room-based calendars)
+    await load_calendars()
+    
+    # Load events
+    await load_events()
+    
+    # Load user directory
+    await load_user_directory()
+    
+    print("Enhanced Calendar MCP Server ready!")
+    yield
+    # Cleanup can go here if needed
+
+app = FastAPI(title="Enhanced Calendar MCP Server", version="2.0.0", lifespan=lifespan)
 
 # Global storage
 rooms_data = {}
@@ -137,26 +159,46 @@ async def load_user_directory():
 
 
 def validate_user_exists(user_id: str) -> tuple[bool, str, dict]:
-    """Validate if user exists in directory with flexible matching."""
-    if not user_directory:
-        # If no user directory, deny access
-        return False, "No user directory configured", {}
+    """Validate if user exists in org structure with flexible matching."""
+    # Load org structure
+    org_data = load_org_structure()
+    if not org_data:
+        return False, "Organization structure not available", {}
     
-    # Try exact match first
-    if user_id in user_directory:
-        return True, "User found", user_directory[user_id]
+    users = org_data.get('users', [])
     
-    # Try converting spaces to dots (e.g., "alice chen" → "alice.chen")
-    user_id_with_dots = user_id.lower().replace(" ", ".")
-    if user_id_with_dots in user_directory:
-        return True, "User found", user_directory[user_id_with_dots]
+    # Try matching by ID (as string)
+    try:
+        user_id_int = int(user_id)
+        for user in users:
+            if user.get('id') == user_id_int:
+                return True, "User found", user
+    except ValueError:
+        pass
     
-    # Try searching by name field (e.g., "Alice Chen" matches user with name "Alice Chen")
-    for uid, user_info in user_directory.items():
-        if user_info.get("name", "").lower() == user_id.lower():
-            return True, "User found", user_info
+    # Try matching by email
+    for user in users:
+        if user.get('email', '').lower() == user_id.lower():
+            return True, "User found", user
     
-    return False, f"User '{user_id}' not found in directory", {}
+    # Try matching by name
+    for user in users:
+        if user.get('name', '').lower() == user_id.lower():
+            return True, "User found", user
+    
+    return False, f"User '{user_id}' not found in organization", {}
+
+
+def load_org_structure() -> dict:
+    """Load the organization structure from JSON file."""
+    import os, json
+    try:
+        org_path = os.path.join(os.path.dirname(__file__), '../../../shared/database/data-generator/org_structure.json')
+        with open(org_path, 'r') as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"Warning: Failed to load org_structure.json: {e}")
+        return {}
 
 
 def validate_group_exists(group_id: str) -> tuple[bool, str, dict]:
@@ -174,13 +216,54 @@ def validate_room_exists(room_id: str) -> tuple[bool, str, dict]:
 
 
 def validate_user_permissions(user_id: str, calendar_id: str) -> tuple[bool, str]:
-    """Validate if user has permission to access the calendar - simplified for room-only system."""
+    """Validate if user has permission to access the calendar based on org structure."""
     user_exists, user_msg, user_info = validate_user_exists(user_id)
     if not user_exists:
         return False, user_msg
     
-    # For room-based system, all users can access all rooms
-    return True, "User has access to room calendars"
+    # In the new org structure, everyone can book as long as they're booking for the right entity:
+    # - Department staff/admin can book for any course or society in their department
+    # - Society officers can only book for their own society
+    return True, "User has booking permissions based on organizational role"
+
+
+def can_user_book_for_entity(user_id: str, entity_type: str, entity_id: int) -> tuple[bool, str]:
+    """Check if user can book for a specific entity (department, course, society)."""
+    user_exists, user_msg, user_info = validate_user_exists(user_id)
+    if not user_exists:
+        return False, user_msg
+    
+    org_data = load_org_structure()
+    if not org_data:
+        return False, "Organization structure not available"
+    
+    user_role = user_info.get('role_scope', '')
+    user_dept_id = user_info.get('department_id')
+    user_scope_id = user_info.get('scope_id')
+    
+    if user_role in ['department', 'staff']:
+        # Department staff can book for any course or society in their department
+        if entity_type == 'department' and entity_id == user_dept_id:
+            return True, "Department member can book for their department"
+        elif entity_type == 'course':
+            # Check if course belongs to user's department
+            courses = org_data.get('courses', [])
+            for course in courses:
+                if course.get('id') == entity_id and course.get('department_id') == user_dept_id:
+                    return True, "Department member can book for department courses"
+        elif entity_type == 'society':
+            # Check if society belongs to user's department
+            societies = org_data.get('societies', [])
+            for society in societies:
+                if society.get('id') == entity_id and society.get('department_id') == user_dept_id:
+                    return True, "Department member can book for department societies"
+    
+    elif user_role == 'society_officer':
+        # Society officers can only book for their own society
+        if entity_type == 'society' and entity_id == user_scope_id:
+            return True, "Society officer can book for their own society"
+    
+    return False, f"User does not have permission to book for {entity_type} {entity_id}"
 
 
 def validate_calendar_exists(calendar_id: str) -> tuple[bool, str, dict]:
@@ -260,26 +343,6 @@ def check_room_conflicts(room_id: str, start_time: str, end_time: str, exclude_e
             continue
     
     return len(conflicts) > 0, conflicts
-
-
-@app.on_event("startup")
-async def startup_event():
-    """Initialize the MCP server with data from files."""
-    print("Starting Enhanced Calendar MCP Server...")
-    
-    # Load rooms first (required for calendars)
-    await load_rooms()
-    
-    # Load calendars (creates room-based calendars)
-    await load_calendars()
-    
-    # Load events
-    await load_events()
-    
-    # Load user directory
-    await load_user_directory()
-    
-    print("Enhanced Calendar MCP Server ready!")
 
 
 @app.post("/calendars/{calendar_id}/events")
@@ -514,6 +577,4 @@ async def list_rooms():
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 if __name__ == "__main__":
-    import asyncio
-    asyncio.run(startup_event())
     uvicorn.run(app, host="0.0.0.0", port=8000)

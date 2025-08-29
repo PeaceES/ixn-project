@@ -10,8 +10,8 @@ from dotenv import load_dotenv
 from agent_core import CalendarAgentCore
 from utils.terminal_colors import TerminalColors as tc
 
-# Configure logging to show debug-level agent diagnostics for debugging
-logging.basicConfig(level=logging.DEBUG)
+# Configure logging - only show INFO and above for cleaner output
+logging.basicConfig(level=logging.INFO, format='%(message)s')
 logger = logging.getLogger(__name__)
 
 # Suppress verbose Azure SDK logging
@@ -76,9 +76,6 @@ async def main() -> None:
         # Process the message
         print(f"{tc.YELLOW}Processing your request...{tc.RESET}")
         success, response = await agent_core.process_message(prompt)
-        print(f"{tc.BLUE}Raw response: {response}{tc.RESET}")
-        print(f"{tc.CYAN}Response type: {type(response)}{tc.RESET}")
-        print(f"{tc.CYAN}Response repr: {repr(response)}{tc.RESET}")
         if not success:
             print(f"{tc.RED}Error: {response}{tc.RESET}")
         else:

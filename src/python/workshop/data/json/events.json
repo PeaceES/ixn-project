@@ -405,17 +405,51 @@
       "status": "confirmed"
     },
     {
-      "id": "event-1756478159-main",
-      "title": "october's event",
-      "description": "Event created via web interface",
-      "start_time": "2025-09-11T15:00:00.000Z",
-      "end_time": "2025-09-11T16:00:00+00:00",
-      "room_id": "central-lecture-hall-main",
+      "id": "ee5bb1cd-e0b7-4eb6-8869-9bc424465684",
+      "calendar_id": "cs-lab-programming",
+      "calendar_name": "Programming Lab",
+      "title": "my september test event",
+      "start_time": "2025-09-03T08:00:00",
+      "end_time": "2025-09-03T09:00:00",
+      "organizer": "1",
+      "location": "Technology Block, Floor 2",
+      "description": "",
+      "created_at": "2025-08-29T15:58:16.488567",
+      "attendees": [
+        "1"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "c66a3b11-da43-4474-8624-3c68ace58543",
+      "calendar_id": "central-seminar-room-alpha",
+      "calendar_name": "Alpha Seminar Room",
+      "title": "Engineering Department Meeting",
+      "start_time": "2025-10-15T09:00:00",
+      "end_time": "2025-10-15T10:00:00",
+      "organizer": "1",
+      "location": "Academic Block, Floor 1",
+      "description": "Meeting for 15 people",
+      "created_at": "2025-08-29T16:19:23.011381",
+      "attendees": [
+        "1"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "36e085d4-7bfc-4a43-ae22-789aa8bc47bc",
       "calendar_id": "central-lecture-hall-main",
-      "organizer": "Web User",
-      "attendee_count": 1,
-      "is_recurring": false,
-      "event_type": "meeting",
+      "calendar_name": "Main Lecture Hall",
+      "title": "user auto detect event",
+      "start_time": "2025-10-16T16:00:00",
+      "end_time": "2025-10-16T18:00:00",
+      "organizer": "7",
+      "location": "Main Building, Ground Floor",
+      "description": "",
+      "created_at": "2025-08-29T16:25:38.189627",
+      "attendees": [
+        "7"
+      ],
       "status": "confirmed"
     }
   ]

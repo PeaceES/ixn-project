@@ -37,8 +37,8 @@ AGENT_NAME = "Calendar Scheduler"
 FONTS_ZIP = "fonts/fonts.zip"
 API_DEPLOYMENT_NAME = os.getenv("MODEL_DEPLOYMENT_NAME")
 PROJECT_CONNECTION_STRING = os.environ["PROJECT_CONNECTION_STRING"]
-print("[AGENT] PROJECT_CONNECTION_STRING:", PROJECT_CONNECTION_STRING)
-print("[AGENT] MODEL_DEPLOYMENT_NAME:", API_DEPLOYMENT_NAME)
+# Removed verbose debug prints for cleaner output
+# Only essential info will be logged
 MAX_COMPLETION_TOKENS = 10240
 MAX_PROMPT_TOKENS = 20480
 TEMPERATURE = 0.1
@@ -63,6 +63,17 @@ class CalendarAgentCore:
         self._enable_tools = enable_tools
         # Flag to separately enable the CodeInterpreter tool (for bisecting)
         self._enable_code_interpreter = enable_code_interpreter
+        
+        # Check for user context from environment (passed by web server)
+        self.default_user_context = None
+        if os.getenv('AGENT_USER_ID'):
+            self.default_user_context = {
+                'id': os.getenv('AGENT_USER_ID'),
+                'name': os.getenv('AGENT_USER_NAME', ''),
+                'email': os.getenv('AGENT_USER_EMAIL', '')
+            }
+            logger.info(f"[AgentCore] Initialized with user context: {self.default_user_context}")
+        
         # Initialize function tools only when tools are enabled (safe-mode)
         if self._enable_tools:
             self._initialize_functions()
@@ -107,30 +118,17 @@ class CalendarAgentCore:
         - comma-separated function names to enable a subset, e.g. "get_rooms_via_mcp,check_room_availability_via_mcp"
         """
         if not self._tools_initialized:
-            # Additional debug logging to trace environment variable issues
+            # Load environment configuration
             import os
             from dotenv import load_dotenv
-            logger.info(f"[AgentCore] Current working directory: {os.getcwd()}")
-            logger.info(f"[AgentCore] Environment variables containing 'ENABLED':")
-            for key, value in os.environ.items():
-                if 'ENABLED' in key.upper():
-                    logger.info(f"[AgentCore]   {key}={value}")
-            
-            # Try reloading .env file to see if it helps
             env_file_path = os.path.join(os.getcwd(), '.env')
-            logger.info(f"[AgentCore] Checking .env file at: {env_file_path}")
             if os.path.exists(env_file_path):
-                logger.info(f"[AgentCore] .env file exists, attempting to reload")
                 load_dotenv(override=True)  # Force reload with override
             else:
                 logger.warning(f"[AgentCore] .env file not found at expected location")
             
             enabled_env = os.getenv("ENABLED_FUNCTIONS", "ALL")
             enabled_names = [s.strip() for s in enabled_env.split(',')] if enabled_env else []
-            
-            # Debug logging
-            logger.info(f"[AgentCore] ENABLED_FUNCTIONS env: {enabled_env}")
-            logger.info(f"[AgentCore] Parsed enabled_names: {enabled_names}")
 
             # Map of available function names to bound callables
             available_funcs = {
@@ -150,16 +148,12 @@ class CalendarAgentCore:
                 "get_user_details": self.get_user_details,
             }
             
-            # Debug logging
-            logger.info(f"[AgentCore] Available functions: {list(available_funcs.keys())}")
-
             selected = []
             selected_names = []
             # If user requested ALL, select all available functions
             if any(n.upper() == "ALL" for n in enabled_names):
                 selected = list(available_funcs.values())
                 selected_names = list(available_funcs.keys())
-                logger.info(f"[AgentCore] Using ALL functions")
             else:
                 for name in enabled_names:
                     if not name:
@@ -167,7 +161,6 @@ class CalendarAgentCore:
                     if name in available_funcs:
                         selected.append(available_funcs[name])
                         selected_names.append(name)
-                        logger.info(f"[AgentCore] Added function: {name}")
                     else:
                         logger.warning(f"[AgentCore] ENABLED_FUNCTIONS includes unknown function: {name}")
 
@@ -175,12 +168,12 @@ class CalendarAgentCore:
                 # If nothing was explicitly selected, default to ALL for backwards compatibility
                 selected = list(available_funcs.values())
                 selected_names = list(available_funcs.keys())
-                logger.info(f"[AgentCore] Defaulting to ALL functions (backwards compatibility)")
 
             # Initialize the AsyncFunctionTool with the selected callables
             self.functions = AsyncFunctionTool(selected)
             self._tools_initialized = True
-            logger.info(f"[AgentCore] Function tools initialized (selected: {selected_names})")
+            # Simplified logging - only show count of functions
+            logger.info(f"[AgentCore] Initialized with {len(selected_names)} functions")
     
     async def get_events_via_mcp(self) -> str:
         """Get events via MCP server."""
@@ -341,8 +334,7 @@ class CalendarAgentCore:
             # Get user's booking entities
             entities_result = await self.get_user_booking_entity(user_id)
             entities_data = json.loads(entities_result)
-            logger.info(f"[AgentCore] Checking permissions for user {user_id} to book for {entity_type}: {entity_name}")
-            logger.info(f"[AgentCore] User's allowed entities: {entities_data.get('entities', [])}")
+            # Debug logging removed - permissions check happening silently
 
             if not entities_data.get("success"):
                 return json.dumps({
@@ -851,8 +843,7 @@ class CalendarAgentCore:
             #     conn_str=connection_string,
             # )
             
-            logger.info(f"[AgentCore] Using hub-based project with connection string")
-            logger.info(f"[AgentCore] This matches your Azure AI Projects SDK version 1.0.0b10")
+            # Initialize project client
 
             # Initialize AIProjectClient using the hub-based connection string method
             self.project_client = AIProjectClient.from_connection_string(
@@ -861,9 +852,8 @@ class CalendarAgentCore:
             )
 
             # Add agent tools
-            logger.info(f"[AgentCore] Toolset before adding tools: {len(self.toolset._tools)} tools")
+            # Add agent tools
             font_file_info = await self.add_agent_tools()
-            logger.info(f"[AgentCore] Toolset after adding tools: {len(self.toolset._tools)} tools")
 
             # Load instructions
             instructions = self.utilities.load_instructions(INSTRUCTIONS_FILE)
@@ -879,7 +869,7 @@ class CalendarAgentCore:
                     instructions=instructions,
                     temperature=TEMPERATURE,
                 )
-                logger.info(f"[AgentCore] Created agent with ID: {self.agent.id}")
+                # Agent created successfully - log will be consolidated at the end
             except Exception as e:
                 logger.error(f"[AgentCore] Failed to create agent with model '{API_DEPLOYMENT_NAME}': {e}")
                 # Try to get available models
@@ -907,16 +897,11 @@ class CalendarAgentCore:
             # For hub-based projects, we might need to handle this differently
             try:
                 # Only enable auto function calls if tools are properly initialized
-                if not self._enable_tools:
-                    logger.info("[AgentCore] Skipping enabling auto function calls because tools are disabled for this instance")
-                else:
-                    if self._tools_initialized and len(self.toolset._tools) > 0:
-                        await self.project_client.agents.enable_auto_function_calls(toolset=self.toolset)
-                        logger.info(f"[AgentCore] Auto function calls enabled successfully")
-                    else:
-                        logger.warning(f"[AgentCore] Skipping auto function calls - tools not properly initialized")
+                if self._enable_tools and self._tools_initialized and len(self.toolset._tools) > 0:
+                    await self.project_client.agents.enable_auto_function_calls(toolset=self.toolset)
+                    # Auto function calls enabled
             except Exception as e:
-                logger.warning(f"[AgentCore] Could not enable auto function calls: {e}")
+                # Silently handle auto function call setup errors
                 # Try alternative approach - create agent with toolset included if possible
                 try:
                     if self._enable_tools and self._tools_initialized:
@@ -928,7 +913,7 @@ class CalendarAgentCore:
                             toolset=self.toolset,
                             temperature=TEMPERATURE,
                         )
-                        logger.info(f"[AgentCore] Agent recreated with toolset integrated")
+                        # Agent recreated with toolset integrated
                 except Exception as e2:
                     logger.warning(f"[AgentCore] Could not recreate agent with toolset: {e2}")
                     # Continue without tools for basic functionality
@@ -937,12 +922,12 @@ class CalendarAgentCore:
             # Hub-based: project_client.agents.create_thread()
             # Endpoint-based: project_client.agents.threads.create()
             self.thread = await self.project_client.agents.create_thread()
-            logger.info(f"[AgentCore] Created thread with ID: {self.thread.id}")
+            # Thread created
 
             # Create shared thread for system events - using hub-based API
             shared_thread = await self.project_client.agents.create_thread()
             self.shared_thread_id = shared_thread.id
-            logger.info(f"[AgentCore] Created shared thread with ID: {self.shared_thread_id}")
+            # Shared thread created
 
             # Send initialization event to shared thread - using hub-based API
             # Hub-based: project_client.agents.create_message()
@@ -958,8 +943,15 @@ class CalendarAgentCore:
                 content=json.dumps(event_payload)
             )
 
-            success_msg = f"Agent initialized successfully. MCP: {mcp_status}, Org structure: {user_dir_status}"
-            logger.info(f"[AgentCore] Initialization complete. Agent ID: {self.agent.id}, Thread ID: {self.thread.id}")
+            # Consolidated initialization logging with essential info only
+            logger.info(f"[AgentCore] Agent initialized successfully")
+            logger.info(f"  - Model: {API_DEPLOYMENT_NAME}")
+            logger.info(f"  - Agent ID: {self.agent.id}")
+            logger.info(f"  - Thread ID: {self.thread.id}")
+            logger.info(f"  - Shared Thread ID: {self.shared_thread_id}")
+            logger.info(f"  - MCP Status: {mcp_status}")
+            
+            success_msg = f"Agent ready (Model: {API_DEPLOYMENT_NAME})"
             return True, success_msg
         except Exception as e:
             self._cleanup_run_thread()
@@ -976,7 +968,7 @@ class CalendarAgentCore:
             logger.warning("[AgentCore] Agent is busy processing another request.")
             return False, "Agent is busy processing another request. Please wait."
         self._operation_active = True
-        logger.info(f"[AgentCore] Processing message. Agent ID: {self.agent.id}, Thread ID: {self.thread.id}")
+        # Process message silently unless there's an error
         try:
             # Use the already initialized project client
             if not self.project_client:
@@ -984,14 +976,11 @@ class CalendarAgentCore:
                 
             # Ensure toolset is properly configured before each run
             try:
-                # Only enable if tools are initialized and not already enabled
-                if not self._enable_tools:
-                    logger.info("[AgentCore] Skipping enabling auto function calls because tools are disabled for this instance")
-                else:
-                    if self._tools_initialized and len(self.toolset._tools) > 0:
-                        await self.project_client.agents.enable_auto_function_calls(toolset=self.toolset)
+                if self._enable_tools and self._tools_initialized and len(self.toolset._tools) > 0:
+                    await self.project_client.agents.enable_auto_function_calls(toolset=self.toolset)
             except Exception as e:
-                logger.warning(f"[AgentCore] Could not enable auto function calls: {e}")
+                # Silently handle auto function call setup errors
+                pass
             
             # Create message using hub-based API
             await self.project_client.agents.create_message(
@@ -1051,50 +1040,9 @@ class CalendarAgentCore:
                 else:
                     logger.info(f"[AgentCore] Run {latest_run.id} finished with status: {latest_run.status}")
             
-            # Diagnostic logging for stream_handler state
-            logger.warning(f"[AgentCore][DEBUG] stream_handler.captured_response: {getattr(stream_handler, 'captured_response', None)}")
-            logger.warning(f"[AgentCore][DEBUG] stream_handler.current_response_text: {getattr(stream_handler, 'current_response_text', None)}")
-            logger.warning(f"[AgentCore][DEBUG] stream_handler.__dict__: {stream_handler.__dict__}")
+            # Stream handler state diagnostics removed for cleaner output
 
-            # Fetch and log all thread messages for this thread - using hub-based API
-            try:
-                # Hub-based: list_messages()
-                # Endpoint-based: messages.list()
-                thread_messages_paged = await self.project_client.agents.list_messages(thread_id=self.thread.id)
-                logger.warning(f"[AgentCore][DEBUG] Thread messages for thread {self.thread.id}:")
-                # For hub-based API, messages might be in .data attribute
-                if hasattr(thread_messages_paged, 'data'):
-                    for msg in thread_messages_paged.data:
-                        logger.warning(f"[AgentCore][DEBUG] Message: id={getattr(msg, 'id', None)}, role={getattr(msg, 'role', None)}, status={getattr(msg, 'status', None)}, content={getattr(msg, 'content', None)}")
-                else:
-                    # If it's an async iterator, iterate properly
-                    async for msg in thread_messages_paged:
-                        logger.warning(f"[AgentCore][DEBUG] Message: id={getattr(msg, 'id', None)}, role={getattr(msg, 'role', None)}, status={getattr(msg, 'status', None)}, content={getattr(msg, 'content', None)}")
-            except Exception as e:
-                logger.error(f"[AgentCore][DEBUG] Error fetching thread messages: {e}")
-
-            # Optionally log the final run object if available - using hub-based API
-            try:
-                # Hub-based: list_runs()
-                # Endpoint-based: runs.list()
-                runs_paged = await self.project_client.agents.list_runs(thread_id=self.thread.id)
-                logger.warning(f"[AgentCore][DEBUG] Runs for thread {self.thread.id}:")
-                # For hub-based API, runs might be in .data attribute
-                if hasattr(runs_paged, 'data'):
-                    for run in runs_paged.data:
-                        logger.warning(f"[AgentCore][DEBUG] Run: id={getattr(run, 'id', None)}, status={getattr(run, 'status', None)}, last_error={getattr(run, 'last_error', None)}")
-                        # If run requires action, log the required action/tool
-                        if getattr(run, 'status', None) == 'REQUIRES_ACTION':
-                            required_action = getattr(run, 'required_action', None)
-                            logger.warning(f"[AgentCore][DEBUG] Run requires action: {required_action}")
-                            tool_calls = getattr(run, 'tool_calls', None)
-                            logger.warning(f"[AgentCore][DEBUG] Run tool_calls: {tool_calls}")
-                else:
-                    # If it's an async iterator, iterate properly
-                    async for run in runs_paged:
-                        logger.warning(f"[AgentCore][DEBUG] Run: id={getattr(run, 'id', None)}, status={getattr(run, 'status', None)}, last_error={getattr(run, 'last_error', None)}")
-            except Exception as e:
-                logger.error(f"[AgentCore][DEBUG] Error fetching runs: {e}")
+            # Debug logging removed - thread messages and runs are processed silently
 
             # Always try to get the latest assistant message from the thread first
             # This ensures we get the final response after tool execution
@@ -1126,7 +1074,7 @@ class CalendarAgentCore:
                             # Only use this message if it's not echoing user input and has content
                             if message_text and message_text.strip() and message_text.strip().lower() != user_message.strip().lower():
                                 response_text = message_text  # Use the latest response
-                                logger.info(f"[AgentCore] Found assistant response: {response_text[:100]}...")
+                                # Found assistant response
                                 break  # Stop at the first valid assistant message
                 else:
                     # Handle async iterator
@@ -1157,7 +1105,7 @@ class CalendarAgentCore:
                             # Only use this message if it's not echoing user input and has content
                             if message_text and message_text.strip() and message_text.strip().lower() != user_message.strip().lower():
                                 response_text = message_text  # Use the latest response
-                                logger.info(f"[AgentCore] Found assistant response (async): {response_text[:100]}...")
+                                # Found assistant response (async)
                                 break  # Stop at the first valid assistant message
             except Exception as e:
                 logger.warning(f"[AgentCore] Could not fetch latest message: {e}")
@@ -1198,7 +1146,7 @@ class CalendarAgentCore:
             return False, error_msg
         finally:
             self._operation_active = False
-            logger.info(f"[AgentCore] Operation complete. Agent ID: {self.agent.id if self.agent else None}, Thread ID: {self.thread.id if self.thread else None}")
+            # Operation completed
 
     async def _handle_required_action(self, run):
         """Handle runs that require action (tool calls)."""
@@ -1208,16 +1156,12 @@ class CalendarAgentCore:
                 required_action = run.required_action
                 if hasattr(required_action, 'submit_tool_outputs') and required_action.submit_tool_outputs:
                     tool_calls = required_action.submit_tool_outputs.tool_calls
-                    logger.info(f"[AgentCore] Handling {len(tool_calls)} tool calls")
-                    
+                    # Handle tool calls
                     tool_outputs = []
                     for tool_call in tool_calls:
                         if tool_call.type == "function":
                             function_name = tool_call.function.name
                             function_args = tool_call.function.arguments
-                            
-                            logger.info(f"[AgentCore] Executing function: {function_name}")
-                            logger.info(f"[AgentCore] Function arguments: {function_args}")
                             
                             try:
                                 # Parse arguments
@@ -1272,8 +1216,8 @@ class CalendarAgentCore:
                                     "tool_call_id": tool_call.id,
                                     "output": str(result)
                                 })
-                                logger.info(f"[AgentCore] Function {function_name} executed successfully")
-                                logger.warning(f"[AgentCore][DEBUG] Tool output for {function_name}: {str(result)[:500]}...")
+                                # Function executed
+                                # Tool output captured
                             except Exception as e:
                                 logger.error(f"[AgentCore] Error executing function {function_name}: {e}")
                                 tool_outputs.append({

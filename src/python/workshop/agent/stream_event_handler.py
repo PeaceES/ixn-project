@@ -47,7 +47,8 @@ class StreamEventHandler(AsyncAgentEventHandler[str]):
                                 text_value = content_item.text.value
                                 if text_value:  # Only add non-empty values
                                     self.current_response_text += text_value
-                                    self.util.log_token_blue(text_value)
+                                    # Token streaming disabled for cleaner output
+                                    # self.util.log_token_blue(text_value)
         except Exception as e:
             print(f"[StreamEventHandler] Exception in on_message_delta: {e}")
 
@@ -70,7 +71,7 @@ class StreamEventHandler(AsyncAgentEventHandler[str]):
                     # Also update current_response_text to ensure consistency
                     if not self.current_response_text.strip() or len(response_text) > len(self.current_response_text):
                         self.current_response_text = response_text
-                    print(f"[StreamEventHandler] Captured complete message: {response_text[:100]}...")
+                    # Captured complete message
             
             # Also handle the case where role is assistant (our response)
             elif getattr(message, 'role', None) == 'assistant' and hasattr(message, 'content'):
@@ -86,7 +87,7 @@ class StreamEventHandler(AsyncAgentEventHandler[str]):
                     self.captured_response = response_text
                     if not self.current_response_text.strip() or len(response_text) > len(self.current_response_text):
                         self.current_response_text = response_text
-                    print(f"[StreamEventHandler] Captured assistant message: {response_text[:100]}...")
+                    # Captured assistant message
             
             await self.util.get_files(message, self.project_client)
         except Exception as e:
@@ -126,7 +127,8 @@ class StreamEventHandler(AsyncAgentEventHandler[str]):
     async def on_tool_call_created(self, tool_call) -> None:
         """Handle tool call creation."""
         try:
-            print(f"[StreamEventHandler] Tool call created: {tool_call.type}")
+            # Tool call created
+            pass
         except Exception as e:
             print(f"[StreamEventHandler] Exception in on_tool_call_created: {e}")
 
@@ -134,10 +136,8 @@ class StreamEventHandler(AsyncAgentEventHandler[str]):
         """Handle tool call delta events."""
         try:
             if delta.type == "function":
-                if delta.function.name:
-                    print(f"[StreamEventHandler] Calling function: {delta.function.name}")
-                if delta.function.arguments:
-                    print(f"[StreamEventHandler] Function arguments: {delta.function.arguments}")
+                # Function delta event - silently handle
+                pass
         except Exception as e:
             print(f"[StreamEventHandler] Exception in on_tool_call_delta: {e}")
 
@@ -148,8 +148,7 @@ class StreamEventHandler(AsyncAgentEventHandler[str]):
                 function_name = tool_call.function.name
                 function_args = tool_call.function.arguments
                 
-                print(f"[StreamEventHandler] Tool call completed: {function_name}")
-                print(f"[StreamEventHandler] Function arguments: {function_args}")
+                # Tool call completed - main handler will process
                 
                 # Note: Tool execution and output submission will be handled by the main agent_core
                 # when it detects the REQUIRES_ACTION status

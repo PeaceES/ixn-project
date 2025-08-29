@@ -39,6 +39,9 @@ app.config['DEBUG'] = os.getenv('FLASK_DEBUG', 'True').lower() == 'true'
 # Additional dev container friendly settings
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0  # Disable caching for development
 
+# Feature flags
+AUTO_INJECT_USER_CONTEXT = os.getenv('AUTO_INJECT_USER_CONTEXT', 'true').lower() == 'true'
+
 # Paths
 WORKSHOP_DIR = Path(__file__).parent
 STATIC_DIR = WORKSHOP_DIR / 'static'
@@ -67,16 +70,28 @@ class User(UserMixin):
         self.calendar_permissions = calendar_permissions or {}
 
 def load_user_directory():
-    """Load user directory from shared location."""
-    user_dir_path = Path(__file__).parent.parent.parent / 'shared' / 'user_directory.json'
+    """Load user directory from org_structure.json."""
+    org_path = Path(__file__).parent.parent.parent / 'shared' / 'database' / 'data-generator' / 'org_structure.json'
     try:
-        with open(user_dir_path, 'r') as f:
-            return json.load(f)
+        with open(org_path, 'r') as f:
+            org_data = json.load(f)
+        
+        # Convert org_structure users to user directory format
+        user_directory = {}
+        for user in org_data.get('users', []):
+            user_id = str(user.get('id', ''))
+            user_directory[user_id] = {
+                'name': user.get('name', ''),
+                'email': user.get('email', ''),
+                'role': user.get('role_scope', ''),
+                'department_id': user.get('department_id', '')
+            }
+        return user_directory
     except FileNotFoundError:
-        print(f"Warning: User directory not found at {user_dir_path}")
+        print(f"Warning: org_structure.json not found at {org_path}")
         return {}
     except json.JSONDecodeError:
-        print(f"Warning: Invalid JSON in user directory at {user_dir_path}")
+        print(f"Warning: Invalid JSON in org_structure.json at {org_path}")
         return {}
 
 @login_manager.user_loader
@@ -150,8 +165,12 @@ def get_agent_pid():
         return agent_process.pid
     return None
 
-def start_agent():
-    """Start the calendar agent as a subprocess with real-time output streaming."""
+def start_agent(user_context=None):
+    """Start the calendar agent as a subprocess with real-time output streaming.
+    
+    Args:
+        user_context: Optional dict with user information (id, name, email) to pass to agent
+    """
     global agent_process, agent_start_time
     
     if is_agent_running():
@@ -163,6 +182,13 @@ def start_agent():
         if not agent_script.exists():
             return False, f"Agent script not found: {agent_script}"
         
+        # Prepare environment variables including user context if provided
+        env = os.environ.copy()
+        if user_context and AUTO_INJECT_USER_CONTEXT:
+            env['AGENT_USER_ID'] = str(user_context.get('id', ''))
+            env['AGENT_USER_NAME'] = user_context.get('name', '')
+            env['AGENT_USER_EMAIL'] = user_context.get('email', '')
+        
         # Start the agent process with stdout/stderr capture
         agent_process = subprocess.Popen(
             ['python', str(agent_script)],
@@ -170,6 +196,7 @@ def start_agent():
             stderr=subprocess.STDOUT,
             stdin=subprocess.PIPE,
             cwd=str(WORKSHOP_DIR),
+            env=env,
             preexec_fn=os.setsid,  # Create new process group
             universal_newlines=True,
             bufsize=1  # Line buffered
@@ -350,6 +377,14 @@ def handle_send_message(data):
     """Handle message from client to send to agent."""
     global agent_process
     
+    # Check if user is authenticated for WebSocket events
+    if not current_user.is_authenticated:
+        emit('chat_error', {
+            'message': 'Please log in to send messages.',
+            'timestamp': time.time()
+        })
+        return
+    
     if not is_agent_running():
         emit('chat_error', {
             'message': 'Agent is not running. Please start the agent first.',
@@ -366,18 +401,34 @@ def handle_send_message(data):
             })
             return
         
-        # Send message to agent via stdin
-        agent_process.stdin.write(message + '\n')
+        # Check if we should inject user context
+        if AUTO_INJECT_USER_CONTEXT and current_user.is_authenticated:
+            # Check if message is asking about booking or contains booking-related keywords
+            booking_keywords = ['book', 'schedule', 'reserve', 'meeting', 'event', 'room', 'what can i book', 'calendar', 'available']
+            needs_user_context = any(keyword in message.lower() for keyword in booking_keywords)
+            
+            if needs_user_context:
+                # Create a context-aware message that includes user information
+                context_message = f"[System: User context - ID: {current_user.id}, Name: {current_user.name}, Email: {current_user.email}]\n{message}"
+                agent_process.stdin.write(context_message + '\n')
+            else:
+                # Send regular message
+                agent_process.stdin.write(message + '\n')
+        else:
+            # Send regular message without context injection
+            agent_process.stdin.write(message + '\n')
+        
         agent_process.stdin.flush()
         
-        # Broadcast the user message to all connected clients
+        # Broadcast the user message to all connected clients (without the context prefix)
         socketio.emit('chat_message', {
             'type': 'user',
             'message': message,
-            'timestamp': time.time()
+            'timestamp': time.time(),
+            'user_name': current_user.name if current_user.is_authenticated else 'Anonymous'
         }, namespace='/')
         
-        print(f"Sent message to agent: {message}")
+        print(f"Sent message to agent: {message} (from user: {current_user.id if current_user.is_authenticated else 'anonymous'})")
         
     except Exception as e:
         error_msg = f"Error sending message to agent: {str(e)}"
@@ -458,7 +509,16 @@ def api_status():
 @login_required
 def start_agent_endpoint():
     """Start the calendar agent."""
-    success, message = start_agent()
+    # Pass current user context to agent if authenticated
+    user_context = None
+    if current_user.is_authenticated:
+        user_context = {
+            'id': current_user.id,
+            'name': current_user.name,
+            'email': current_user.email
+        }
+    
+    success, message = start_agent(user_context)
     return jsonify({
         'success': success,
         'message': message,

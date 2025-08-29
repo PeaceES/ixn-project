@@ -1,21 +1,25 @@
 #!/usr/bin/env python3
 """
-Simplified agent test that creates an agent without any tools to verify basic functionality.
+Test script for the simplified calendar agent (no tools version).
+This tests basic agent initialization and message processing without tool complexity.
 """
 
 import asyncio
 import logging
 import os
-import json
+import sys
 from dotenv import load_dotenv
 
-from azure.ai.projects.aio import AIProjectClient
-from azure.ai.agents.models import Agent, AgentThread
-from azure.identity import DefaultAzureCredential
-from utils.terminal_colors import TerminalColors as tc
+# Add the current directory to path so we can import our agent
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from simple_calendar_agent import SimpleCalendarAgentCore
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
 # Load environment variables

@@ -25,6 +25,7 @@ load_dotenv()
 # Configuration
 ENABLE_AUTO_EVALUATION = os.getenv("ENABLE_AUTO_EVALUATION", "false").lower() == "true"
 AUTO_EVAL_METRICS = os.getenv("AUTO_EVAL_METRICS", "intent,coherence,tools").split(",")
+API_VERSION = os.getenv("AZURE_OPENAI_API_VERSION", "2023-05-15")
 
 logger = logging.getLogger(__name__)
 
@@ -62,8 +63,8 @@ class RealTimeEvaluator:
             logger.info("Retrieved model configuration")
             
             model_config = model_config.to_evaluator_model_config(
-                deployment_name=os.getenv("MODEL_DEPLOYMENT_NAME", "gpt-4"),
-                api_version="2023-05-15",
+                deployment_name=os.getenv("MODEL_DEPLOYMENT_NAME", "gpt-5-chat"),
+                api_version=API_VERSION,
                 include_credentials=True
             )
             logger.info("Model configuration prepared for evaluators")

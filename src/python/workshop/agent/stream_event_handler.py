@@ -37,32 +37,17 @@ class StreamEventHandler(AsyncAgentEventHandler[str]):
     async def on_message_delta(self, delta: MessageDeltaChunk) -> None:
         """Handle message delta events. This will be the streamed token"""
         try:
-            print(f"[StreamEventHandler][DEBUG] on_message_delta: type={type(delta)}, text={getattr(delta, 'text', None)}, delta={delta}")
-            if hasattr(delta, 'text') and delta.text:
-                self.current_response_text += delta.text
-                self.util.log_token_blue(delta.text)
-            # Also check for content attribute which might contain the text
-            elif hasattr(delta, 'content') and delta.content:
-                for content_item in delta.content:
-                    if hasattr(content_item, 'text') and content_item.text:
-                        if hasattr(content_item.text, 'value'):
-                            text_value = content_item.text.value
-                        else:
-                            text_value = str(content_item.text)
-                        self.current_response_text += text_value
-                        self.util.log_token_blue(text_value)
-            # Additional fallback for delta content
-            elif hasattr(delta, 'delta') and delta.delta:
+            # Only process delta content to avoid duplicates
+            if hasattr(delta, 'delta') and delta.delta:
                 delta_content = delta.delta
                 if hasattr(delta_content, 'content') and delta_content.content:
                     for content_item in delta_content.content:
                         if hasattr(content_item, 'text') and content_item.text:
                             if hasattr(content_item.text, 'value'):
                                 text_value = content_item.text.value
-                            else:
-                                text_value = str(content_item.text)
-                            self.current_response_text += text_value
-                            self.util.log_token_blue(text_value)
+                                if text_value:  # Only add non-empty values
+                                    self.current_response_text += text_value
+                                    self.util.log_token_blue(text_value)
         except Exception as e:
             print(f"[StreamEventHandler] Exception in on_message_delta: {e}")
 

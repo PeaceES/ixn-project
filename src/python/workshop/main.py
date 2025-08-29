@@ -10,8 +10,8 @@ from dotenv import load_dotenv
 from agent_core import CalendarAgentCore
 from utils.terminal_colors import TerminalColors as tc
 
-# Configure logging to reduce verbosity
-logging.basicConfig(level=logging.WARNING)
+# Configure logging to show debug-level agent diagnostics for debugging
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 # Suppress verbose Azure SDK logging
@@ -38,7 +38,8 @@ async def main() -> None:
     """
     
     # Initialize the agent core
-    agent_core = CalendarAgentCore()
+    # Start in functions-only mode: enable functions but keep Code Interpreter disabled
+    agent_core = CalendarAgentCore(enable_tools=True, enable_code_interpreter=False)
     
     print(f"{tc.CYAN}Starting Calendar Scheduling Agent...{tc.RESET}")
     

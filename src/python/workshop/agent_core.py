@@ -12,6 +12,7 @@ from typing import Optional, Tuple, Dict, Any, List
 from dotenv import load_dotenv
 
 from azure.ai.projects.aio import AIProjectClient
+from azure.ai.projects.models import MessageRole
 from azure.ai.agents.models import (
     Agent,
     AgentThread,
@@ -48,7 +49,7 @@ INSTRUCTIONS_FILE = "../shared/instructions/general_instructions.txt"
 class CalendarAgentCore:
     """Core calendar agent functionality."""
     
-    def __init__(self):
+    def __init__(self, enable_tools: bool = True, enable_code_interpreter: bool = False):
         self.agent: Optional[Agent] = None
         self.thread: Optional[AgentThread] = None
         self.toolset = AsyncToolSet()
@@ -58,7 +59,15 @@ class CalendarAgentCore:
         self.functions = None
         self._operation_active = False  # Prevent concurrent runs
         self._tools_initialized = False  # Track if tools are already added
-        self._initialize_functions()
+        # Flag to enable or disable tools (safe-mode testing)
+        self._enable_tools = enable_tools
+        # Flag to separately enable the CodeInterpreter tool (for bisecting)
+        self._enable_code_interpreter = enable_code_interpreter
+        # Initialize function tools only when tools are enabled (safe-mode)
+        if self._enable_tools:
+            self._initialize_functions()
+        else:
+            logger.info("[AgentCore] Tools are disabled for this instance (safe-mode). Tools will not be initialized.")
 
     def __del__(self):
         """Destructor to ensure HTTP sessions are closed."""
@@ -91,22 +100,87 @@ class CalendarAgentCore:
         # Note: MCP client cleanup should be done in async cleanup() method
         
     def _initialize_functions(self):
-        """Initialize the function tools."""
+        """Initialize the function tools.
+
+        Controlled by the ENABLED_FUNCTIONS environment variable. Format:
+        - "ALL" (default) to enable all functions
+        - comma-separated function names to enable a subset, e.g. "get_rooms_via_mcp,check_room_availability_via_mcp"
+        """
         if not self._tools_initialized:
-            self.functions = AsyncFunctionTool([
-                self.get_events_via_mcp,
-                self.check_room_availability_via_mcp,
-                self.get_rooms_via_mcp,
-                self.schedule_event_with_organizer,
-                self.fetch_user_directory,
-                self.get_user_groups,
-                self.can_user_book_for_entity,
-                self.schedule_event_with_permissions,
-                self.get_user_details,
-            ])
-            # Don't add to toolset here - it will be done in add_agent_tools()
+            # Additional debug logging to trace environment variable issues
+            import os
+            from dotenv import load_dotenv
+            logger.info(f"[AgentCore] Current working directory: {os.getcwd()}")
+            logger.info(f"[AgentCore] Environment variables containing 'ENABLED':")
+            for key, value in os.environ.items():
+                if 'ENABLED' in key.upper():
+                    logger.info(f"[AgentCore]   {key}={value}")
+            
+            # Try reloading .env file to see if it helps
+            env_file_path = os.path.join(os.getcwd(), '.env')
+            logger.info(f"[AgentCore] Checking .env file at: {env_file_path}")
+            if os.path.exists(env_file_path):
+                logger.info(f"[AgentCore] .env file exists, attempting to reload")
+                load_dotenv(override=True)  # Force reload with override
+            else:
+                logger.warning(f"[AgentCore] .env file not found at expected location")
+            
+            enabled_env = os.getenv("ENABLED_FUNCTIONS", "ALL")
+            enabled_names = [s.strip() for s in enabled_env.split(',')] if enabled_env else []
+            
+            # Debug logging
+            logger.info(f"[AgentCore] ENABLED_FUNCTIONS env: {enabled_env}")
+            logger.info(f"[AgentCore] Parsed enabled_names: {enabled_names}")
+
+            # Map of available function names to bound callables
+            available_funcs = {
+                "get_events_via_mcp": self.get_events_via_mcp,
+                "check_room_availability_via_mcp": self.check_room_availability_via_mcp,
+                "get_rooms_via_mcp": self.get_rooms_via_mcp,
+                "schedule_event_with_organizer": self.schedule_event_with_organizer,
+                # Provide both legacy and new names for the org loader so tests and env values keep working
+                # "fetch_user_directory": self.fetch_org_structure,
+                # "fetch_org_structure": self.fetch_org_structure,
+                # Use the async wrapper here so the AsyncFunctionTool can await the callable
+                "fetch_user_directory": self._async_fetch_org_structure,
+                "fetch_org_structure": self._async_fetch_org_structure,
+                "get_user_groups": self.get_user_groups,
+                "get_user_booking_entity": self.get_user_booking_entity,
+                "schedule_event_with_permissions": self.schedule_event_with_permissions,
+                "get_user_details": self.get_user_details,
+            }
+            
+            # Debug logging
+            logger.info(f"[AgentCore] Available functions: {list(available_funcs.keys())}")
+
+            selected = []
+            selected_names = []
+            # If user requested ALL, select all available functions
+            if any(n.upper() == "ALL" for n in enabled_names):
+                selected = list(available_funcs.values())
+                selected_names = list(available_funcs.keys())
+                logger.info(f"[AgentCore] Using ALL functions")
+            else:
+                for name in enabled_names:
+                    if not name:
+                        continue
+                    if name in available_funcs:
+                        selected.append(available_funcs[name])
+                        selected_names.append(name)
+                        logger.info(f"[AgentCore] Added function: {name}")
+                    else:
+                        logger.warning(f"[AgentCore] ENABLED_FUNCTIONS includes unknown function: {name}")
+
+            if not selected:
+                # If nothing was explicitly selected, default to ALL for backwards compatibility
+                selected = list(available_funcs.values())
+                selected_names = list(available_funcs.keys())
+                logger.info(f"[AgentCore] Defaulting to ALL functions (backwards compatibility)")
+
+            # Initialize the AsyncFunctionTool with the selected callables
+            self.functions = AsyncFunctionTool(selected)
             self._tools_initialized = True
-            logger.info("[AgentCore] Function tools initialized (not yet added to toolset)")
+            logger.info(f"[AgentCore] Function tools initialized (selected: {selected_names})")
     
     async def get_events_via_mcp(self) -> str:
         """Get events via MCP server."""
@@ -260,30 +334,83 @@ class CalendarAgentCore:
                                             room_id: str, title: str, start_time: str, end_time: str, 
                                             description: str = "") -> str:
         """Schedule an event with proper permission checking based on org structure."""
+        import json
         try:
-            # First check if user can book for the entity
-            permission_check = self.can_user_book_for_entity(user_id, entity_type, entity_name)
-            permission_result = json.loads(permission_check)
-            
-            if not permission_result.get("success") or not permission_result.get("can_book"):
+            import logging
+            logger = logging.getLogger(__name__)
+            # Get user's booking entities
+            entities_result = await self.get_user_booking_entity(user_id)
+            entities_data = json.loads(entities_result)
+            logger.info(f"[AgentCore] Checking permissions for user {user_id} to book for {entity_type}: {entity_name}")
+            logger.info(f"[AgentCore] User's allowed entities: {entities_data.get('entities', [])}")
+
+            if not entities_data.get("success"):
+                return json.dumps({
+                    "success": False,
+                    "error": "Permission check failed",
+                    "message": entities_data.get("error", "Could not verify user permissions")
+                })
+
+            # Validate entity exists in org structure
+            org_data = self._load_org_structure()
+            entity_exists = False
+            entity_id = None
+            if entity_type == 'department':
+                for d in org_data.get('departments', []):
+                    if d['name'].lower() == entity_name.lower():
+                        entity_exists = True
+                        entity_id = d['id']
+                        break
+            elif entity_type == 'course':
+                for c in org_data.get('courses', []):
+                    if c['name'].lower() == entity_name.lower():
+                        entity_exists = True
+                        entity_id = c['id']
+                        break
+            elif entity_type == 'society':
+                for s in org_data.get('societies', []):
+                    if s['name'].lower() == entity_name.lower():
+                        entity_exists = True
+                        entity_id = s['id']
+                        break
+
+            if not entity_exists:
+                logger.warning(f"[AgentCore] Entity not found: {entity_type} '{entity_name}'")
+                return json.dumps({
+                    "success": False,
+                    "error": "Entity not found",
+                    "message": f"{entity_type.title()} '{entity_name}' does not exist"
+                })
+
+            # Check if the requested entity is in user's allowed entities (by id)
+            allowed_entities = entities_data.get("entities", [])
+            can_book = False
+            for entity in allowed_entities:
+                if entity['type'] == entity_type and entity.get('id') == entity_id:
+                    can_book = True
+                    break
+
+            if not can_book:
+                logger.warning(f"[AgentCore] Permission denied for user {user_id} to book {entity_type} '{entity_name}' (id: {entity_id})")
                 return json.dumps({
                     "success": False,
                     "error": "Permission denied",
-                    "message": permission_result.get("message", "You don't have permission to book for this entity"),
-                    "allowed_entities": permission_result.get("allowed_entities", [])
+                    "message": f"User cannot book for {entity_type}: {entity_name}",
+                    "allowed_entities": allowed_entities
                 })
-            
+
             # If permissions are good, schedule the event
-            organizer = f"{user_id} ({entity_type}: {entity_name})"
+            organizer_display = f"{user_id} ({entity_type}: {entity_name})"
+            # Pass just the user_id to MCP, but keep the full organizer string for display
             result = await self.schedule_event_via_mcp(
                 title=title,
                 start_time=start_time,
                 end_time=end_time,
                 room_id=room_id,
-                organizer=organizer,
+                organizer=user_id,  # MCP server expects just the user ID
                 description=description
             )
-            
+
             # If event was successfully created, post to shared thread
             result_data = json.loads(result) if isinstance(result, str) else result
             if result_data.get("success"):
@@ -292,13 +419,16 @@ class CalendarAgentCore:
                     start_time=start_time,
                     end_time=end_time,
                     room_id=room_id,
-                    organizer=organizer,
+                    organizer=organizer_display,  # Use the display version for the shared thread
                     description=description
                 )
-            
+
             return result
-            
+
         except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"[AgentCore] Error scheduling event with permissions: {str(e)}")
             return json.dumps({
                 "success": False,
                 "error": f"Error scheduling event with permissions: {str(e)}"
@@ -334,24 +464,82 @@ class CalendarAgentCore:
         except Exception as e:
             logger.error(f"[AgentCore] Failed to post event to shared thread: {e}")
 
-    def fetch_user_directory(self) -> Dict[str, Any]:
-        """Fetch user info from org_structure.json instead of user_directory_local.json."""
-        import os, json
+    def fetch_org_structure(self) -> Dict[str, Any]:
+        """Load organization structure from local org_structure.json and return users keyed by email.
+
+        This is intentionally local-only (no network calls). It reads
+        src/shared/database/data-generator/org_structure.json and returns a
+        dict where keys are lowercase emails and values are the user objects.
+        """
         org_path = os.path.join(os.path.dirname(__file__), '../../shared/database/data-generator/org_structure.json')
+        org_abspath = os.path.abspath(org_path)
         try:
-            with open(org_path, 'r') as f:
+            with open(org_abspath, 'r') as f:
                 org_data = json.load(f)
-        except Exception as e:
-            logger.warning(f"Failed to load org_structure.json: {e}")
+
+            users = {}
+            for user in org_data.get('users', []):
+                email = user.get('email', '').lower()
+                if email:
+                    users[email] = user
+
+            logger.info(f"[AgentCore] Loaded org_structure.json from {org_abspath} ({len(users)} users)")
+            return users
+        except Exception:
+            # Log full stack trace to help debugging file access / JSON errors
+            logger.exception(f"[AgentCore] Failed to load org_structure.json at {org_abspath}")
             return {}
 
-        # Convert users list to dict keyed by email for easy lookup
-        users = {}
-        for user in org_data.get('users', []):
-            email = user.get('email', '').lower()
-            if email:
-                users[email] = user
-        return users
+    # Async wrapper for function tool consumption
+    async def _async_fetch_org_structure(self) -> str:
+        """Fetch the organization directory with all users, staff, and their contact information.
+        
+        Use this function to get user information, find users by name or email, 
+        retrieve the complete organization directory/user list, or when asked to 
+        "fetch users", "get users", "show users", or "list users".
+        
+        Returns a JSON string with success and a list of user objects containing
+        names, emails, departments, roles, and other user details.
+        """
+        import json
+        try:
+            users = self.fetch_org_structure()
+            user_list = list(users.values())
+            
+            # Create a more concise, agent-friendly response
+            user_summary = []
+            for user in user_list:
+                user_summary.append({
+                    "id": user.get("id"),
+                    "name": user.get("name"),
+                    "email": user.get("email"),
+                    "role": user.get("role_scope"),
+                    "department_id": user.get("department_id")
+                })
+            
+            response = {
+                "success": True,
+                "message": f"Found {len(user_list)} users in the organization directory",
+                "total_users": len(user_list),
+                "users": user_summary[:10]  # Limit to first 10 for readability
+            }
+            
+            if len(user_list) > 10:
+                response["note"] = f"Showing first 10 of {len(user_list)} users. Full list available on request."
+            
+            return json.dumps(response, indent=2)
+        except Exception as e:
+            logger.exception("[AgentCore] Failed to run async fetch_org_structure")
+            return json.dumps({
+                "success": False, 
+                "error": str(e),
+                "message": "Failed to load organization directory"
+            })
+
+    # Backwards compatible wrapper: keep the old function name working
+    def fetch_user_directory(self) -> Dict[str, Any]:
+        """Backward-compatible wrapper that returns the same data as fetch_org_structure."""
+        return self.fetch_org_structure()
 
     def get_user_details(self, user_id: str) -> str:
         """Get detailed information about a user from org structure."""
@@ -393,7 +581,7 @@ class CalendarAgentCore:
                 "error": f"Error fetching user details: {str(e)}"
             })
 
-    def get_user_groups(self, user_id: str) -> str:
+    async def get_user_groups(self, user_id: str) -> str:
         """Get groups/entities that a user can book for."""
         import json
         try:
@@ -432,14 +620,14 @@ class CalendarAgentCore:
                 "error": f"Error getting user groups: {str(e)}"
             })
 
-    def can_user_book_for_entity(self, user_id: str, entity_type: str, entity_name: str) -> str:
-        """Check if user can book for a specific entity."""
+    async def get_user_booking_entity(self, user_id: str) -> str:
+        """Get all entities (departments, courses, societies) a user can book for."""
         import json
         try:
             org_data = self._load_org_structure()
+            users = org_data.get('users', [])
             
             # Find user
-            users = org_data.get('users', [])
             user = None
             try:
                 user_id_int = int(user_id)
@@ -455,29 +643,71 @@ class CalendarAgentCore:
                     "error": f"User '{user_id}' not found"
                 })
             
-            # Get user's booking entities
-            booking_entities = self._get_user_booking_entities(user, org_data)
+            # Get user's booking entities using the extracted logic
+            entities = []
             
-            # Check if the requested entity is in user's allowed entities
-            for entity in booking_entities:
-                if entity['type'] == entity_type and entity['name'].lower() == entity_name.lower():
-                    return json.dumps({
-                        "success": True,
-                        "can_book": True,
-                        "message": f"User can book for {entity_type}: {entity_name}"
+            user_role = user.get('role_scope', '')
+            user_dept_id = user.get('department_id')
+            user_scope_id = user.get('scope_id')
+            
+            departments = org_data.get('departments', [])
+            courses = org_data.get('courses', [])
+            societies = org_data.get('societies', [])
+            
+            if user_role in ['department', 'staff']:
+                # Department staff can book for their department
+                dept = next((d for d in departments if d.get('id') == user_dept_id), None)
+                if dept:
+                    entities.append({
+                        'type': 'department',
+                        'id': dept['id'],
+                        'name': dept['name'],
+                        'email': dept['email']
+                    })
+                
+                # And for any course in their department
+                for course in courses:
+                    if course.get('department_id') == user_dept_id:
+                        entities.append({
+                            'type': 'course',
+                            'id': course['id'],
+                            'name': course['name'],
+                            'email': course['email']
+                        })
+                
+                # And for any society in their department
+                for society in societies:
+                    if society.get('department_id') == user_dept_id:
+                        entities.append({
+                            'type': 'society',
+                            'id': society['id'],
+                            'name': society['name'],
+                            'email': society['email']
+                        })
+            
+            elif user_role == 'society_officer':
+                # Society officers can only book for their own society
+                society = next((s for s in societies if s.get('id') == user_scope_id), None)
+                if society:
+                    entities.append({
+                        'type': 'society',
+                        'id': society['id'],
+                        'name': society['name'],
+                        'email': society['email']
                     })
             
             return json.dumps({
                 "success": True,
-                "can_book": False,
-                "message": f"User cannot book for {entity_type}: {entity_name}",
-                "allowed_entities": booking_entities
+                "user_id": user_id,
+                "user_name": user.get('name'),
+                "role": user.get('role_scope'),
+                "entities": entities
             })
             
         except Exception as e:
             return json.dumps({
                 "success": False,
-                "error": f"Error checking permissions: {str(e)}"
+                "error": f"Error getting user booking entities: {str(e)}"
             })
 
     def _load_org_structure(self) -> Dict:
@@ -551,6 +781,10 @@ class CalendarAgentCore:
         """Add tools for the agent."""
         font_file_info = None
 
+        if not self._enable_tools:
+            logger.info("[AgentCore] add_agent_tools skipped because tools are disabled for this instance")
+            return None
+
         # Only add functions tool if not already added
         if self.functions and not any(tool == self.functions for tool in self.toolset._tools):
             self.toolset.add(self.functions)
@@ -559,13 +793,16 @@ class CalendarAgentCore:
             logger.info("[AgentCore] Functions tool already in toolset, skipping")
 
         # Add the code interpreter tool for data visualization
-        code_interpreter = CodeInterpreterTool()
-        # Check if code interpreter is already added
-        if not any(isinstance(tool, CodeInterpreterTool) for tool in self.toolset._tools):
-            self.toolset.add(code_interpreter)
-            logger.info("[AgentCore] Added code interpreter tool to toolset")
+        if self._enable_code_interpreter:
+            code_interpreter = CodeInterpreterTool()
+            # Check if code interpreter is already added
+            if not any(isinstance(tool, CodeInterpreterTool) for tool in self.toolset._tools):
+                self.toolset.add(code_interpreter)
+                logger.info("[AgentCore] Added code interpreter tool to toolset")
+            else:
+                logger.info("[AgentCore] Code interpreter tool already in toolset, skipping")
         else:
-            logger.info("[AgentCore] Code interpreter tool already in toolset, skipping")
+            logger.info("[AgentCore] Code interpreter tool not enabled for this run (skipping)")
 
         # Add multilingual support to the code interpreter
         # Multilingual font upload temporarily disabled for debugging
@@ -635,13 +872,24 @@ class CalendarAgentCore:
 
             # Create agent
             # Create agent with hub-based connection string format
-            self.agent = await self.project_client.agents.create_agent(
-                model=API_DEPLOYMENT_NAME,
-                name=AGENT_NAME,
-                instructions=instructions,
-                temperature=TEMPERATURE,
-            )
-            logger.info(f"[AgentCore] Created agent with ID: {self.agent.id}")
+            try:
+                self.agent = await self.project_client.agents.create_agent(
+                    model=API_DEPLOYMENT_NAME,
+                    name=AGENT_NAME,
+                    instructions=instructions,
+                    temperature=TEMPERATURE,
+                )
+                logger.info(f"[AgentCore] Created agent with ID: {self.agent.id}")
+            except Exception as e:
+                logger.error(f"[AgentCore] Failed to create agent with model '{API_DEPLOYMENT_NAME}': {e}")
+                # Try to get available models
+                try:
+                    # This might help us see what models are available
+                    logger.error(f"[AgentCore] Check that model '{API_DEPLOYMENT_NAME}' is deployed in your AI Foundry project")
+                    logger.error(f"[AgentCore] Project connection: {PROJECT_CONNECTION_STRING}")
+                except Exception:
+                    pass
+                raise e
 
             # Check MCP health status
             try:
@@ -650,24 +898,28 @@ class CalendarAgentCore:
             except Exception:
                 mcp_status = "unreachable"
 
-            # Check user directory status  
-            users = self.fetch_user_directory()
+            # Check org structure status
+            org_data = self._load_org_structure()
+            users = org_data.get('users', []) if isinstance(org_data, dict) else []
             user_dir_status = f"loaded ({len(users)} entries)" if users else "empty/inaccessible"
 
             # Enable auto function calls - this might be causing the toolset issue
             # For hub-based projects, we might need to handle this differently
             try:
                 # Only enable auto function calls if tools are properly initialized
-                if self._tools_initialized and len(self.toolset._tools) > 0:
-                    await self.project_client.agents.enable_auto_function_calls(toolset=self.toolset)
-                    logger.info(f"[AgentCore] Auto function calls enabled successfully")
+                if not self._enable_tools:
+                    logger.info("[AgentCore] Skipping enabling auto function calls because tools are disabled for this instance")
                 else:
-                    logger.warning(f"[AgentCore] Skipping auto function calls - tools not properly initialized")
+                    if self._tools_initialized and len(self.toolset._tools) > 0:
+                        await self.project_client.agents.enable_auto_function_calls(toolset=self.toolset)
+                        logger.info(f"[AgentCore] Auto function calls enabled successfully")
+                    else:
+                        logger.warning(f"[AgentCore] Skipping auto function calls - tools not properly initialized")
             except Exception as e:
                 logger.warning(f"[AgentCore] Could not enable auto function calls: {e}")
                 # Try alternative approach - create agent with toolset included if possible
                 try:
-                    if self._tools_initialized:
+                    if self._enable_tools and self._tools_initialized:
                         # Recreate agent with toolset
                         self.agent = await self.project_client.agents.create_agent(
                             model=API_DEPLOYMENT_NAME,
@@ -706,7 +958,7 @@ class CalendarAgentCore:
                 content=json.dumps(event_payload)
             )
 
-            success_msg = f"Agent initialized successfully. MCP: {mcp_status}, User Directory: {user_dir_status}"
+            success_msg = f"Agent initialized successfully. MCP: {mcp_status}, Org structure: {user_dir_status}"
             logger.info(f"[AgentCore] Initialization complete. Agent ID: {self.agent.id}, Thread ID: {self.thread.id}")
             return True, success_msg
         except Exception as e:
@@ -715,7 +967,7 @@ class CalendarAgentCore:
             logger.error(f"[AgentCore] Initialization error: {error_msg}")
             return False, error_msg
 
-    async def process_message(self, message: str) -> Tuple[bool, str]:
+    async def process_message(self, user_message: str) -> Tuple[bool, str]:
         """Process a message with the agent. Returns (success, response)."""
         if not self.agent or not self.thread:
             logger.warning("[AgentCore] Agent or thread not initialized.")
@@ -733,8 +985,11 @@ class CalendarAgentCore:
             # Ensure toolset is properly configured before each run
             try:
                 # Only enable if tools are initialized and not already enabled
-                if self._tools_initialized and len(self.toolset._tools) > 0:
-                    await self.project_client.agents.enable_auto_function_calls(toolset=self.toolset)
+                if not self._enable_tools:
+                    logger.info("[AgentCore] Skipping enabling auto function calls because tools are disabled for this instance")
+                else:
+                    if self._tools_initialized and len(self.toolset._tools) > 0:
+                        await self.project_client.agents.enable_auto_function_calls(toolset=self.toolset)
             except Exception as e:
                 logger.warning(f"[AgentCore] Could not enable auto function calls: {e}")
             
@@ -742,7 +997,7 @@ class CalendarAgentCore:
             await self.project_client.agents.create_message(
                 thread_id=self.thread.id,
                 role="user",
-                content=message,
+                content=user_message,
             )
             logger.info(f"[AgentCore] Message created for thread ID: {self.thread.id}")
 
@@ -752,43 +1007,21 @@ class CalendarAgentCore:
                 utilities=self.utilities
             )
 
-            stream_handler.current_user_query = message
+            stream_handler.current_user_query = user_message
             
-            # Try to use stream first, fallback to non-stream if it fails
-            try:
-                # Create stream using hub-based API
-                stream = await self.project_client.agents.create_stream(
-                        thread_id=self.thread.id,
-                        agent_id=self.agent.id,
-                        event_handler=stream_handler,
-                        max_completion_tokens=MAX_COMPLETION_TOKENS,
-                        max_prompt_tokens=MAX_PROMPT_TOKENS,
-                        temperature=TEMPERATURE,
-                        top_p=TOP_P,
-                        instructions=self.agent.instructions,
-                )
-                logger.info(f"[AgentCore] Run started for thread ID: {self.thread.id}, Agent ID: {self.agent.id}")
-                
-                async with stream as s:
-                    await s.until_done()
-                logger.info(f"[AgentCore] Run completed for thread ID: {self.thread.id}")
-                
-            except Exception as stream_error:
-                logger.warning(f"[AgentCore] Stream creation failed: {stream_error}, trying non-stream approach")
-                
-                # Fallback to non-stream run
-                run = await self.project_client.agents.create_run(
-                    thread_id=self.thread.id,
-                    agent_id=self.agent.id,
-                    max_completion_tokens=MAX_COMPLETION_TOKENS,
-                    max_prompt_tokens=MAX_PROMPT_TOKENS,
-                    temperature=TEMPERATURE,
-                    top_p=TOP_P,
-                    instructions=self.agent.instructions,
-                )
-                
-                # Wait for run to complete
-                await self._wait_for_run_completion(run.id, max_wait=60)
+            # Skip streaming for now - use reliable non-streaming approach
+            logger.info(f"[AgentCore] Using non-streaming approach for reliability")
+            
+            # Create run using non-streaming method (like the working simple test)
+            run = await self.project_client.agents.create_run(
+                thread_id=self.thread.id,
+                agent_id=self.agent.id,
+                temperature=TEMPERATURE,
+            )
+            logger.info(f"[AgentCore] Run started for thread ID: {self.thread.id}, Agent ID: {self.agent.id}")
+            
+            # Wait for run to complete
+            await self._wait_for_run_completion(run.id, max_wait=60)
                 
             
             # Handle ALL required actions in a loop until run completes
@@ -869,18 +1102,32 @@ class CalendarAgentCore:
             try:
                 thread_messages = await self.project_client.agents.list_messages(thread_id=self.thread.id)
                 if hasattr(thread_messages, 'data') and thread_messages.data:
-                    # Look for the most recent assistant message
+                    # Look for the most recent assistant message (check for both 'assistant' and 'agent' roles)
+                    # Process messages in reverse order since they might be chronologically ordered
                     for message in thread_messages.data:
-                        if getattr(message, 'role', None) == 'assistant':
+                        message_role = getattr(message, 'role', None)
+                        logger.debug(f"[AgentCore] Processing message role: {message_role}, type: {type(message_role)}")
+                        
+                        # Check for different possible role values - agent messages are assistant responses
+                        if (str(message_role) in ['assistant', 'agent'] or 
+                            str(message_role).endswith('AGENT') or 
+                            str(message_role).endswith('ASSISTANT') or
+                            message_role == MessageRole.AGENT):
                             content = getattr(message, 'content', [])
+                            message_text = ""
                             for content_item in content:
                                 if hasattr(content_item, 'text') and content_item.text:
                                     if hasattr(content_item.text, 'value'):
-                                        response_text += content_item.text.value
+                                        message_text = content_item.text.value
                                     else:
-                                        response_text += str(content_item.text)
-                            if response_text.strip():  # If we found content, stop looking
-                                break
+                                        message_text = str(content_item.text)
+                                    break  # Take first text content
+                                        
+                            # Only use this message if it's not echoing user input and has content
+                            if message_text and message_text.strip() and message_text.strip().lower() != user_message.strip().lower():
+                                response_text = message_text  # Use the latest response
+                                logger.info(f"[AgentCore] Found assistant response: {response_text[:100]}...")
+                                break  # Stop at the first valid assistant message
                 else:
                     # Handle async iterator
                     messages_list = []
@@ -889,16 +1136,29 @@ class CalendarAgentCore:
                     
                     # Process messages in reverse order (most recent first)
                     for message in messages_list:
-                        if getattr(message, 'role', None) == 'assistant':
+                        message_role = getattr(message, 'role', None)
+                        logger.debug(f"[AgentCore] Processing message role (async): {message_role}, type: {type(message_role)}")
+                        
+                        # Check for different possible role values - agent messages are assistant responses
+                        if (str(message_role) in ['assistant', 'agent'] or 
+                            str(message_role).endswith('AGENT') or 
+                            str(message_role).endswith('ASSISTANT') or
+                            message_role == MessageRole.AGENT):
                             content = getattr(message, 'content', [])
+                            message_text = ""
                             for content_item in content:
                                 if hasattr(content_item, 'text') and content_item.text:
                                     if hasattr(content_item.text, 'value'):
-                                        response_text += content_item.text.value
+                                        message_text = content_item.text.value
                                     else:
-                                        response_text += str(content_item.text)
-                            if response_text.strip():  # If we found content, stop looking
-                                break
+                                        message_text = str(content_item.text)
+                                    break  # Take first text content
+                                        
+                            # Only use this message if it's not echoing user input and has content
+                            if message_text and message_text.strip() and message_text.strip().lower() != user_message.strip().lower():
+                                response_text = message_text  # Use the latest response
+                                logger.info(f"[AgentCore] Found assistant response (async): {response_text[:100]}...")
+                                break  # Stop at the first valid assistant message
             except Exception as e:
                 logger.warning(f"[AgentCore] Could not fetch latest message: {e}")
             
@@ -983,6 +1243,25 @@ class CalendarAgentCore:
                                         args.get("organizer", ""),
                                         args.get("description", "")
                                     )
+                                elif function_name == "_async_fetch_org_structure":
+                                    result = await self._async_fetch_org_structure()
+                                elif function_name == "get_user_groups":
+                                    result = await self.get_user_groups(args.get("user_id", ""))
+                                elif function_name == "get_user_booking_entity":
+                                    result = await self.get_user_booking_entity(args.get("user_id", ""))
+                                elif function_name == "get_user_details":
+                                    result = self.get_user_details(args.get("user_id", ""))
+                                elif function_name == "schedule_event_with_permissions":
+                                    result = await self.schedule_event_with_permissions(
+                                        args.get("user_id", ""),
+                                        args.get("entity_type", ""),
+                                        args.get("entity_name", ""),
+                                        args.get("room_id", ""),
+                                        args.get("title", ""),
+                                        args.get("start_time", ""),
+                                        args.get("end_time", ""),
+                                        args.get("description", "")
+                                    )
                                 else:
                                     result = json.dumps({
                                         "success": False,
@@ -994,6 +1273,7 @@ class CalendarAgentCore:
                                     "output": str(result)
                                 })
                                 logger.info(f"[AgentCore] Function {function_name} executed successfully")
+                                logger.warning(f"[AgentCore][DEBUG] Tool output for {function_name}: {str(result)[:500]}...")
                             except Exception as e:
                                 logger.error(f"[AgentCore] Error executing function {function_name}: {e}")
                                 tool_outputs.append({

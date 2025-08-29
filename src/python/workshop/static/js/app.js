@@ -24,50 +24,6 @@ class CalendarAgentUI {
         if (window.CalendarManager) {
             this.calendarManager = new window.CalendarManager();
             console.log('📅 Calendar integration initialized');
-            
-            // Set up today's date as default in booking form
-            const today = new Date().toISOString().split('T')[0];
-            const dateInput = document.getElementById('booking-date');
-            if (dateInput) {
-                dateInput.value = today;
-            }
-            
-            // Set default time to next hour
-            const now = new Date();
-            const nextHour = new Date(now.getTime() + 60 * 60 * 1000);
-            const timeInput = document.getElementById('booking-time');
-            if (timeInput) {
-                timeInput.value = nextHour.toTimeString().slice(0, 5);
-            }
-            
-            // Populate room dropdown
-            await this.populateRoomDropdown();
-        }
-    }
-
-    async populateRoomDropdown() {
-        try {
-            const response = await fetch('/api/calendar/rooms');
-            if (response.ok) {
-                const data = await response.json();
-                const roomSelect = document.getElementById('booking-room');
-                if (roomSelect && data.rooms) {
-                    // Clear existing options except the first one
-                    while (roomSelect.children.length > 1) {
-                        roomSelect.removeChild(roomSelect.lastChild);
-                    }
-                    
-                    // Add room options
-                    data.rooms.forEach(room => {
-                        const option = document.createElement('option');
-                        option.value = room.id;
-                        option.textContent = `${room.name} (${room.capacity} people)`;
-                        roomSelect.appendChild(option);
-                    });
-                }
-            }
-        } catch (error) {
-            console.warn('Could not populate room dropdown:', error);
         }
     }
 
@@ -643,15 +599,6 @@ class CalendarAgentUI {
 
     // Calendar integration methods (Stage 5)
     initializeCalendarEventListeners() {
-        // Quick booking form
-        const bookingForm = document.getElementById('quick-booking-form');
-        if (bookingForm) {
-            bookingForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.handleQuickBooking();
-            });
-        }
-
         // Calendar refresh button
         const refreshBtn = document.getElementById('refresh-calendar-btn');
         if (refreshBtn) {
@@ -681,93 +628,13 @@ class CalendarAgentUI {
                 this.addChatMessage('🏢 Room availability updated', 'system');
                 break;
             case 'book-meeting-btn':
-                this.scrollToBooking();
-                this.addChatMessage('➕ Use the quick booking form below or ask me to book a meeting!', 'system');
+                this.addChatMessage('➕ Ask me to book a meeting! For example: "Book the Main Conference Room tomorrow at 2pm for a team meeting"', 'system');
                 break;
             case 'view-events-btn':
                 this.showTodaysEvents();
                 break;
             default:
                 this.showNotification('Feature coming soon!', 'info');
-        }
-    }
-
-    async handleQuickBooking() {
-        const title = document.getElementById('booking-title').value.trim();
-        const roomId = document.getElementById('booking-room').value;
-        const date = document.getElementById('booking-date').value;
-        const time = document.getElementById('booking-time').value;
-        const duration = parseInt(document.getElementById('booking-duration').value);
-
-        if (!title || !roomId || !date || !time) {
-            this.showNotification('Please fill in all required fields', 'error');
-            return;
-        }
-
-        try {
-            // Combine date and time
-            const startDateTime = new Date(`${date}T${time}`);
-            
-            // Check if time is in the past
-            if (startDateTime < new Date()) {
-                this.showNotification('Cannot book meetings in the past', 'error');
-                return;
-            }
-
-            // Check room availability first
-            const endDateTime = new Date(startDateTime.getTime() + duration * 60 * 1000);
-            const availabilityResponse = await fetch(`/api/calendar/availability?room_id=${roomId}&start_time=${startDateTime.toISOString()}&end_time=${endDateTime.toISOString()}`);
-            
-            if (availabilityResponse.ok) {
-                const availabilityData = await availabilityResponse.json();
-                
-                if (!availabilityData.available) {
-                    this.showNotification('Room is not available at the selected time', 'error');
-                    return;
-                }
-            }
-
-            // Create the event
-            const response = await fetch('/api/calendar/events', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    title: title,
-                    room_id: roomId,
-                    start_time: startDateTime.toISOString(),
-                    duration_minutes: duration
-                })
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                this.showNotification('Meeting booked successfully! 🎉', 'success');
-                
-                // Reset form
-                document.getElementById('quick-booking-form').reset();
-                
-                // Set default values again
-                const today = new Date().toISOString().split('T')[0];
-                document.getElementById('booking-date').value = today;
-                const nextHour = new Date(Date.now() + 60 * 60 * 1000);
-                document.getElementById('booking-time').value = nextHour.toTimeString().slice(0, 5);
-                
-                // Refresh calendar if available - use the new refresh method
-                if (this.calendarManager) {
-                    await this.calendarManager.refreshCalendar();
-                }
-                
-                // Add chat message
-                this.addChatMessage(`✅ Meeting "${title}" booked successfully for ${startDateTime.toLocaleString()}`, 'system');
-            } else {
-                const errorData = await response.json();
-                this.showNotification(`Failed to book meeting: ${errorData.error}`, 'error');
-            }
-        } catch (error) {
-            console.error('Booking error:', error);
-            this.showNotification('Failed to book meeting. Please try again.', 'error');
         }
     }
 
@@ -791,8 +658,7 @@ class CalendarAgentUI {
         }
         
         if (lowerMessage.includes('book meeting') || lowerMessage.includes('schedule meeting')) {
-            this.scrollToBooking();
-            return 'Use the quick booking form or provide meeting details and I\'ll help you book it! ➕';
+            return 'Please provide meeting details and I\'ll help you book it! For example: "Book the Main Conference Room tomorrow at 2pm for a team meeting" ➕';
         }
 
         return null; // No calendar command detected
@@ -809,13 +675,6 @@ class CalendarAgentUI {
         const roomCard = document.querySelector('.room-card');
         if (roomCard) {
             roomCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    }
-
-    scrollToBooking() {
-        const bookingCard = document.querySelector('.booking-card');
-        if (bookingCard) {
-            bookingCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     }
 

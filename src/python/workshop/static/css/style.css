@@ -65,6 +65,94 @@ header h1 {
     gap: 20px;
 }
 
+/* New Layout Styles */
+.main-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.control-panel {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.mini-card {
+    padding: 15px 20px;
+    min-height: auto;
+}
+
+.mini-card h3 {
+    font-size: 1rem;
+    margin-bottom: 12px;
+    color: #2c3e50;
+    border-bottom: 1px solid #ecf0f1;
+    padding-bottom: 8px;
+}
+
+.chat-card.full-width {
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.bottom-features {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    width: 100%;
+}
+
+/* Adjust bottom features height */
+.bottom-features .calendar-card,
+.bottom-features .room-card {
+    min-height: auto;
+    max-height: 520px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Compact Status Grid */
+.status-grid.compact {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.status-grid.compact .status-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+/* Horizontal Button Groups */
+.button-group.horizontal {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+}
+
+.quick-actions.horizontal {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* Small Buttons */
+.btn-small {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+}
+
+.action-btn.btn-small {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+}
+
 /* Dashboard Grid - Legacy Support */
 .dashboard {
     display: grid;
@@ -494,6 +582,24 @@ footer p {
         flex-direction: column;
     }
     
+    /* New layout responsive adjustments */
+    .control-panel {
+        grid-template-columns: 1fr;
+    }
+    
+    .bottom-features {
+        grid-template-columns: 1fr;
+    }
+    
+    .mini-card {
+        padding: 12px 15px;
+    }
+    
+    .button-group.horizontal {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    
     .btn {
         justify-content: center;
     }
@@ -644,10 +750,13 @@ footer p {
 
 /* Selected Date Events */
 .selected-date-events {
-    margin-top: 15px;
+    margin-top: auto; /* Push to bottom */
     padding: 15px;
     background: #f8f9fa;
     border-radius: 8px;
+    flex-shrink: 0; /* Don't shrink */
+    max-height: 120px; /* Match room details height */
+    overflow-y: auto; /* Scroll if needed */
 }
 
 .selected-date-events h4 {
@@ -695,7 +804,30 @@ footer p {
 
 /* Room Availability Styles */
 .room-availability {
+    flex: 1;
+    overflow-y: auto;
+    max-height: 340px; /* Limit height to force scrolling */
+    padding-right: 10px; /* Space for scrollbar */
     margin-bottom: 15px;
+}
+
+/* Custom scrollbar for room availability */
+.room-availability::-webkit-scrollbar {
+    width: 8px;
+}
+
+.room-availability::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.room-availability::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.room-availability::-webkit-scrollbar-thumb:hover {
+    background: #555;
 }
 
 .room-availability h4 {
@@ -776,6 +908,9 @@ footer p {
     padding: 15px;
     background: #f8f9fa;
     border-radius: 8px;
+    flex-shrink: 0; /* Don't shrink */
+    max-height: 120px; /* Limit height */
+    overflow-y: auto; /* Scroll if needed */
 }
 
 .room-details h4 {
@@ -814,56 +949,13 @@ footer p {
     color: #6c757d;
 }
 
-/* Quick Booking Form */
-.booking-form {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-}
-
-.form-group label {
-    font-weight: 600;
-    color: #495057;
-    font-size: 0.9rem;
-}
-
-.form-group input,
-.form-group select {
-    padding: 10px;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    font-size: 0.9rem;
-    transition: border-color 0.2s;
-}
-
-.form-group input:focus,
-.form-group select:focus {
-    outline: none;
-    border-color: #007bff;
-    box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
-}
-
 /* Calendar Integration Cards */
-.calendar-card,
-.room-card,
-.booking-card {
-    min-height: 400px;
-}
+/* Height is already set in .bottom-features section */
 
 .calendar-card .calendar-widget {
-    margin-bottom: 15px;
+    flex: 1; /* Take available space */
+    display: flex;
+    flex-direction: column;
 }
 
 /* Calendar Header Controls */
@@ -913,5 +1005,21 @@ footer p {
         flex-direction: column;
         align-items: flex-start;
         gap: 5px;
+    }
+    
+    /* Responsive layout adjustments */
+    .control-panel {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .bottom-features {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .bottom-features .calendar-card,
+    .bottom-features .room-card {
+        height: 400px; /* Slightly smaller on mobile */
     }
 }

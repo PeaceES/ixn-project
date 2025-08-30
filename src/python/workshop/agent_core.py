@@ -317,19 +317,25 @@ class CalendarAgentCore:
                 start_time=start_time,
                 end_time=end_time,
                 room_id=room_id,
-                organizer=organizer_email,  # Now passing email instead of raw organizer
+                organizer=organizer_email,
                 description=description
             )
-            
+
             # If event was successfully created, post to shared thread
             result_data = json.loads(result) if isinstance(result, str) else result
             if result_data.get("success"):
+                event_obj = result_data.get("event", {})
+                attendee_email = None
+                attendees = event_obj.get("attendees")
+                if isinstance(attendees, list) and attendees:
+                    attendee_email = attendees[0]
                 await self._post_event_to_shared_thread(
                     title=title,
                     start_time=start_time,
                     end_time=end_time,
                     room_id=room_id,
-                    organizer=organizer_email,  # Use the resolved email
+                    organizer=organizer_email,
+                    attendee_email=attendee_email,
                     description=description
                 )
             
@@ -473,13 +479,57 @@ class CalendarAgentCore:
             })
 
     async def _post_event_to_shared_thread(self, title: str, start_time: str, end_time: str, 
-                                         room_id: str, organizer: str, description: str = "") -> None:
+                                         room_id: str, organizer: str, attendee_email: str = None, description: str = "") -> None:
         """Post a newly created event to the shared thread for visibility."""
         try:
             if not self.shared_thread_id or not self.project_client:
                 logger.warning("[AgentCore] Cannot post to shared thread - thread ID or client not available")
                 return
-                
+
+            # Use same extraction logic as MCP server
+            def extract_entity_from_description(description: str):
+                import re
+                for_pattern = r"organized by .+? for (?:the )?(.+?)(?:\.|,|$)"
+                match = re.search(for_pattern, description, re.IGNORECASE)
+                if match:
+                    return match.group(1).strip()
+                patterns = [
+                    r"organized by the (.+?)(?:\.|,|$)",
+                    r"organized by (.+?)(?:\.|,|$)",
+                ]
+                for pattern in patterns:
+                    match = re.search(pattern, description, re.IGNORECASE)
+                    if match:
+                        return match.group(1).strip()
+                return None
+
+            def find_entity_email(entity_name: str):
+                if not entity_name:
+                    return None
+                import os, json
+                org_path = os.path.join(os.path.dirname(__file__), '../../shared/database/data-generator/org_structure.json')
+                try:
+                    with open(org_path, 'r') as f:
+                        org_data = json.load(f)
+                except Exception:
+                    return None
+                normalized_name = entity_name.lower().strip()
+                for dept in org_data.get('departments', []):
+                    if dept.get('name', '').lower() == normalized_name:
+                        return dept.get('email')
+                for society in org_data.get('societies', []):
+                    if society.get('name', '').lower() == normalized_name:
+                        return society.get('email')
+                for course in org_data.get('courses', []):
+                    if course.get('name', '').lower() == normalized_name:
+                        return course.get('email')
+                return None
+
+            # If attendee_email is not provided, extract from description
+            if attendee_email is None:
+                entity_name = extract_entity_from_description(description or "")
+                attendee_email = find_entity_email(entity_name) if entity_name else None
+
             event_payload = {
                 "event": "event_created",
                 "title": title,
@@ -487,18 +537,19 @@ class CalendarAgentCore:
                 "end_time": end_time,
                 "room_id": room_id,
                 "organizer": organizer,
+                "attendee_email": attendee_email,
                 "description": description,
                 "created_by": "calendar-agent",
                 "timestamp": start_time  # Using event start time as the timestamp
             }
-            
+
             await self.project_client.agents.create_message(
                 thread_id=self.shared_thread_id,
                 role="user",
                 content=json.dumps(event_payload)
             )
             logger.info(f"[AgentCore] Posted event '{title}' to shared thread {self.shared_thread_id}")
-            
+
         except Exception as e:
             logger.error(f"[AgentCore] Failed to post event to shared thread: {e}")
 

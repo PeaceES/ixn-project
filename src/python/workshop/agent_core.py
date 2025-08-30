@@ -295,12 +295,29 @@ class CalendarAgentCore:
                                          start_time: str, end_time: str, organizer: str, description: str = "") -> str:
         """Schedule an event without permission checking - just collect organizer info."""
         try:
+            # Try to resolve email if organizer is an ID or name
+            org_data = self._load_org_structure()
+            organizer_email = organizer  # Default to what was passed in
+            
+            # Try to find the user's email
+            for user in org_data.get('users', []):
+                # Check if organizer matches ID, email, or name
+                try:
+                    if user.get('id') == int(organizer):
+                        organizer_email = user.get('email', organizer)
+                        break
+                except ValueError:
+                    pass
+                if user.get('email', '').lower() == organizer.lower() or user.get('name', '').lower() == organizer.lower():
+                    organizer_email = user.get('email', organizer)
+                    break
+            
             result = await self.schedule_event_via_mcp(
                 title=title,
                 start_time=start_time,
                 end_time=end_time,
                 room_id=room_id,
-                organizer=organizer,
+                organizer=organizer_email,  # Now passing email instead of raw organizer
                 description=description
             )
             
@@ -312,7 +329,7 @@ class CalendarAgentCore:
                     start_time=start_time,
                     end_time=end_time,
                     room_id=room_id,
-                    organizer=organizer,
+                    organizer=organizer_email,  # Use the resolved email
                     description=description
                 )
             
@@ -392,14 +409,31 @@ class CalendarAgentCore:
                 })
 
             # If permissions are good, schedule the event
-            organizer_display = f"{user_id} ({entity_type}: {entity_name})"
-            # Pass just the user_id to MCP, but keep the full organizer string for display
+            # Get user's email from org structure
+            org_data = self._load_org_structure()
+            user_email = user_id  # Default to what was passed in
+            
+            # Try to find the user's email
+            for user in org_data.get('users', []):
+                # Check if user_id matches ID, email, or name
+                try:
+                    if user.get('id') == int(user_id):
+                        user_email = user.get('email', user_id)
+                        break
+                except ValueError:
+                    pass
+                if user.get('email', '').lower() == user_id.lower() or user.get('name', '').lower() == user_id.lower():
+                    user_email = user.get('email', user_id)
+                    break
+            
+            organizer_display = f"{user_email} ({entity_type}: {entity_name})"
+            # Pass the email to MCP server
             result = await self.schedule_event_via_mcp(
                 title=title,
                 start_time=start_time,
                 end_time=end_time,
                 room_id=room_id,
-                organizer=user_id,  # MCP server expects just the user ID
+                organizer=user_email,  # Now passing email instead of ID
                 description=description
             )
 

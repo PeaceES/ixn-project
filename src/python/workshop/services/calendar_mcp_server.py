@@ -266,6 +266,62 @@ def can_user_book_for_entity(user_id: str, entity_type: str, entity_id: int) -> 
     return False, f"User does not have permission to book for {entity_type} {entity_id}"
 
 
+def extract_entity_from_description(description: str) -> Optional[str]:
+    """Extract the entity name from description that contains 'organized by'."""
+    import re
+    
+    # First check for "organized by X for Y" pattern where Y is an entity (not generic like "students")
+    # This pattern is for cases like "organized by Allison Hill for the Engineering Department"
+    for_entity_pattern = r"organized by .+? for (?:the )?(.+?(?:Department|Society|Course|Club))(?:\.|,|$)"
+    match = re.search(for_entity_pattern, description, re.IGNORECASE)
+    if match:
+        return match.group(1).strip()
+    
+    # Otherwise check standard patterns
+    patterns = [
+        r"organized by the (.+?)(?:\.|,|$)",  # "organized by the AI Society."
+        r"organized by (.+?) for",             # "organized by Drama Society for students" - stops at "for"
+        r"organized by (.+?)(?:\.|,|$)",       # "organized by AI Society"
+    ]
+    
+    for pattern in patterns:
+        match = re.search(pattern, description, re.IGNORECASE)
+        if match:
+            return match.group(1).strip()
+    
+    return None
+
+
+def find_entity_email(entity_name: str) -> Optional[str]:
+    """Find the email address for an entity (department, society, course) from org structure."""
+    if not entity_name:
+        return None
+        
+    org_data = load_org_structure()
+    if not org_data:
+        return None
+    
+    # Normalize the entity name for comparison
+    normalized_name = entity_name.lower().strip()
+    
+    # Check departments
+    for dept in org_data.get('departments', []):
+        if dept.get('name', '').lower() == normalized_name:
+            return dept.get('email')
+    
+    # Check societies
+    for society in org_data.get('societies', []):
+        if society.get('name', '').lower() == normalized_name:
+            return society.get('email')
+    
+    # Check courses
+    for course in org_data.get('courses', []):
+        if course.get('name', '').lower() == normalized_name:
+            return course.get('email')
+    
+    return None
+
+
 def validate_calendar_exists(calendar_id: str) -> tuple[bool, str, dict]:
     """Validate if calendar exists and return calendar info - simplified for room-only system."""
     # Check in room-based calendars
@@ -349,21 +405,26 @@ def check_room_conflicts(room_id: str, start_time: str, end_time: str, exclude_e
 async def create_event(calendar_id: str, payload: CreateEventRequest):
     """Create a new calendar event with full validation."""
     try:
-        # 1. Validate user permissions
+        # 1. Validate user exists and get user info
+        user_exists, user_msg, user_info = validate_user_exists(payload.user_id)
+        if not user_exists:
+            raise HTTPException(status_code=404, detail=user_msg)
+        
+        # 2. Validate user permissions
         has_permission, permission_msg = validate_user_permissions(payload.user_id, calendar_id)
         if not has_permission:
             raise HTTPException(status_code=403, detail=permission_msg)
         
-        # 2. Validate calendar exists
+        # 3. Validate calendar exists
         calendar_exists, calendar_msg, calendar_info = validate_calendar_exists(calendar_id)
         if not calendar_exists:
             raise HTTPException(status_code=404, detail=calendar_msg)
         
-        # 3. Validate required fields
+        # 4. Validate required fields
         if not payload.title or not payload.start_time or not payload.end_time:
             raise HTTPException(status_code=400, detail="Missing required fields: title, start_time, end_time")
         
-        # 4. Check for time conflicts
+        # 5. Check for time conflicts
         has_conflicts, conflicts = check_time_conflicts(calendar_id, payload.start_time, payload.end_time)
         if has_conflicts:
             conflict_details = [f"'{c['title']}' ({c['start_time']} - {c['end_time']})" for c in conflicts]
@@ -372,7 +433,17 @@ async def create_event(calendar_id: str, payload: CreateEventRequest):
                 detail=f"Time conflict with existing events: {', '.join(conflict_details)}"
             )
         
-        # 5. Create the event
+        # 6. Create the event
+        # Extract email from user_info if we have it
+        organizer_email = user_info.get('email', payload.user_id) if user_info else payload.user_id
+        
+        # Extract entity from description and find its email for attendees
+        entity_name = extract_entity_from_description(payload.description or "")
+        entity_email = find_entity_email(entity_name) if entity_name else None
+        
+        # Use entity email for attendees if found, otherwise use organizer email
+        attendees = [entity_email] if entity_email else [organizer_email]
+        
         event = {
             "id": str(uuid.uuid4()),
             "calendar_id": calendar_id,
@@ -380,15 +451,15 @@ async def create_event(calendar_id: str, payload: CreateEventRequest):
             "title": payload.title,
             "start_time": payload.start_time,
             "end_time": payload.end_time,
-            "organizer": payload.user_id,
+            "organizer": organizer_email,  # Now storing email instead of ID
             "location": payload.location or calendar_info.get("location", ""),
             "description": payload.description or "",
             "created_at": datetime.utcnow().isoformat(),
-            "attendees": [payload.user_id],
+            "attendees": attendees,  # Use entity email if available
             "status": "confirmed"
         }
         
-        # 6. Save event
+        # 7. Save event
         events_data["events"].append(event)
         await save_events()
         

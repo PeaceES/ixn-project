@@ -270,17 +270,15 @@ def extract_entity_from_description(description: str) -> Optional[str]:
     """Extract the entity name from description that contains 'organized by'."""
     import re
     
-    # First check for "organized by X for Y" pattern where Y is an entity (not generic like "students")
-    # This pattern is for cases like "organized by Allison Hill for the Engineering Department"
-    for_entity_pattern = r"organized by .+? for (?:the )?(.+?(?:Department|Society|Course|Club))(?:\.|,|$)"
-    match = re.search(for_entity_pattern, description, re.IGNORECASE)
+    # First check for "organized by X for Y" pattern - we want Y
+    for_pattern = r"organized by .+? for (?:the )?(.+?)(?:\.|,|$)"
+    match = re.search(for_pattern, description, re.IGNORECASE)
     if match:
         return match.group(1).strip()
     
     # Otherwise check standard patterns
     patterns = [
         r"organized by the (.+?)(?:\.|,|$)",  # "organized by the AI Society."
-        r"organized by (.+?) for",             # "organized by Drama Society for students" - stops at "for"
         r"organized by (.+?)(?:\.|,|$)",       # "organized by AI Society"
     ]
     

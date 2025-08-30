@@ -412,29 +412,41 @@ class CalendarAgentCore:
             # Get user's email from org structure
             org_data = self._load_org_structure()
             user_email = user_id  # Default to what was passed in
+            user_name = user_id  # Default name
             
-            # Try to find the user's email
+            # Try to find the user's email and name
             for user in org_data.get('users', []):
                 # Check if user_id matches ID, email, or name
                 try:
                     if user.get('id') == int(user_id):
                         user_email = user.get('email', user_id)
+                        user_name = user.get('name', user_id)
                         break
                 except ValueError:
                     pass
                 if user.get('email', '').lower() == user_id.lower() or user.get('name', '').lower() == user_id.lower():
                     user_email = user.get('email', user_id)
+                    user_name = user.get('name', user_id)
                     break
             
-            organizer_display = f"{user_email} ({entity_type}: {entity_name})"
-            # Pass the email to MCP server
+            organizer_display = f"{user_name} ({entity_type}: {entity_name})"
+            
+            # Include entity info in description so MCP server can extract it for attendees
+            enhanced_description = description
+            if enhanced_description:
+                enhanced_description += f" - Organized by {user_name} for {entity_name}"
+            else:
+                enhanced_description = f"Organized by {user_name} for {entity_name}"
+            
+            # Pass the actual user's email as organizer to MCP server
+            # The MCP server will extract entity from description and set it as attendee
             result = await self.schedule_event_via_mcp(
                 title=title,
                 start_time=start_time,
                 end_time=end_time,
                 room_id=room_id,
-                organizer=user_email,  # Now passing email instead of ID
-                description=description
+                organizer=user_email,  # Pass actual user's email as organizer
+                description=enhanced_description
             )
 
             # If event was successfully created, post to shared thread

@@ -47,13 +47,22 @@ EVENTS_FILE = os.path.join(DATA_DIR, "events.json")
 USER_DIRECTORY_LOCAL_FILE = os.path.join(DATA_DIR, "user_directory_local.json")
 USER_DIRECTORY_URL = os.getenv("USER_DIRECTORY_URL")
 
-# Request schema
+# Request schemas
 class CreateEventRequest(BaseModel):
     user_id: str
     calendar_id: str  # This will be the room_id (simplified)
     title: str
     start_time: str  # ISO 8601 format
     end_time: str
+    location: Optional[str] = None
+    description: Optional[str] = None
+
+
+class UpdateEventRequest(BaseModel):
+    user_id: Optional[str] = None
+    title: Optional[str] = None
+    start_time: Optional[str] = None  # ISO 8601 format
+    end_time: Optional[str] = None
     location: Optional[str] = None
     description: Optional[str] = None
 
@@ -612,6 +621,171 @@ async def get_user_permissions(user_id: str):
             "user_id": user_id,
             "user_info": user_info,
             "allowed_calendars": user_info.get("allowed_calendars", [])
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@app.put("/calendars/{calendar_id}/events/{event_id}")
+async def update_event(calendar_id: str, event_id: str, payload: UpdateEventRequest):
+    """Update an existing calendar event."""
+    try:
+        # Find the event to update
+        event_to_update = None
+        event_index = None
+        for i, event in enumerate(events_data.get("events", [])):
+            if event.get("id") == event_id:
+                event_to_update = event
+                event_index = i
+                break
+        
+        if not event_to_update:
+            raise HTTPException(status_code=404, detail=f"Event with ID '{event_id}' not found")
+        
+        # Check if the event belongs to the specified calendar
+        if event_to_update.get("calendar_id") != calendar_id:
+            raise HTTPException(status_code=400, detail=f"Event '{event_id}' does not belong to calendar '{calendar_id}'")
+        
+        # Validate calendar exists
+        calendar_exists, calendar_msg, calendar_info = validate_calendar_exists(calendar_id)
+        if not calendar_exists:
+            raise HTTPException(status_code=404, detail=calendar_msg)
+        
+        # Prepare updated values (only update fields that are provided)
+        updated_event = event_to_update.copy()
+        original_event_copy = event_to_update.copy()  # Keep original for notifications
+        
+        # Update only provided fields
+        if payload.title is not None:
+            updated_event["title"] = payload.title
+        if payload.start_time is not None:
+            updated_event["start_time"] = payload.start_time
+        if payload.end_time is not None:
+            updated_event["end_time"] = payload.end_time
+        if payload.location is not None:
+            updated_event["location"] = payload.location
+        if payload.description is not None:
+            updated_event["description"] = payload.description
+        if payload.user_id is not None:
+            updated_event["organizer"] = payload.user_id
+            updated_event["attendees"] = [payload.user_id]  # Update attendees list
+        
+        # If times are being updated, check for conflicts
+        if payload.start_time or payload.end_time:
+            start_time = updated_event["start_time"]
+            end_time = updated_event["end_time"]
+            
+            # Check for conflicts, excluding the current event
+            has_conflicts, conflicts = check_time_conflicts(calendar_id, start_time, end_time, exclude_event_id=event_id)
+            if has_conflicts:
+                conflict_details = [f"'{c['title']}' ({c['start_time']} - {c['end_time']})" for c in conflicts]
+                raise HTTPException(
+                    status_code=409, 
+                    detail=f"Time conflict with existing events: {', '.join(conflict_details)}"
+                )
+        
+        # Add modification tracking
+        updated_event["modified_at"] = datetime.utcnow().isoformat()
+        if "modification_history" not in updated_event:
+            updated_event["modification_history"] = []
+        
+        # Save the previous state to history
+        history_entry = {
+            "modified_at": updated_event["modified_at"],
+            "previous_state": {
+                "title": event_to_update.get("title"),
+                "start_time": event_to_update.get("start_time"),
+                "end_time": event_to_update.get("end_time"),
+                "location": event_to_update.get("location"),
+                "description": event_to_update.get("description"),
+                "organizer": event_to_update.get("organizer")
+            },
+            "modified_by": payload.user_id if payload.user_id else event_to_update.get("organizer", "unknown")
+        }
+        updated_event["modification_history"].append(history_entry)
+        
+        # Update the event in the data structure
+        events_data["events"][event_index] = updated_event
+        
+        # Save to file
+        await save_events()
+        
+        return {
+            "success": True,
+            "event": updated_event,
+            "original_event": original_event_copy,  # Include original event data for notifications
+            "message": f"Event '{updated_event['title']}' updated successfully"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@app.delete("/calendars/{calendar_id}/events/{event_id}")
+async def delete_event(calendar_id: str, event_id: str):
+    """Delete an existing calendar event."""
+    try:
+        # Find the event to delete
+        event_to_delete = None
+        event_index = None
+        for i, event in enumerate(events_data.get("events", [])):
+            if event.get("id") == event_id:
+                event_to_delete = event
+                event_index = i
+                break
+        
+        if not event_to_delete:
+            raise HTTPException(status_code=404, detail=f"Event with ID '{event_id}' not found")
+        
+        # Check if the event belongs to the specified calendar
+        if event_to_delete.get("calendar_id") != calendar_id:
+            raise HTTPException(status_code=400, detail=f"Event '{event_id}' does not belong to calendar '{calendar_id}'")
+        
+        # Store event details for response (include full event data for notifications)
+        deleted_event_title = event_to_delete.get("title", "Unknown Event")
+        deleted_event_copy = event_to_delete.copy()  # Keep full event data for response
+        
+        # Remove the event from the data structure
+        events_data["events"].pop(event_index)
+        
+        # Save to file
+        await save_events()
+        
+        return {
+            "success": True,
+            "deleted_event_id": event_id,
+            "original_event": deleted_event_copy,  # Include full event data
+            "message": f"Event '{deleted_event_title}' deleted successfully"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@app.get("/calendars/{calendar_id}/events/{event_id}")
+async def get_event(calendar_id: str, event_id: str):
+    """Get details of a specific event."""
+    try:
+        # Find the event
+        event = None
+        for e in events_data.get("events", []):
+            if e.get("id") == event_id and e.get("calendar_id") == calendar_id:
+                event = e
+                break
+        
+        if not event:
+            raise HTTPException(status_code=404, detail=f"Event with ID '{event_id}' not found in calendar '{calendar_id}'")
+        
+        return {
+            "success": True,
+            "event": event
         }
         
     except HTTPException:

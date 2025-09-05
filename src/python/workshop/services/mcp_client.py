@@ -156,6 +156,98 @@ class CalendarMCPClient:
             return {"status": "unhealthy", "error": f"Network error: {e}"}
         except Exception as e:
             return {"status": "unhealthy", "error": f"Health check failed: {e}"}
+    
+    async def update_event_via_mcp(
+        self,
+        calendar_id: str,
+        event_id: str,
+        user_id: Optional[str] = None,
+        title: Optional[str] = None,
+        start_time: Optional[str] = None,
+        end_time: Optional[str] = None,
+        location: Optional[str] = None,
+        description: Optional[str] = None
+    ) -> dict:
+        """Update an existing event via the MCP server."""
+        payload = {}
+        if user_id is not None:
+            payload["user_id"] = user_id
+        if title is not None:
+            payload["title"] = title
+        if start_time is not None:
+            payload["start_time"] = start_time
+        if end_time is not None:
+            payload["end_time"] = end_time
+        if location is not None:
+            payload["location"] = location
+        if description is not None:
+            payload["description"] = description
+        
+        try:
+            client = await self._get_client()
+            response = await client.put(
+                f"{self.base_url}/calendars/{calendar_id}/events/{event_id}",
+                json=payload,
+                timeout=30.0
+            )
+            
+            if response.status_code == 403:
+                return {"success": False, "error": "Permission denied"}
+            elif response.status_code == 404:
+                return {"success": False, "error": "Event not found"}
+            elif response.status_code == 409:
+                return {"success": False, "error": "Time conflict with existing events"}
+            
+            response.raise_for_status()
+            return response.json()
+        except httpx.TimeoutException:
+            return {"success": False, "error": "Request timeout"}
+        except httpx.RequestError as e:
+            return {"success": False, "error": f"Network error: {e}"}
+        except Exception as e:
+            return {"success": False, "error": f"Unexpected error: {e}"}
+    
+    async def delete_event_via_mcp(self, calendar_id: str, event_id: str) -> dict:
+        """Delete an existing event via the MCP server."""
+        try:
+            client = await self._get_client()
+            response = await client.delete(
+                f"{self.base_url}/calendars/{calendar_id}/events/{event_id}",
+                timeout=30.0
+            )
+            
+            if response.status_code == 404:
+                return {"success": False, "error": "Event not found"}
+            
+            response.raise_for_status()
+            return response.json()
+        except httpx.TimeoutException:
+            return {"success": False, "error": "Request timeout"}
+        except httpx.RequestError as e:
+            return {"success": False, "error": f"Network error: {e}"}
+        except Exception as e:
+            return {"success": False, "error": f"Unexpected error: {e}"}
+    
+    async def get_event_via_mcp(self, calendar_id: str, event_id: str) -> dict:
+        """Get details of a specific event via the MCP server."""
+        try:
+            client = await self._get_client()
+            response = await client.get(
+                f"{self.base_url}/calendars/{calendar_id}/events/{event_id}",
+                timeout=30.0
+            )
+            
+            if response.status_code == 404:
+                return {"success": False, "error": "Event not found"}
+            
+            response.raise_for_status()
+            return response.json()
+        except httpx.TimeoutException:
+            return {"success": False, "error": "Request timeout"}
+        except httpx.RequestError as e:
+            return {"success": False, "error": f"Network error: {e}"}
+        except Exception as e:
+            return {"success": False, "error": f"Unexpected error: {e}"}
 
 
 # Convenience functions for backward compatibility
@@ -178,3 +270,19 @@ async def check_room_availability_via_mcp(room_id: str, start_time: str, end_tim
     """Convenience function for checking room availability via MCP."""
     client = CalendarMCPClient()
     return await client.check_room_availability_via_mcp(room_id, start_time, end_time)
+
+async def update_event_via_mcp(calendar_id: str, event_id: str, user_id: str = None, title: str = None, 
+                              start_time: str = None, end_time: str = None, location: str = None, description: str = None):
+    """Convenience function for updating events via MCP."""
+    client = CalendarMCPClient()
+    return await client.update_event_via_mcp(calendar_id, event_id, user_id, title, start_time, end_time, location, description)
+
+async def delete_event_via_mcp(calendar_id: str, event_id: str):
+    """Convenience function for deleting events via MCP."""
+    client = CalendarMCPClient()
+    return await client.delete_event_via_mcp(calendar_id, event_id)
+
+async def get_event_via_mcp(calendar_id: str, event_id: str):
+    """Convenience function for getting event details via MCP."""
+    client = CalendarMCPClient()
+    return await client.get_event_via_mcp(calendar_id, event_id)

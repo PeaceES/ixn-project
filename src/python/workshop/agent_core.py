@@ -146,6 +146,11 @@ class CalendarAgentCore:
                 "get_user_booking_entity": self.get_user_booking_entity,
                 "schedule_event_with_permissions": self.schedule_event_with_permissions,
                 "get_user_details": self.get_user_details,
+                # Event modification functions
+                "reschedule_event_via_mcp": self.reschedule_event_via_mcp,
+                "modify_event_via_mcp": self.modify_event_via_mcp,
+                "cancel_event_via_mcp": self.cancel_event_via_mcp,
+                "get_event_details_via_mcp": self.get_event_details_via_mcp,
             }
             
             selected = []
@@ -289,6 +294,167 @@ class CalendarAgentCore:
                 "success": False,
                 "error": f"MCP connection failed: {e}",
                 "message": f"Cannot schedule event '{title}'"
+            })
+
+    async def reschedule_event_via_mcp(self, event_id: str, calendar_id: str, new_start_time: str, new_end_time: str, user_id: str = None) -> str:
+        """Reschedule an existing event to new times via MCP server."""
+        try:
+            health = await self.mcp_client.health_check()
+            if not health.get("status") == "healthy":
+                return json.dumps({
+                    "success": False,
+                    "error": "MCP server not available",
+                    "message": f"Cannot reschedule event with ID '{event_id}'"
+                })
+            
+            # Update only the times
+            result = await self.mcp_client.update_event_via_mcp(
+                calendar_id=calendar_id,
+                event_id=event_id,
+                user_id=user_id,
+                start_time=new_start_time,
+                end_time=new_end_time
+            )
+            
+            if result.get("success"):
+                # Post rescheduling notification to shared thread
+                changes = {
+                    "start_time": new_start_time,
+                    "end_time": new_end_time
+                }
+                # Try to get original event data from result if available
+                original_event = result.get("original_event")
+                await self._post_event_change_to_shared_thread("rescheduled", event_id, calendar_id, changes, original_event)
+                
+                return json.dumps(result)
+            else:
+                return json.dumps({
+                    "success": False,
+                    "error": f"MCP error: {result.get('error')}",
+                    "message": f"Could not reschedule event with ID '{event_id}'"
+                })
+        except Exception as e:
+            return json.dumps({
+                "success": False,
+                "error": f"MCP connection failed: {e}",
+                "message": f"Cannot reschedule event with ID '{event_id}'"
+            })
+
+    async def modify_event_via_mcp(self, event_id: str, calendar_id: str, user_id: str = None, 
+                                 title: str = None, start_time: str = None, end_time: str = None,
+                                 location: str = None, description: str = None) -> str:
+        """Modify an existing event via MCP server."""
+        try:
+            health = await self.mcp_client.health_check()
+            if not health.get("status") == "healthy":
+                return json.dumps({
+                    "success": False,
+                    "error": "MCP server not available",
+                    "message": f"Cannot modify event with ID '{event_id}'"
+                })
+            
+            result = await self.mcp_client.update_event_via_mcp(
+                calendar_id=calendar_id,
+                event_id=event_id,
+                user_id=user_id,
+                title=title,
+                start_time=start_time,
+                end_time=end_time,
+                location=location,
+                description=description
+            )
+            
+            if result.get("success"):
+                # Post modification notification to shared thread
+                changes = {}
+                if title is not None:
+                    changes["title"] = title
+                if start_time is not None:
+                    changes["start_time"] = start_time
+                if end_time is not None:
+                    changes["end_time"] = end_time
+                if location is not None:
+                    changes["location"] = location
+                if description is not None:
+                    changes["description"] = description
+                
+                # Try to get original event data from result if available
+                original_event = result.get("original_event")
+                await self._post_event_change_to_shared_thread("modified", event_id, calendar_id, changes, original_event)
+                
+                return json.dumps(result)
+            else:
+                return json.dumps({
+                    "success": False,
+                    "error": f"MCP error: {result.get('error')}",
+                    "message": f"Could not modify event with ID '{event_id}'"
+                })
+        except Exception as e:
+            return json.dumps({
+                "success": False,
+                "error": f"MCP connection failed: {e}",
+                "message": f"Cannot modify event with ID '{event_id}'"
+            })
+
+    async def cancel_event_via_mcp(self, event_id: str, calendar_id: str) -> str:
+        """Cancel/delete an existing event via MCP server."""
+        try:
+            health = await self.mcp_client.health_check()
+            if not health.get("status") == "healthy":
+                return json.dumps({
+                    "success": False,
+                    "error": "MCP server not available",
+                    "message": f"Cannot cancel event with ID '{event_id}'"
+                })
+            
+            result = await self.mcp_client.delete_event_via_mcp(calendar_id, event_id)
+            
+            if result.get("success"):
+                # Post cancellation notification to shared thread
+                # Try to get original event data from result if available
+                original_event = result.get("original_event")
+                await self._post_event_change_to_shared_thread("cancelled", event_id, calendar_id, None, original_event)
+                
+                return json.dumps(result)
+            else:
+                return json.dumps({
+                    "success": False,
+                    "error": f"MCP error: {result.get('error')}",
+                    "message": f"Could not cancel event with ID '{event_id}'"
+                })
+        except Exception as e:
+            return json.dumps({
+                "success": False,
+                "error": f"MCP connection failed: {e}",
+                "message": f"Cannot cancel event with ID '{event_id}'"
+            })
+
+    async def get_event_details_via_mcp(self, event_id: str, calendar_id: str) -> str:
+        """Get details of a specific event via MCP server."""
+        try:
+            health = await self.mcp_client.health_check()
+            if not health.get("status") == "healthy":
+                return json.dumps({
+                    "success": False,
+                    "error": "MCP server not available",
+                    "message": f"Cannot retrieve event details for ID '{event_id}'"
+                })
+            
+            result = await self.mcp_client.get_event_via_mcp(calendar_id, event_id)
+            
+            if result.get("success"):
+                return json.dumps(result)
+            else:
+                return json.dumps({
+                    "success": False,
+                    "error": f"MCP error: {result.get('error')}",
+                    "message": f"Could not retrieve event details for ID '{event_id}'"
+                })
+        except Exception as e:
+            return json.dumps({
+                "success": False,
+                "error": f"MCP connection failed: {e}",
+                "message": f"Cannot retrieve event details for ID '{event_id}'"
             })
 
     async def schedule_event_with_organizer(self, room_id: str, title: str, 
@@ -552,6 +718,86 @@ class CalendarAgentCore:
 
         except Exception as e:
             logger.error(f"[AgentCore] Failed to post event to shared thread: {e}")
+
+    async def _post_event_change_to_shared_thread(self, action: str, event_id: str, calendar_id: str, 
+                                                 changes: dict = None, event_data: dict = None) -> None:
+        """Post event changes (modify, reschedule, cancel) to the shared thread for visibility."""
+        try:
+            if not self.shared_thread_id or not self.project_client:
+                logger.warning("[AgentCore] Cannot post to shared thread - thread ID or client not available")
+                return
+
+            # Create payload based on action type
+            if action == "cancelled":
+                event_payload = {
+                    "event": "event_cancelled",
+                    "event_id": event_id,
+                    "calendar_id": calendar_id,
+                    "updated_by": "calendar-agent",
+                    "timestamp": event_data.get("start_time") if event_data else None
+                }
+                # Add event details if available (includes organizer and attendees for comms agent)
+                if event_data:
+                    event_payload.update({
+                        "title": event_data.get("title"),
+                        "start_time": event_data.get("start_time"),
+                        "end_time": event_data.get("end_time"),
+                        "room_id": event_data.get("calendar_id"),  # calendar_id is room_id in our system
+                        "organizer": event_data.get("organizer"),
+                        "attendee_email": event_data.get("attendees", [None])[0] if event_data.get("attendees") else None,
+                        "attendees": event_data.get("attendees", []),  # Full attendees list for comms agent
+                        "description": event_data.get("description")
+                    })
+            
+            elif action == "modified":
+                event_payload = {
+                    "event": "event_modified",
+                    "event_id": event_id,
+                    "calendar_id": calendar_id,
+                    "changes": changes or {},
+                    "updated_by": "calendar-agent",
+                    "timestamp": changes.get("start_time") if changes else None
+                }
+                # Add original event data if available (includes organizer and attendees for comms agent)
+                if event_data:
+                    event_payload["original_event"] = event_data
+                    # Also add key contact info at top level for easy access
+                    event_payload.update({
+                        "title": event_data.get("title"),
+                        "organizer": event_data.get("organizer"),
+                        "attendee_email": event_data.get("attendees", [None])[0] if event_data.get("attendees") else None,
+                        "attendees": event_data.get("attendees", [])  # Full attendees list for comms agent
+                    })
+            
+            elif action == "rescheduled":
+                event_payload = {
+                    "event": "event_rescheduled",
+                    "event_id": event_id,
+                    "calendar_id": calendar_id,
+                    "changes": changes or {},
+                    "updated_by": "calendar-agent",
+                    "timestamp": changes.get("start_time") if changes else None
+                }
+                # Add original event data if available (includes organizer and attendees for comms agent)
+                if event_data:
+                    event_payload["original_event"] = event_data
+                    # Also add key contact info at top level for easy access
+                    event_payload.update({
+                        "title": event_data.get("title"),
+                        "organizer": event_data.get("organizer"),
+                        "attendee_email": event_data.get("attendees", [None])[0] if event_data.get("attendees") else None,
+                        "attendees": event_data.get("attendees", [])  # Full attendees list for comms agent
+                    })
+
+            await self.project_client.agents.create_message(
+                thread_id=self.shared_thread_id,
+                role="user",
+                content=json.dumps(event_payload)
+            )
+            logger.info(f"[AgentCore] Posted {action} event notification to shared thread {self.shared_thread_id}")
+
+        except Exception as e:
+            logger.error(f"[AgentCore] Failed to post {action} event to shared thread: {e}")
 
     def fetch_org_structure(self) -> Dict[str, Any]:
         """Load organization structure from local org_structure.json and return users keyed by email.

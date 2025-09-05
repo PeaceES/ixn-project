@@ -595,6 +595,166 @@
         "automotive-club-soc@example.edu"
       ],
       "status": "confirmed"
+    },
+    {
+      "id": "7ecf84a2-1cd0-46bc-a582-10382915cd5a",
+      "calendar_id": "central-lecture-hall-main",
+      "calendar_name": "Main Lecture Hall",
+      "title": "4th test event",
+      "start_time": "2026-01-27T17:00:00",
+      "end_time": "2026-01-27T18:00:00",
+      "organizer": "donaldgarcia@example.net",
+      "location": "Main Building, Ground Floor",
+      "description": "Event for 70 people - Organized by Allison Hill for Robotics Society",
+      "created_at": "2025-08-30T17:48:37.030773",
+      "attendees": [
+        "robotics-society-soc@example.edu"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "b3b1ac5b-913d-4de3-add4-de845a6538ba",
+      "calendar_id": "central-lecture-hall-secondary",
+      "calendar_name": "Secondary Lecture Hall",
+      "title": "5th test event",
+      "start_time": "2026-01-27T17:00:00",
+      "end_time": "2026-01-27T18:00:00",
+      "organizer": "donaldgarcia@example.net",
+      "location": "Main Building, Ground Floor",
+      "description": "Event for 70 people - Organized by Allison Hill for Robotics Society",
+      "created_at": "2025-08-30T18:06:41.193908",
+      "attendees": [
+        "robotics-society-soc@example.edu"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "aaf6d409-457c-40e5-a8bd-2aef75c4da79",
+      "calendar_id": "student-union-main-hall",
+      "calendar_name": "Student Union Main Hall",
+      "title": "6th test event",
+      "start_time": "2026-01-27T17:00:00",
+      "end_time": "2026-01-27T18:00:00",
+      "organizer": "donaldgarcia@example.net",
+      "location": "Student Union Building",
+      "description": "Event for 70 people - Organized by Allison Hill for Robotics Society",
+      "created_at": "2025-08-30T18:11:35.206206",
+      "attendees": [
+        "robotics-society-soc@example.edu"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "a8dd65a5-2e2e-49fb-8117-6244d20c16ef",
+      "calendar_id": "central-lecture-hall-main",
+      "calendar_name": "Main Lecture Hall",
+      "title": "6th test event",
+      "start_time": "2026-09-28T17:00:00",
+      "end_time": "2026-09-28T18:00:00",
+      "organizer": "donaldgarcia@example.net",
+      "location": "Main Building, Ground Floor",
+      "description": "Event for 70 people, Robotics Society - Organized by Allison Hill for Robotics Society",
+      "created_at": "2025-08-30T18:17:02.051437",
+      "attendees": [
+        "robotics-society-soc@example.edu"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "5f4ec0e4-0979-428b-8f2d-b75a7edaf06e",
+      "calendar_id": "central-lecture-hall-main",
+      "calendar_name": "Main Lecture Hall",
+      "title": "my 8th test event",
+      "start_time": "2030-09-30T17:00:00",
+      "end_time": "2030-09-30T18:00:00",
+      "organizer": "donaldgarcia@example.net",
+      "location": "Main Building, Ground Floor",
+      "description": "Event for 70 people, Robotics Society - Organized by Allison Hill for Robotics Society",
+      "created_at": "2025-08-30T18:18:45.294997",
+      "attendees": [
+        "robotics-society-soc@example.edu"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "099b94f4-99ef-45f3-8dc6-be13f360f364",
+      "calendar_id": "central-lecture-hall-main",
+      "calendar_name": "Main Lecture Hall",
+      "title": "9th test event",
+      "start_time": "2028-01-27T17:00:00",
+      "end_time": "2028-01-27T18:00:00",
+      "organizer": "donaldgarcia@example.net",
+      "location": "Main Building, Ground Floor",
+      "description": "Event for 70 people organized by Robotics Society. - Organized by Allison Hill for Robotics Society",
+      "created_at": "2025-08-30T18:23:15.326181",
+      "attendees": [
+        "robotics-society-soc@example.edu"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "a4ae0fb3-8c81-4e01-9f63-99e9807a6ff0",
+      "calendar_id": "central-seminar-room-alpha",
+      "calendar_name": "Alpha Seminar Room",
+      "title": "Department Strategy Meeting",
+      "start_time": "2025-09-01T10:00:00Z",
+      "end_time": "2025-09-01T11:00:00Z",
+      "organizer": "howardmaurice@example.com",
+      "location": "Academic Block, Floor 1",
+      "description": "Quarterly planning - Organized by Gabrielle Davis for Computing Department",
+      "created_at": "2025-08-31T10:09:34.912954",
+      "attendees": [
+        "computing-department-dept@example.edu"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "0a8f0855-1ba4-4dd3-9fb1-11ecd904b546",
+      "calendar_id": "central-lecture-hall-main",
+      "calendar_name": "Main Lecture Hall",
+      "title": "friday\u2019s test event",
+      "start_time": "2028-01-28T17:00:00",
+      "end_time": "2028-01-28T18:00:00",
+      "organizer": "peaceselem@gmail.com",
+      "location": "Main Building, Ground Floor",
+      "description": "Event for 70 people, organized by Allison Hill for the Robotics Society. - Organized by Allison Hill for Robotics Society",
+      "created_at": "2025-09-05T14:34:57.127451",
+      "attendees": [
+        "robotics-society-soc@example.edu"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "2efe4a1e-0986-403b-addc-f21aefcd78ca",
+      "calendar_id": "central-lecture-hall-secondary",
+      "calendar_name": "Secondary Lecture Hall",
+      "title": "friday\u2019s test event",
+      "start_time": "2028-01-29T17:00:00",
+      "end_time": "2028-01-29T18:00:00",
+      "organizer": "peaceselem@gmail.com",
+      "location": "Main Building, Ground Floor",
+      "description": "Event for 70 people, organized by Allison Hill for the Robotics Society. - Organized by Allison Hill for Robotics Society",
+      "created_at": "2025-09-05T14:40:54.067860",
+      "attendees": [
+        "robotics-society-soc@example.edu"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "fcae4093-ecaf-4f1a-8548-08d97094f046",
+      "calendar_id": "student-union-main-hall",
+      "calendar_name": "Student Union Main Hall",
+      "title": "fridays test event 2",
+      "start_time": "2028-01-28T17:00:00",
+      "end_time": "2028-01-28T18:00:00",
+      "organizer": "peaceselem@gmail.com",
+      "location": "Student Union Building",
+      "description": "Event for 70 people organized by Allison Hill for the Robotics Society. - Organized by Allison Hill for Robotics Society",
+      "created_at": "2025-09-05T14:53:54.027934",
+      "attendees": [
+        "robotics-society-soc@example.edu"
+      ],
+      "status": "confirmed"
     }
   ]
 }

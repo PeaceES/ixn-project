@@ -755,6 +755,38 @@
         "robotics-society-soc@example.edu"
       ],
       "status": "confirmed"
+    },
+    {
+      "id": "ef8885f1-099c-4e0a-8abd-ac64fb881988",
+      "calendar_id": "central-seminar-room-beta",
+      "calendar_name": "Beta Seminar Room",
+      "title": "September's Event",
+      "start_time": "2025-09-08T16:00:00",
+      "end_time": "2025-09-08T17:00:00",
+      "organizer": "peaceselem@gmail.com",
+      "location": "Academic Block, Floor 1",
+      "description": "Organized by Allison Hill for Robotics Society",
+      "created_at": "2025-09-07T22:33:44.396132",
+      "attendees": [
+        "robotics-society-soc@example.edu"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "9f5458d3-f53c-4412-a3fc-c48bec1f34e7",
+      "calendar_id": "central-seminar-room-beta",
+      "calendar_name": "Beta Seminar Room",
+      "title": "Second September Event",
+      "start_time": "2025-09-09T16:00:00",
+      "end_time": "2025-09-09T17:00:00",
+      "organizer": "peaceselem@gmail.com",
+      "location": "Academic Block, Floor 1",
+      "description": "Organized by Allison Hill for Robotics Society",
+      "created_at": "2025-09-07T22:38:34.270924",
+      "attendees": [
+        "robotics-society-soc@example.edu"
+      ],
+      "status": "confirmed"
     }
   ]
 }

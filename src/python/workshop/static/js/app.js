@@ -810,15 +810,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         if (window.calendarAgentUI) {
             window.calendarAgentUI.addChatMessage(
-                'Welcome to the Calendar Scheduling Agent! 🎉', 
-                'system'
-            );
-            window.calendarAgentUI.addChatMessage(
-                'Calendar integration is now active! You can view the calendar, check room availability, and book meetings using the interface below or by chatting with the agent.', 
-                'system'
-            );
-            window.calendarAgentUI.addChatMessage(
-                'Try asking: "show calendar", "check rooms", "book a meeting", or "today\'s events"', 
+                'Welcome to the Calendar Scheduling Agent! Calendar integration is now active! You can view the calendar, check room availability, and book meetings using the interface below or by chatting with the agent. Click START AGENT to start.', 
                 'system'
             );
         }

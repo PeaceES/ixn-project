@@ -364,24 +364,9 @@ def handle_connect():
         'uptime': get_agent_uptime()
     })
     
-    # Send recent logs if available
-    try:
-        if agent_log_file.exists():
-            with open(agent_log_file, 'r') as f:
-                lines = f.readlines()
-                # Send last 20 lines to new client
-                for line in lines[-20:]:
-                    emit('agent_output', {
-                        'type': 'stdout',
-                        'data': line.rstrip(),
-                        'timestamp': time.time()
-                    })
-    except Exception as e:
-        emit('agent_output', {
-            'type': 'error',
-            'data': f"Error loading recent logs: {str(e)}",
-            'timestamp': time.time()
-        })
+    # Removed sending recent logs to avoid replaying old agent output
+    # If you want to show logs only when agent is running, you can add a check here
+    # ...existing code...
 
 @socketio.on('disconnect')
 def handle_disconnect():
@@ -610,14 +595,14 @@ def send_message_to_agent():
             return jsonify({
                 'success': False,
                 'error': 'Message is required'
-            }), 400
+            }, 400)
         
         message = data['message'].strip()
         if not message:
             return jsonify({
                 'success': False,
                 'error': 'Message cannot be empty'
-            }), 400
+            }, 400)
         
         # Send message to agent via stdin
         agent_process.stdin.write(message + '\n')

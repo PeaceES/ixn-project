@@ -204,6 +204,8 @@ def start_agent(user_context=None):
         
         agent_start_time = time.time()
         
+        # User context is already passed via environment variables, no need to send via stdin
+        
         # Start output streaming
         stream_output_to_clients()
         
@@ -287,6 +289,9 @@ def stream_output_to_clients():
     
     def read_output():
         """Read output from agent process and queue it for WebSocket clients."""
+        final_response_buffer = []
+        capturing_final_response = False
+        
         try:
             while agent_process and agent_process.poll() is None:
                 line = agent_process.stdout.readline()
@@ -294,12 +299,34 @@ def stream_output_to_clients():
                     line = line.rstrip()  # Already decoded due to universal_newlines=True
                     agent_output_queue.put(('stdout', line))
                     
-                    # Try to detect if this is an agent response vs system output
+                    # Check for final response markers
+                    if line == "FINAL_AGENT_RESPONSE_START":
+                        capturing_final_response = True
+                        final_response_buffer = []
+                        continue
+                    elif line == "FINAL_AGENT_RESPONSE_END":
+                        capturing_final_response = False
+                        # Send the captured final response as a special message type
+                        if final_response_buffer:
+                            final_response_text = '\n'.join(final_response_buffer)
+                            if connected_clients:
+                                socketio.emit('final_agent_response', {
+                                    'message': final_response_text,
+                                    'timestamp': time.time()
+                                }, namespace='/')
+                        continue
+                    
+                    # If we're capturing the final response, add to buffer instead of emitting
+                    if capturing_final_response:
+                        final_response_buffer.append(line)
+                        continue
+                    
+                    # For non-final response output, determine output type
                     output_type = 'stdout'
                     if any(keyword in line.lower() for keyword in ['assistant:', 'agent:', 'response:', 'reply:']):
                         output_type = 'agent'
                     
-                    # Emit to all connected WebSocket clients
+                    # Emit to all connected WebSocket clients (only intermediate output)
                     if connected_clients:
                         socketio.emit('agent_output', {
                             'type': output_type,
@@ -377,6 +404,12 @@ def handle_send_message(data):
     """Handle message from client to send to agent."""
     global agent_process
     
+    # DEBUG: Log all incoming WebSocket messages
+    print(f"[DEBUG] WebSocket received message: {data}")
+    print(f"[DEBUG] Message content: '{data.get('message', 'NO_MESSAGE_KEY')}'")
+    print(f"[DEBUG] Message type: {type(data.get('message'))}")
+    print(f"[DEBUG] Message length: {len(data.get('message', ''))}")
+    
     # Check if user is authenticated for WebSocket events
     if not current_user.is_authenticated:
         emit('chat_error', {
@@ -394,31 +427,28 @@ def handle_send_message(data):
     
     try:
         message = data.get('message', '').strip()
+        
+        # DEBUG: Log message processing
+        print(f"[DEBUG] Processing message: '{message}'")
+        print(f"[DEBUG] Message empty check: {not message}")
+        
         if not message:
+            print(f"[DEBUG] Empty message detected, sending error response")
             emit('chat_error', {
                 'message': 'Message cannot be empty.',
                 'timestamp': time.time()
             })
             return
         
-        # Check if we should inject user context
-        if AUTO_INJECT_USER_CONTEXT and current_user.is_authenticated:
-            # Check if message is asking about booking or contains booking-related keywords
-            booking_keywords = ['book', 'schedule', 'reserve', 'meeting', 'event', 'room', 'what can i book', 'calendar', 'available']
-            needs_user_context = any(keyword in message.lower() for keyword in booking_keywords)
-            
-            if needs_user_context:
-                # Create a context-aware message that includes user information
-                context_message = f"[System: User context - ID: {current_user.id}, Name: {current_user.name}, Email: {current_user.email}]\n{message}"
-                agent_process.stdin.write(context_message + '\n')
-            else:
-                # Send regular message
-                agent_process.stdin.write(message + '\n')
-        else:
-            # Send regular message without context injection
-            agent_process.stdin.write(message + '\n')
+        # Send regular message without runtime context injection
+        # (User context is already available via environment variables)
+        print(f"[DEBUG] Sending message to agent: '{message}'")
+        agent_process.stdin.write(message + '\n')
         
         agent_process.stdin.flush()
+        
+        # DEBUG: Log the flush operation
+        print(f"[DEBUG] Stdin flushed successfully")
         
         # Broadcast the user message to all connected clients (without the context prefix)
         socketio.emit('chat_message', {

@@ -519,6 +519,91 @@ footer p {
     margin-right: 8px;
 }
 
+/* Final Agent Response - Special styling */
+.final-agent-response {
+    background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+    border: 2px solid #4caf50;
+    border-radius: 8px;
+    margin: 15px 0;
+    padding: 15px;
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
+    animation: highlight 0.5s ease-in-out;
+}
+
+.final-agent-response strong {
+    color: #2e7d32;
+}
+
+/* Animation for final response */
+@keyframes highlight {
+    0% { transform: scale(1); background: linear-gradient(135deg, #fff9c4 0%, #f0f4c3 100%); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%); }
+}
+
+/* Toggle for intermediate steps */
+.output-toggle {
+    margin-bottom: 10px;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.3s;
+    border-radius: 24px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+    background-color: #4caf50;
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(26px);
+}
+
+/* Hide intermediate messages when toggle is off */
+.chat-output.hide-intermediate .message:not(.final-agent-response):not(.system-message):not(.info-message):not(.user-message) {
+    display: none;
+}
+
 /* Chat Input Enhancement */
 .chat-input-container {
     display: flex;
@@ -985,6 +1070,35 @@ footer p {
 .quick-actions .action-btn:not(:disabled):hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* Final Agent Response Styling */
+.final-agent-response {
+    background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+    border-left: 4px solid #4caf50;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin: 10px 0;
+    font-weight: 500;
+}
+
+.final-agent-response strong {
+    color: #2e7d32;
+}
+
+/* Toggle styling */
+.toggle-label {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 15px;
+    color: #555;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.toggle-label input[type="checkbox"] {
+    margin-right: 8px;
+    transform: scale(1.1);
 }
 
 /* Responsive Calendar */

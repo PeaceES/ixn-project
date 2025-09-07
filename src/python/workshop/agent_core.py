@@ -1202,6 +1202,21 @@ class CalendarAgentCore:
             instructions = self.utilities.load_instructions(INSTRUCTIONS_FILE)
             if font_file_info:
                 instructions = instructions.replace("{font_file_id}", font_file_info.id)
+            
+            # Inject user context into instructions if available
+            if self.default_user_context:
+                user_context_instruction = f"""
+
+CURRENT USER CONTEXT:
+You are currently interacting with:
+- User ID: {self.default_user_context['id']}
+- Name: {self.default_user_context['name']} 
+- Email: {self.default_user_context['email']}
+
+Use this user information automatically for booking operations without asking for their ID.
+When they ask about bookings or what they can book for, use their ID ({self.default_user_context['id']}) directly.
+"""
+                instructions += user_context_instruction
 
             # Create agent
             # Create agent with hub-based connection string format

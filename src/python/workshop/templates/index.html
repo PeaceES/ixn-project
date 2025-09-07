@@ -82,6 +82,14 @@
             <div class="card chat-card full-width">
                 <h2>Interactive Chat Interface</h2>
                 <div class="chat-container">
+                    <!-- Output Controls with Toggle -->
+                    <div class="output-toggle">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="show-intermediate-toggle" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span>Show intermediate steps and reasoning</span>
+                    </div>
                     <div class="chat-output" id="chat-output">
                         <div class="message system-message">
                             <strong>System:</strong> WebSocket connection status: <span id="connection-status">Connecting...</span>
@@ -102,6 +110,9 @@
                     <div class="output-controls">
                         <button id="clear-output" class="btn btn-secondary">Clear Output</button>
                         <button id="scroll-to-bottom" class="btn btn-secondary">Scroll to Bottom</button>
+                        <label class="toggle-label">
+                            <input type="checkbox" id="show-intermediate" checked> Show intermediate steps
+                        </label>
                     </div>
                 </div>
             </div>

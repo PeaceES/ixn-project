@@ -10,6 +10,7 @@ class CalendarAgentUI {
         this.outputContainer = null;
         this.maxOutputLines = 1000; // Limit output to prevent memory issues
         this.calendarManager = null; // Calendar manager instance
+        this.showIntermediate = true; // Toggle for showing intermediate output
         
         this.initializeWebSocket();
         this.enableButtons();
@@ -53,7 +54,15 @@ class CalendarAgentUI {
 
         // Agent output streaming
         this.socket.on('agent_output', (data) => {
-            this.appendOutput(data.type, data.data, data.timestamp);
+            // Only show intermediate output if the toggle is enabled
+            if (this.showIntermediate) {
+                this.appendOutput(data.type, data.data, data.timestamp);
+            }
+        });
+
+        // Final agent response (clean answer)
+        this.socket.on('final_agent_response', (data) => {
+            this.addFinalAgentResponse(data.message, data.timestamp);
         });
 
         // Agent status updates
@@ -132,6 +141,43 @@ class CalendarAgentUI {
         this.scrollToBottom();
     }
 
+    addFinalAgentResponse(message, timestamp) {
+        this.outputContainer = this.outputContainer || document.getElementById('chat-output');
+        if (!this.outputContainer) return;
+
+        // Create timestamp
+        const time = new Date(timestamp * 1000).toLocaleTimeString();
+        
+        // Create a special message element for final agent responses
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message final-agent-response';
+        
+        // Extract the actual response text from the formatted output
+        let cleanMessage = message;
+        // Remove ANSI color codes and "Agent response:" prefix if present
+        cleanMessage = cleanMessage.replace(/\x1b\[[0-9;]*m/g, ''); // Remove ANSI codes
+        cleanMessage = cleanMessage.replace(/^Agent response:\s*/i, ''); // Remove "Agent response:" prefix
+        
+        const content = `<span class="timestamp">[${time}]</span> <strong>🤖 Agent:</strong> ${this.escapeHtml(cleanMessage)}`;
+        
+        messageDiv.innerHTML = content;
+        this.outputContainer.appendChild(messageDiv);
+        
+        // Limit number of messages to prevent memory issues
+        const messages = this.outputContainer.querySelectorAll('.message');
+        if (messages.length > this.maxOutputLines) {
+            for (let i = 0; i < messages.length - this.maxOutputLines; i++) {
+                messages[i].remove();
+            }
+        }
+        
+        // Auto-scroll to bottom
+        this.scrollToBottom();
+        
+        // Show a notification for the response
+        this.showNotification('Agent response received', 'success');
+    }
+
     escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
@@ -197,7 +243,7 @@ class CalendarAgentUI {
         } else {
             if (startBtn) {
                 startBtn.disabled = false;
-                startBtn.textContent = '🚀 Start Agent';
+                startBtn.textContent = '✔️Start Agent';
             }
             if (stopBtn) {
                 stopBtn.disabled = true;
@@ -287,6 +333,15 @@ class CalendarAgentUI {
         if (scrollBtn) {
             scrollBtn.addEventListener('click', () => {
                 this.scrollToBottom();
+            });
+        }
+
+        // Toggle for showing intermediate output
+        const showIntermediateToggle = document.getElementById('show-intermediate-toggle');
+        if (showIntermediateToggle) {
+            showIntermediateToggle.addEventListener('change', (e) => {
+                this.showIntermediate = e.target.checked;
+                this.toggleIntermediateOutput(e.target.checked);
             });
         }
 
@@ -711,6 +766,35 @@ class CalendarAgentUI {
         } catch (error) {
             console.error('Error fetching today\'s events:', error);
             this.addChatMessage('❌ Could not fetch today\'s events', 'system');
+        }
+    }
+
+    hideIntermediateMessages() {
+        if (!this.outputContainer) return;
+        const intermediateMessages = this.outputContainer.querySelectorAll('.stdout-message, .agent-message:not(.final-agent-response)');
+        intermediateMessages.forEach(msg => {
+            msg.style.display = 'none';
+        });
+    }
+
+    showAllMessages() {
+        if (!this.outputContainer) return;
+        const allMessages = this.outputContainer.querySelectorAll('.message');
+        allMessages.forEach(msg => {
+            msg.style.display = 'block';
+        });
+    }
+
+    toggleIntermediateOutput(show) {
+        this.outputContainer = this.outputContainer || document.getElementById('chat-output');
+        if (!this.outputContainer) return;
+
+        if (show) {
+            // Show all messages
+            this.outputContainer.classList.remove('hide-intermediate');
+        } else {
+            // Hide intermediate messages, show only final responses and system messages
+            this.outputContainer.classList.add('hide-intermediate');
         }
     }
 }

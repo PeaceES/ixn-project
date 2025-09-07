@@ -61,12 +61,21 @@ async def main() -> None:
     
     cmd = None
     
+    print(f"[DEBUG] Starting input loop...")
+    
     while True:
+        print(f"[DEBUG] Waiting for input...")
         prompt = input(
             f"\n\n{tc.GREEN}Enter your query (type exit or save to finish): {tc.RESET}"
         ).strip()
         
+        # DEBUG: Log what was received from input
+        print(f"[DEBUG] Received input: '{prompt}'")
+        print(f"[DEBUG] Input length: {len(prompt)}")
+        print(f"[DEBUG] Input repr: {repr(prompt)}")
+        
         if not prompt:
+            print(f"[DEBUG] Empty prompt detected, continuing loop")
             continue
         
         cmd = prompt.lower()
@@ -74,12 +83,19 @@ async def main() -> None:
             break
         
         # Process the message
+        print(f"[DEBUG] About to process message: '{prompt}'")
         print(f"{tc.YELLOW}Processing your request...{tc.RESET}")
         success, response = await agent_core.process_message(prompt)
         if not success:
+            # Use structured markers for errors too
+            print(f"FINAL_AGENT_RESPONSE_START")
             print(f"{tc.RED}Error: {response}{tc.RESET}")
+            print(f"FINAL_AGENT_RESPONSE_END")
         else:
+            # Use structured markers for web UI filtering
+            print(f"FINAL_AGENT_RESPONSE_START")
             print(f"{tc.GREEN}Agent response: {response}{tc.RESET}")
+            print(f"FINAL_AGENT_RESPONSE_END")
     
     # Handle cleanup
     if cmd == "save":

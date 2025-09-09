@@ -299,6 +299,17 @@ class CalendarAgentCore:
     async def reschedule_event_via_mcp(self, event_id: str, new_start_time: str, new_end_time: str, user_id: str = None) -> str:
         """Reschedule an existing event to new times via MCP server."""
         try:
+            # For terminal interface, require user_id to be provided for permission check
+            if user_id is None and self.default_user_context is None:
+                return json.dumps({
+                    "success": False,
+                    "error": "User identification required",
+                    "message": "Please provide your user ID to reschedule this event. Only the original organizer can reschedule events."
+                })
+            
+            # Use provided user_id or fallback to default context (web interface)
+            effective_user_id = user_id or (self.default_user_context.get('email') if self.default_user_context else None)
+            
             health = await self.mcp_client.health_check()
             if not health.get("status") == "healthy":
                 return json.dumps({
@@ -322,7 +333,7 @@ class CalendarAgentCore:
             result = await self.mcp_client.update_event_via_mcp(
                 calendar_id=calendar_id,
                 event_id=event_id,
-                user_id=user_id,
+                user_id=effective_user_id,
                 start_time=new_start_time,
                 end_time=new_end_time
             )
@@ -356,6 +367,17 @@ class CalendarAgentCore:
                                  location: str = None, description: str = None) -> str:
         """Modify an existing event via MCP server."""
         try:
+            # For terminal interface, require user_id to be provided for permission check
+            if user_id is None and self.default_user_context is None:
+                return json.dumps({
+                    "success": False,
+                    "error": "User identification required",
+                    "message": "Please provide your user ID to modify this event. Only the original organizer can modify events."
+                })
+            
+            # Use provided user_id or fallback to default context (web interface)
+            effective_user_id = user_id or (self.default_user_context.get('email') if self.default_user_context else None)
+            
             health = await self.mcp_client.health_check()
             if not health.get("status") == "healthy":
                 return json.dumps({
@@ -379,7 +401,7 @@ class CalendarAgentCore:
             result = await self.mcp_client.update_event_via_mcp(
                 calendar_id=calendar_id,
                 event_id=event_id,
-                user_id=user_id,
+                user_id=effective_user_id,
                 title=title,
                 start_time=start_time,
                 end_time=end_time,
@@ -419,9 +441,20 @@ class CalendarAgentCore:
                 "message": f"Cannot modify event with ID '{event_id}'"
             })
 
-    async def cancel_event_via_mcp(self, event_id: str) -> str:
+    async def cancel_event_via_mcp(self, event_id: str, user_id: str = None) -> str:
         """Cancel/delete an existing event via MCP server."""
         try:
+            # For terminal interface, require user_id to be provided for permission check
+            if user_id is None and self.default_user_context is None:
+                return json.dumps({
+                    "success": False,
+                    "error": "User identification required",
+                    "message": "Please provide your user ID to cancel this event. Only the original organizer can cancel events."
+                })
+            
+            # Use provided user_id or fallback to default context (web interface)
+            effective_user_id = user_id or (self.default_user_context.get('email') if self.default_user_context else None)
+            
             health = await self.mcp_client.health_check()
             if not health.get("status") == "healthy":
                 return json.dumps({
@@ -441,7 +474,7 @@ class CalendarAgentCore:
             
             calendar_id = find_result.get("calendar_id")
             
-            result = await self.mcp_client.delete_event_via_mcp(calendar_id, event_id)
+            result = await self.mcp_client.delete_event_via_mcp(calendar_id, event_id, effective_user_id)
             
             if result.get("success"):
                 # Post cancellation notification to shared thread

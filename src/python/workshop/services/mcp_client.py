@@ -207,12 +207,17 @@ class CalendarMCPClient:
         except Exception as e:
             return {"success": False, "error": f"Unexpected error: {e}"}
     
-    async def delete_event_via_mcp(self, calendar_id: str, event_id: str) -> dict:
+    async def delete_event_via_mcp(self, calendar_id: str, event_id: str, user_id: str = None) -> dict:
         """Delete an existing event via the MCP server."""
         try:
             client = await self._get_client()
+            params = {}
+            if user_id:
+                params["user_id"] = user_id
+                
             response = await client.delete(
                 f"{self.base_url}/calendars/{calendar_id}/events/{event_id}",
+                params=params,
                 timeout=30.0
             )
             
@@ -309,10 +314,10 @@ async def update_event_via_mcp(calendar_id: str, event_id: str, user_id: str = N
     client = CalendarMCPClient()
     return await client.update_event_via_mcp(calendar_id, event_id, user_id, title, start_time, end_time, location, description)
 
-async def delete_event_via_mcp(calendar_id: str, event_id: str):
+async def delete_event_via_mcp(calendar_id: str, event_id: str, user_id: str = None):
     """Convenience function for deleting events via MCP."""
     client = CalendarMCPClient()
-    return await client.delete_event_via_mcp(calendar_id, event_id)
+    return await client.delete_event_via_mcp(calendar_id, event_id, user_id)
 
 async def get_event_via_mcp(calendar_id: str, event_id: str):
     """Convenience function for getting event details via MCP."""

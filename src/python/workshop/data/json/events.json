@@ -433,8 +433,8 @@
       "calendar_id": "central-lecture-hall-main",
       "calendar_name": "Main Lecture Hall",
       "title": "September's Event",
-      "start_time": "2025-09-01T16:00:00",
-      "end_time": "2025-09-01T17:00:00",
+      "start_time": "2025-11-01T16:00:00",
+      "end_time": "2025-11-01T17:00:00",
       "organizer": "1",
       "location": "Main Building, Ground Floor",
       "description": "September's Event for the Engineering Department",
@@ -442,7 +442,22 @@
       "attendees": [
         "1"
       ],
-      "status": "confirmed"
+      "status": "confirmed",
+      "modified_at": "2025-09-09T15:06:22.049915",
+      "modification_history": [
+        {
+          "modified_at": "2025-09-09T15:06:22.049915",
+          "previous_state": {
+            "title": "September's Event",
+            "start_time": "2025-09-01T16:00:00",
+            "end_time": "2025-09-01T17:00:00",
+            "location": "Main Building, Ground Floor",
+            "description": "September's Event for the Engineering Department",
+            "organizer": "1"
+          },
+          "modified_by": "1"
+        }
+      ]
     },
     {
       "id": "ee5bb1cd-e0b7-4eb6-8869-9bc424465684",
@@ -817,32 +832,31 @@
       "calendar_id": "central-seminar-room-beta",
       "calendar_name": "Beta Seminar Room",
       "title": "Second September Event",
-      "start_time": "2025-09-09T16:00:00",
-      "end_time": "2025-09-09T17:00:00",
+      "start_time": "2025-09-10T16:00:00",
+      "end_time": "2025-09-10T17:00:00",
       "organizer": "peaceselem@gmail.com",
       "location": "Academic Block, Floor 1",
       "description": "Organized by Allison Hill for Robotics Society",
       "created_at": "2025-09-07T22:38:34.270924",
       "attendees": [
-        "robotics-society-soc@example.edu"
+        "peaceselem@gmail.com"
       ],
-      "status": "confirmed"
-    },
-    {
-      "id": "9204e685-35a2-4788-88b1-bef0abfdb91f",
-      "calendar_id": "central-lecture-hall-main",
-      "calendar_name": "Main Lecture Hall",
-      "title": "Robotics Society Event",
-      "start_time": "2025-11-30T17:00:00",
-      "end_time": "2025-11-30T18:00:00",
-      "organizer": "peaceselem@gmail.com",
-      "location": "Main Building, Ground Floor",
-      "description": "Robotics Society meeting/event - Organized by Allison Hill for Robotics Society",
-      "created_at": "2025-09-08T11:08:53.927024",
-      "attendees": [
-        "robotics-society-soc@example.edu"
-      ],
-      "status": "confirmed"
+      "status": "confirmed",
+      "modified_at": "2025-09-09T14:57:24.135221",
+      "modification_history": [
+        {
+          "modified_at": "2025-09-09T14:57:24.135221",
+          "previous_state": {
+            "title": "Second September Event",
+            "start_time": "2025-09-09T16:00:00",
+            "end_time": "2025-09-09T17:00:00",
+            "location": "Academic Block, Floor 1",
+            "description": "Organized by Allison Hill for Robotics Society",
+            "organizer": "peaceselem@gmail.com"
+          },
+          "modified_by": "peaceselem@gmail.com"
+        }
+      ]
     }
   ]
 }

@@ -649,6 +649,28 @@ async def update_event(calendar_id: str, event_id: str, payload: UpdateEventRequ
         if event_to_update.get("calendar_id") != calendar_id:
             raise HTTPException(status_code=400, detail=f"Event '{event_id}' does not belong to calendar '{calendar_id}'")
         
+        # ORGANIZER PERMISSION CHECK: Only the original organizer can modify the event
+        if payload.user_id is not None:
+            original_organizer = event_to_update.get("organizer", "")
+            requesting_user = payload.user_id
+            
+            # Check if user_id matches organizer (handle both email and ID formats)
+            if original_organizer != requesting_user:
+                # Try flexible matching for different ID formats
+                user_exists, user_msg, user_info = validate_user_exists(requesting_user)
+                if user_exists:
+                    user_email = user_info.get('email', requesting_user)
+                    if original_organizer != user_email:
+                        raise HTTPException(
+                            status_code=403, 
+                            detail=f"Access denied. Only the original organizer '{original_organizer}' can modify this event"
+                        )
+                else:
+                    raise HTTPException(
+                        status_code=403, 
+                        detail=f"Access denied. Only the original organizer '{original_organizer}' can modify this event"
+                    )
+        
         # Validate calendar exists
         calendar_exists, calendar_msg, calendar_info = validate_calendar_exists(calendar_id)
         if not calendar_exists:
@@ -727,7 +749,7 @@ async def update_event(calendar_id: str, event_id: str, payload: UpdateEventRequ
 
 
 @app.delete("/calendars/{calendar_id}/events/{event_id}")
-async def delete_event(calendar_id: str, event_id: str):
+async def delete_event(calendar_id: str, event_id: str, user_id: str = None):
     """Delete an existing calendar event."""
     try:
         # Find the event to delete
@@ -745,6 +767,28 @@ async def delete_event(calendar_id: str, event_id: str):
         # Check if the event belongs to the specified calendar
         if event_to_delete.get("calendar_id") != calendar_id:
             raise HTTPException(status_code=400, detail=f"Event '{event_id}' does not belong to calendar '{calendar_id}'")
+        
+        # ORGANIZER PERMISSION CHECK: Only the original organizer can delete the event
+        if user_id is not None:
+            original_organizer = event_to_delete.get("organizer", "")
+            requesting_user = user_id
+            
+            # Check if user_id matches organizer (handle both email and ID formats)
+            if original_organizer != requesting_user:
+                # Try flexible matching for different ID formats
+                user_exists, user_msg, user_info = validate_user_exists(requesting_user)
+                if user_exists:
+                    user_email = user_info.get('email', requesting_user)
+                    if original_organizer != user_email:
+                        raise HTTPException(
+                            status_code=403, 
+                            detail=f"Access denied. Only the original organizer '{original_organizer}' can delete this event"
+                        )
+                else:
+                    raise HTTPException(
+                        status_code=403, 
+                        detail=f"Access denied. Only the original organizer '{original_organizer}' can delete this event"
+                    )
         
         # Store event details for response (include full event data for notifications)
         deleted_event_title = event_to_delete.get("title", "Unknown Event")

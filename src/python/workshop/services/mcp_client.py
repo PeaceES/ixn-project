@@ -229,17 +229,15 @@ class CalendarMCPClient:
             return {"success": False, "error": f"Unexpected error: {e}"}
     
     async def get_event_via_mcp(self, calendar_id: str, event_id: str) -> dict:
-        """Get details of a specific event via the MCP server."""
+        """Get event details via the MCP server."""
         try:
             client = await self._get_client()
             response = await client.get(
                 f"{self.base_url}/calendars/{calendar_id}/events/{event_id}",
                 timeout=30.0
             )
-            
             if response.status_code == 404:
                 return {"success": False, "error": "Event not found"}
-            
             response.raise_for_status()
             return response.json()
         except httpx.TimeoutException:
@@ -248,6 +246,40 @@ class CalendarMCPClient:
             return {"success": False, "error": f"Network error: {e}"}
         except Exception as e:
             return {"success": False, "error": f"Unexpected error: {e}"}
+
+    async def find_event_calendar_via_mcp(self, event_id: str) -> dict:
+        """Find which calendar contains the given event ID."""
+        try:
+            # Get all calendars
+            calendars_result = await self.get_rooms_via_mcp()
+            if not calendars_result.get("success", True):
+                return {"success": False, "error": "Cannot retrieve calendars"}
+            
+            calendars = calendars_result.get("calendars", [])
+            if not calendars:
+                return {"success": False, "error": "No calendars available"}
+            
+            # Search for the event in each calendar
+            for calendar in calendars:
+                calendar_id = calendar.get("id")
+                if not calendar_id:
+                    continue
+                    
+                # Try to get the event from this calendar
+                event_result = await self.get_event_via_mcp(calendar_id, event_id)
+                if event_result.get("success", True) and "error" not in event_result:
+                    # Found the event!
+                    return {
+                        "success": True,
+                        "calendar_id": calendar_id,
+                        "event": event_result
+                    }
+            
+            # Event not found in any calendar
+            return {"success": False, "error": f"Event '{event_id}' not found in any calendar"}
+            
+        except Exception as e:
+            return {"success": False, "error": f"Error searching for event: {e}"}
 
 
 # Convenience functions for backward compatibility

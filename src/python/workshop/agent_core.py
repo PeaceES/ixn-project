@@ -296,7 +296,7 @@ class CalendarAgentCore:
                 "message": f"Cannot schedule event '{title}'"
             })
 
-    async def reschedule_event_via_mcp(self, event_id: str, calendar_id: str, new_start_time: str, new_end_time: str, user_id: str = None) -> str:
+    async def reschedule_event_via_mcp(self, event_id: str, new_start_time: str, new_end_time: str, user_id: str = None) -> str:
         """Reschedule an existing event to new times via MCP server."""
         try:
             health = await self.mcp_client.health_check()
@@ -306,6 +306,17 @@ class CalendarAgentCore:
                     "error": "MCP server not available",
                     "message": f"Cannot reschedule event with ID '{event_id}'"
                 })
+            
+            # First, find which calendar contains this event
+            find_result = await self.mcp_client.find_event_calendar_via_mcp(event_id)
+            if not find_result.get("success"):
+                return json.dumps({
+                    "success": False,
+                    "error": find_result.get("error"),
+                    "message": f"Cannot find event with ID '{event_id}'"
+                })
+            
+            calendar_id = find_result.get("calendar_id")
             
             # Update only the times
             result = await self.mcp_client.update_event_via_mcp(
@@ -340,7 +351,7 @@ class CalendarAgentCore:
                 "message": f"Cannot reschedule event with ID '{event_id}'"
             })
 
-    async def modify_event_via_mcp(self, event_id: str, calendar_id: str, user_id: str = None, 
+    async def modify_event_via_mcp(self, event_id: str, user_id: str = None, 
                                  title: str = None, start_time: str = None, end_time: str = None,
                                  location: str = None, description: str = None) -> str:
         """Modify an existing event via MCP server."""
@@ -353,6 +364,18 @@ class CalendarAgentCore:
                     "message": f"Cannot modify event with ID '{event_id}'"
                 })
             
+            # First, find which calendar contains this event
+            find_result = await self.mcp_client.find_event_calendar_via_mcp(event_id)
+            if not find_result.get("success"):
+                return json.dumps({
+                    "success": False,
+                    "error": find_result.get("error"),
+                    "message": f"Cannot find event with ID '{event_id}'"
+                })
+            
+            calendar_id = find_result.get("calendar_id")
+            
+            # Update the event with the provided fields
             result = await self.mcp_client.update_event_via_mcp(
                 calendar_id=calendar_id,
                 event_id=event_id,
@@ -396,7 +419,7 @@ class CalendarAgentCore:
                 "message": f"Cannot modify event with ID '{event_id}'"
             })
 
-    async def cancel_event_via_mcp(self, event_id: str, calendar_id: str) -> str:
+    async def cancel_event_via_mcp(self, event_id: str) -> str:
         """Cancel/delete an existing event via MCP server."""
         try:
             health = await self.mcp_client.health_check()
@@ -406,6 +429,17 @@ class CalendarAgentCore:
                     "error": "MCP server not available",
                     "message": f"Cannot cancel event with ID '{event_id}'"
                 })
+            
+            # First, find which calendar contains this event
+            find_result = await self.mcp_client.find_event_calendar_via_mcp(event_id)
+            if not find_result.get("success"):
+                return json.dumps({
+                    "success": False,
+                    "error": find_result.get("error"),
+                    "message": f"Cannot find event with ID '{event_id}'"
+                })
+            
+            calendar_id = find_result.get("calendar_id")
             
             result = await self.mcp_client.delete_event_via_mcp(calendar_id, event_id)
             
@@ -816,6 +850,7 @@ class CalendarAgentCore:
             for user in org_data.get('users', []):
                 email = user.get('email', '').lower()
                 if email:
+
                     users[email] = user
 
             logger.info(f"[AgentCore] Loaded org_structure.json from {org_abspath} ({len(users)} users)")
@@ -1563,6 +1598,32 @@ When they ask about bookings or what they can book for, use their ID ({self.defa
                                         args.get("start_time", ""),
                                         args.get("end_time", ""),
                                         args.get("description", "")
+                                    )
+                                elif function_name == "cancel_event_via_mcp":
+                                    result = await self.cancel_event_via_mcp(
+                                        args.get("event_id", "")
+                                    )
+                                elif function_name == "modify_event_via_mcp":
+                                    result = await self.modify_event_via_mcp(
+                                        args.get("event_id", ""),
+                                        args.get("user_id"),
+                                        args.get("title"),
+                                        args.get("start_time"),
+                                        args.get("end_time"),
+                                        args.get("location"),
+                                        args.get("description")
+                                    )
+                                elif function_name == "reschedule_event_via_mcp":
+                                    result = await self.reschedule_event_via_mcp(
+                                        args.get("event_id", ""),
+                                        args.get("new_start_time", ""),
+                                        args.get("new_end_time", ""),
+                                        args.get("user_id")
+                                    )
+                                elif function_name == "get_event_details_via_mcp":
+                                    result = await self.get_event_details_via_mcp(
+                                        args.get("event_id", ""),
+                                        args.get("calendar_id", "")
                                     )
                                 else:
                                     result = json.dumps({

@@ -2,31 +2,71 @@
   "events": [
     {
       "id": "event-1",
-      "title": "Student Activity: Review",
-      "description": "This is a synthetic event for testing purposes.",
-      "start_time": "2025-07-03T15:00:00",
-      "end_time": "2025-07-03T16:30:00",
+      "title": "Updated Meeting Title",
+      "description": "Modified through agent function - success!",
+      "start_time": "2025-07-03T16:00:00",
+      "end_time": "2025-07-03T17:30:00",
       "room_id": "central-meeting-room-alpha",
       "calendar_id": "central-meeting-room-alpha",
-      "organizer": "IT Department",
+      "organizer": "test-user",
       "attendee_count": 25,
       "is_recurring": false,
       "event_type": "meeting",
-      "status": "confirmed"
-    },
-    {
-      "id": "event-2",
-      "title": "Seminar: Introduction",
-      "description": "This is a synthetic event for testing purposes.",
-      "start_time": "2025-07-09T14:00:00",
-      "end_time": "2025-07-09T17:00:00",
-      "room_id": "central-seminar-room-alpha",
-      "calendar_id": "central-seminar-room-alpha",
-      "organizer": "Dean Williams",
-      "attendee_count": 14,
-      "is_recurring": false,
-      "event_type": "meeting",
-      "status": "confirmed"
+      "status": "confirmed",
+      "modified_at": "2025-09-08T11:06:49.501915",
+      "modification_history": [
+        {
+          "modified_at": "2025-09-08T10:43:56.159671",
+          "previous_state": {
+            "title": "Student Activity: Review",
+            "start_time": "2025-07-03T15:00:00",
+            "end_time": "2025-07-03T16:30:00",
+            "location": null,
+            "description": "This is a synthetic event for testing purposes.",
+            "organizer": "IT Department"
+          },
+          "modified_by": "IT Department"
+        },
+        {
+          "modified_at": "2025-09-08T10:46:27.616059",
+          "previous_state": {
+            "title": "Student Activity: Review",
+            "start_time": "2025-07-03T15:00:00",
+            "end_time": "2025-07-03T16:30:00",
+            "location": null,
+            "description": "Test update via MCP client",
+            "organizer": "IT Department"
+          },
+          "modified_by": "IT Department"
+        },
+        {
+          "modified_at": "2025-09-08T11:06:09.066332",
+          "previous_state": {
+            "title": "Student Activity: Review",
+            "start_time": "2025-07-03T15:00:00",
+            "end_time": "2025-07-03T16:30:00",
+            "location": null,
+            "description": "Test modification via agent function",
+            "organizer": "IT Department"
+          },
+          "modified_by": "test-user"
+        },
+        {
+          "modified_at": "2025-09-08T11:06:49.501915",
+          "previous_state": {
+            "title": "Student Activity: Review",
+            "start_time": "2025-07-03T16:00:00",
+            "end_time": "2025-07-03T17:30:00",
+            "location": null,
+            "description": "Test modification via agent function",
+            "organizer": "test-user"
+          },
+          "modified_by": "test-user"
+        }
+      ],
+      "attendees": [
+        "test-user"
+      ]
     },
     {
       "id": "event-3",
@@ -783,6 +823,22 @@
       "location": "Academic Block, Floor 1",
       "description": "Organized by Allison Hill for Robotics Society",
       "created_at": "2025-09-07T22:38:34.270924",
+      "attendees": [
+        "robotics-society-soc@example.edu"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "9204e685-35a2-4788-88b1-bef0abfdb91f",
+      "calendar_id": "central-lecture-hall-main",
+      "calendar_name": "Main Lecture Hall",
+      "title": "Robotics Society Event",
+      "start_time": "2025-11-30T17:00:00",
+      "end_time": "2025-11-30T18:00:00",
+      "organizer": "peaceselem@gmail.com",
+      "location": "Main Building, Ground Floor",
+      "description": "Robotics Society meeting/event - Organized by Allison Hill for Robotics Society",
+      "created_at": "2025-09-08T11:08:53.927024",
       "attendees": [
         "robotics-society-soc@example.edu"
       ],

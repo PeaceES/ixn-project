@@ -95,7 +95,7 @@
       "id": 4,
       "department_id": 2,
       "name": "AI Society",
-      "email": "ai-society-soc@example.edu"
+      "email": "peaceselem@gmail.com"
     },
     {
       "id": 5,
@@ -132,7 +132,7 @@
     {
       "id": 1,
       "name": "Allison Hill",
-      "email": "donaldgarcia@example.net",
+      "email": "peaceselem@gmail.com",
       "role_scope": "department",
       "scope_id": 1,
       "department_id": 1

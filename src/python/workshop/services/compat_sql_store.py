@@ -88,3 +88,12 @@ def check_availability(calendar_id: str, start_iso: str, end_iso: str, exclude_e
         )
         (available,) = cur.fetchone()
         return bool(available)
+    
+
+def lookup_entity_emails(query: str):
+    """Return a list of entity matches [{'entity_type','entity_id','name','email','department_id'}, ...]."""
+    with _conn() as cn, cn.cursor() as cur:
+        cur.execute("EXEC api.lookup_entity_emails @query=?", query)
+        row = cur.fetchone()
+        return json.loads(row[0]) if row and row[0] else []
+

@@ -631,33 +631,31 @@ def send_message_to_agent():
 
 @app.route('/api/calendar/rooms')
 def get_rooms():
-    """Get list of all available rooms."""
+    """Get list of all available rooms from database."""
     try:
-        rooms_file = WORKSHOP_DIR / 'data' / 'json' / 'rooms.json'
-        if rooms_file.exists():
-            import json
-            with open(rooms_file, 'r') as f:
-                rooms_data = json.load(f)
-            return jsonify(rooms_data)
-        else:
-            # Return fallback room data
-            return jsonify({
-                'rooms': [
-                    {
-                        'id': 'central-meeting-room-alpha',
-                        'name': 'Meeting Room Alpha',
-                        'capacity': 10,
-                        'room_type': 'meeting_room',
-                        'location': 'Main Building, 2nd Floor',
-                        'equipment': ['projector', 'whiteboard']
-                    },
-                    {
-                        'id': 'central-meeting-room-beta',
-                        'name': 'Meeting Room Beta',
-                        'capacity': 8,
-                        'room_type': 'meeting_room',
-                        'location': 'Main Building, 2nd Floor',
-                        'equipment': ['tv_screen', 'whiteboard']
+        from services.compat_sql_store import get_rooms as sql_get_rooms
+        rooms_data = sql_get_rooms()
+        return jsonify(rooms_data)
+    except Exception as e:
+        print(f"Error getting rooms from database: {e}")
+        # Return fallback room data
+        return jsonify({
+            'rooms': [
+                {
+                    'id': 'central-meeting-room-alpha',
+                    'name': 'Meeting Room Alpha',
+                    'capacity': 10,
+                    'room_type': 'meeting_room',
+                    'location': 'Main Building, 2nd Floor',
+                    'equipment': ['projector', 'whiteboard']
+                },
+                {
+                    'id': 'central-meeting-room-beta',
+                    'name': 'Meeting Room Beta',
+                    'capacity': 8,
+                    'room_type': 'meeting_room',
+                    'location': 'Main Building, 2nd Floor',
+                    'equipment': ['tv_screen', 'whiteboard']
                     },
                     {
                         'id': 'central-lecture-hall-main',
@@ -677,22 +675,30 @@ def get_rooms():
 
 @app.route('/api/calendar/events')
 def get_events():
-    """Get events within a date range."""
+    """Get events within a date range from database."""
     try:
+        from datetime import datetime
+        from services.compat_sql_store import get_rooms as sql_get_rooms
+        
         # Get query parameters
         start_date = request.args.get('start')
         end_date = request.args.get('end')
         room_id = request.args.get('room_id')
         
-        events_file = WORKSHOP_DIR / 'data' / 'json' / 'events.json'
-        if events_file.exists():
-            import json
-            from datetime import datetime
-            
-            with open(events_file, 'r') as f:
-                events_data = json.load(f)
-            
-            events = events_data.get('events', [])
+        try:
+            events = []
+            if room_id:
+                # Get events for specific room
+                from services.compat_sql_store import list_events
+                events_data = list_events(room_id)
+                events = events_data.get('events', [])
+            else:
+                # Get all events from all rooms
+                rooms_data = sql_get_rooms()
+                for room in rooms_data.get('rooms', []):
+                    from services.compat_sql_store import list_events
+                    room_events = list_events(room['id'])
+                    events.extend(room_events.get('events', []))
             
             # Filter by date range if provided
             if start_date and end_date:
@@ -706,12 +712,9 @@ def get_events():
                         filtered_events.append(event)
                 events = filtered_events
             
-            # Filter by room if provided
-            if room_id:
-                events = [event for event in events if event.get('room_id') == room_id]
-            
             return jsonify({'events': events})
-        else:
+        except Exception as db_error:
+            print(f"Database error: {db_error}")
             # Return fallback event data
             from datetime import datetime, timedelta
             now = datetime.now()
@@ -790,21 +793,17 @@ def create_event():
             'status': 'confirmed'
         }
         
-        # Save to events.json file
-        events_file = WORKSHOP_DIR / 'data' / 'json' / 'events.json'
+        # Save to database using SQL adapter
         try:
-            if events_file.exists():
-                with open(events_file, 'r') as f:
-                    events_data = json.load(f)
-            else:
-                events_data = {'events': []}
-            
-            # Add the new event
-            events_data['events'].append(new_event)
-            
-            # Save back to file
-            with open(events_file, 'w') as f:
-                json.dump(events_data, f, indent=2)
+            from services.compat_sql_store import create_event
+            created_event = create_event(new_event)
+            if not created_event:
+                return jsonify({
+                    'success': False,
+                    'error': 'Failed to create event in database'
+                }), 500
+            # Use the event returned from database (may have updated fields)
+            new_event = created_event
             
             # Notify all connected WebSocket clients about the new event
             if connected_clients:
@@ -851,38 +850,47 @@ def check_availability():
                 'error': 'room_id, start_time, and end_time are required'
             }), 400
         
-        # For demonstration, we'll check against existing events
-        events_file = WORKSHOP_DIR / 'data' / 'json' / 'events.json'
-        if events_file.exists():
-            import json
+        # Check availability using SQL database
+        try:
+            from services.compat_sql_store import check_availability, list_events
             from datetime import datetime
             
-            with open(events_file, 'r') as f:
-                events_data = json.load(f)
+            # Check availability using SQL adapter
+            is_available = check_availability(room_id, start_time, end_time)
             
-            start_dt = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
-            end_dt = datetime.fromisoformat(end_time.replace('Z', '+00:00'))
-            
-            # Check for conflicts
-            conflicts = []
-            for event in events_data.get('events', []):
-                if event.get('room_id') == room_id:
+            if is_available:
+                return jsonify({
+                    'available': True,
+                    'conflicts': []
+                })
+            else:
+                # Get conflicts by listing events for this room
+                room_events_data = list_events(room_id)
+                events = room_events_data.get('events', [])
+                
+                start_dt = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
+                end_dt = datetime.fromisoformat(end_time.replace('Z', '+00:00'))
+                
+                conflicts = []
+                for event in events:
                     event_start = datetime.fromisoformat(event['start_time'])
                     event_end = datetime.fromisoformat(event['end_time'])
                     
                     # Check for overlap
                     if start_dt < event_end and end_dt > event_start:
                         conflicts.append(event)
-            
-            return jsonify({
-                'available': len(conflicts) == 0,
-                'conflicts': conflicts
-            })
-        else:
-            # Assume available if no events file
+                
+                return jsonify({
+                    'available': False,
+                    'conflicts': conflicts
+                })
+        except Exception as db_error:
+            print(f"Database error, falling back: {db_error}")
+            # Fallback: assume available if database unavailable
             return jsonify({
                 'available': True,
-                'conflicts': []
+                'conflicts': [],
+                'warning': 'Database unavailable, availability not verified'
             })
             
     except Exception as e:

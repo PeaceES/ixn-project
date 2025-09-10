@@ -10,6 +10,11 @@ from dateutil import parser
 import uuid
 import uvicorn
 from contextlib import asynccontextmanager
+from dotenv import load_dotenv
+from async_sql_store import async_get_rooms, async_list_events, async_create_event, async_update_event, async_cancel_event, async_check_availability, async_get_all_events
+
+# Load environment variables from .env file
+load_dotenv()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -69,17 +74,13 @@ class UpdateEventRequest(BaseModel):
 
 # Utility functions
 async def load_rooms():
-    """Load rooms configuration from JSON file."""
+    """Load rooms configuration from SQL database."""
     global rooms_data
     try:
-        with open(ROOMS_FILE, 'r') as f:
-            rooms_data = json.load(f)
-        print(f"Loaded {len(rooms_data.get('rooms', []))} rooms from {ROOMS_FILE}")
-    except FileNotFoundError:
-        print(f"Warning: {ROOMS_FILE} not found, using empty rooms list")
-        rooms_data = {"rooms": []}
+        rooms_data = await async_get_rooms()
+        print(f"✅ Loaded {len(rooms_data.get('rooms', []))} rooms from database")
     except Exception as e:
-        print(f"Error loading rooms: {e}")
+        print(f"❌ Error loading rooms from database: {e}")
         rooms_data = {"rooms": []}
 
 
@@ -110,29 +111,21 @@ async def load_calendars():
 
 
 async def load_events():
-    """Load events from JSON file."""
+    """Load events from SQL database."""
     global events_data
     try:
-        with open(EVENTS_FILE, 'r') as f:
-            events_data = json.load(f)
-        print(f"Loaded {len(events_data.get('events', []))} events from {EVENTS_FILE}")
-    except FileNotFoundError:
-        print(f"Warning: {EVENTS_FILE} not found, creating empty events file")
-        events_data = {"events": []}
-        await save_events()
+        events_data = await async_get_all_events()
+        print(f"✅ Loaded {len(events_data.get('events', []))} events from database")
     except Exception as e:
-        print(f"Error loading events: {e}")
+        print(f"❌ Error loading events from database: {e}")
         events_data = {"events": []}
 
 
 async def save_events():
-    """Save events to JSON file."""
-    try:
-        with open(EVENTS_FILE, 'w') as f:
-            json.dump(events_data, f, indent=2)
-        print(f"Saved {len(events_data.get('events', []))} events to {EVENTS_FILE}")
-    except Exception as e:
-        print(f"Error saving events: {e}")
+    """Save events - No longer needed as events are saved directly to database."""
+    # Events are now saved directly to the database via the SQL adapter
+    # This function is kept for compatibility but is now a no-op
+    print("💾 Events are saved automatically to database")
 
 
 async def load_user_directory():
@@ -339,38 +332,49 @@ def validate_calendar_exists(calendar_id: str) -> tuple[bool, str, dict]:
     return False, f"Calendar '{calendar_id}' not found", {}
 
 
-def check_time_conflicts(calendar_id: str, start_time: str, end_time: str, exclude_event_id: str = None) -> tuple[bool, list]:
-    """Check for time conflicts with existing events in the same calendar."""
+async def check_time_conflicts(calendar_id: str, start_time: str, end_time: str, exclude_event_id: str = None) -> tuple[bool, list]:
+    """Check for time conflicts with existing events in the same calendar using database."""
     try:
-        new_start = parser.parse(start_time)
-        new_end = parser.parse(end_time)
-    except Exception:
-        return True, ["Invalid date format"]
-    
-    conflicts = []
-    for event in events_data.get("events", []):
-        if event.get("calendar_id") != calendar_id:
-            continue
+        # Use the SQL adapter to check availability
+        is_available = await async_check_availability(calendar_id, start_time, end_time, exclude_event_id)
         
-        if exclude_event_id and event.get("id") == exclude_event_id:
-            continue
-        
-        try:
-            event_start = parser.parse(event["start_time"])
-            event_end = parser.parse(event["end_time"])
+        if is_available:
+            return False, []  # No conflicts
+        else:
+            # If not available, get the actual conflicts by fetching events for this calendar
+            calendar_events_data = await async_list_events(calendar_id)
+            events = calendar_events_data.get("events", [])
             
-            # Check for overlap
-            if (new_start < event_end) and (new_end > event_start):
-                conflicts.append({
-                    "event_id": event.get("id"),
-                    "title": event.get("title"),
-                    "start_time": event["start_time"],
-                    "end_time": event["end_time"]
-                })
-        except Exception:
-            continue
-    
-    return len(conflicts) > 0, conflicts
+            try:
+                new_start = parser.parse(start_time)
+                new_end = parser.parse(end_time)
+            except Exception:
+                return True, ["Invalid date format"]
+            
+            conflicts = []
+            for event in events:
+                if exclude_event_id and event.get("id") == exclude_event_id:
+                    continue
+                
+                try:
+                    event_start = parser.parse(event["start_time"])
+                    event_end = parser.parse(event["end_time"])
+                    
+                    # Check for overlap
+                    if (new_start < event_end) and (new_end > event_start):
+                        conflicts.append({
+                            "event_id": event.get("id"),
+                            "title": event.get("title"),
+                            "start_time": event["start_time"],
+                            "end_time": event["end_time"]
+                        })
+                except Exception:
+                    continue
+            
+            return True, conflicts
+    except Exception as e:
+        print(f"Error checking time conflicts: {e}")
+        return True, ["Database error occurred"]
 
 
 def check_room_conflicts(room_id: str, start_time: str, end_time: str, exclude_event_id: str = None) -> tuple[bool, list]:
@@ -432,7 +436,7 @@ async def create_event(calendar_id: str, payload: CreateEventRequest):
             raise HTTPException(status_code=400, detail="Missing required fields: title, start_time, end_time")
         
         # 5. Check for time conflicts
-        has_conflicts, conflicts = check_time_conflicts(calendar_id, payload.start_time, payload.end_time)
+        has_conflicts, conflicts = await check_time_conflicts(calendar_id, payload.start_time, payload.end_time)
         if has_conflicts:
             conflict_details = [f"'{c['title']}' ({c['start_time']} - {c['end_time']})" for c in conflicts]
             raise HTTPException(
@@ -466,13 +470,17 @@ async def create_event(calendar_id: str, payload: CreateEventRequest):
             "status": "confirmed"
         }
         
-        # 7. Save event
-        events_data["events"].append(event)
-        await save_events()
+        # 7. Save event to database
+        created_event = await async_create_event(event)
+        if not created_event:
+            raise HTTPException(status_code=500, detail="Failed to create event in database")
+        
+        # Update global cache for immediate consistency (optional - could be removed)
+        events_data["events"].append(created_event)
         
         return {
             "success": True,
-            "event": event,
+            "event": created_event,
             "message": f"Event '{payload.title}' created successfully in {calendar_info.get('name', calendar_id)}"
         }
         
@@ -488,12 +496,13 @@ async def list_events(calendar_id: str):
     try:
         # Handle "all" as special case to return all events
         if calendar_id.lower() == "all":
+            all_events_data = await async_get_all_events()
             return {
                 "success": True,
-                "events": events_data.get("events", []),
+                "events": all_events_data.get("events", []),
                 "calendar_id": "all",
                 "calendar_name": "All Calendars",
-                "total_events": len(events_data.get("events", []))
+                "total_events": len(all_events_data.get("events", []))
             }
         
         # Validate calendar exists
@@ -501,11 +510,9 @@ async def list_events(calendar_id: str):
         if not calendar_exists:
             raise HTTPException(status_code=404, detail=calendar_msg)
         
-        # Filter events by calendar
-        calendar_events = [
-            event for event in events_data.get("events", [])
-            if event.get("calendar_id") == calendar_id
-        ]
+        # Get events from database for this calendar
+        calendar_events_data = await async_list_events(calendar_id)
+        calendar_events = calendar_events_data.get("events", [])
         
         return {
             "success": True,
@@ -525,10 +532,11 @@ async def list_events(calendar_id: str):
 async def list_all_events():
     """List all events across all calendars."""
     try:
+        all_events_data = await async_get_all_events()
         return {
             "success": True,
-            "events": events_data.get("events", []),
-            "total_events": len(events_data.get("events", []))
+            "events": all_events_data.get("events", []),
+            "total_events": len(all_events_data.get("events", []))
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
@@ -555,11 +563,9 @@ async def get_calendar_info(calendar_id: str):
         if not calendar_exists:
             raise HTTPException(status_code=404, detail=calendar_msg)
         
-        # Get event count for this calendar
-        event_count = len([
-            event for event in events_data.get("events", [])
-            if event.get("calendar_id") == calendar_id
-        ])
+        # Get event count for this calendar from database
+        calendar_events_data = await async_list_events(calendar_id)
+        event_count = len(calendar_events_data.get("events", []))
         
         return {
             "success": True,
@@ -582,7 +588,7 @@ async def check_calendar_availability(calendar_id: str, start_time: str, end_tim
             raise HTTPException(status_code=404, detail=calendar_msg)
         
         # Check for conflicts
-        has_conflicts, conflicts = check_time_conflicts(calendar_id, start_time, end_time)
+        has_conflicts, conflicts = await check_time_conflicts(calendar_id, start_time, end_time)
         
         return {
             "success": True,
@@ -633,75 +639,48 @@ async def get_user_permissions(user_id: str):
 async def update_event(calendar_id: str, event_id: str, payload: UpdateEventRequest):
     """Update an existing calendar event."""
     try:
-        # Find the event to update
-        event_to_update = None
-        event_index = None
-        for i, event in enumerate(events_data.get("events", [])):
-            if event.get("id") == event_id:
-                event_to_update = event
-                event_index = i
-                break
-        
-        if not event_to_update:
-            raise HTTPException(status_code=404, detail=f"Event with ID '{event_id}' not found")
-        
-        # Check if the event belongs to the specified calendar
-        if event_to_update.get("calendar_id") != calendar_id:
-            raise HTTPException(status_code=400, detail=f"Event '{event_id}' does not belong to calendar '{calendar_id}'")
-        
-        # ORGANIZER PERMISSION CHECK: Only the original organizer can modify the event
-        if payload.user_id is not None:
-            original_organizer = event_to_update.get("organizer", "")
-            requesting_user = payload.user_id
-            
-            # Check if user_id matches organizer (handle both email and ID formats)
-            if original_organizer != requesting_user:
-                # Try flexible matching for different ID formats
-                user_exists, user_msg, user_info = validate_user_exists(requesting_user)
-                if user_exists:
-                    user_email = user_info.get('email', requesting_user)
-                    if original_organizer != user_email:
-                        raise HTTPException(
-                            status_code=403, 
-                            detail=f"Access denied. Only the original organizer '{original_organizer}' can modify this event"
-                        )
-                else:
-                    raise HTTPException(
-                        status_code=403, 
-                        detail=f"Access denied. Only the original organizer '{original_organizer}' can modify this event"
-                    )
-        
-        # Validate calendar exists
+        # Validate calendar exists first
         calendar_exists, calendar_msg, calendar_info = validate_calendar_exists(calendar_id)
         if not calendar_exists:
             raise HTTPException(status_code=404, detail=calendar_msg)
         
-        # Prepare updated values (only update fields that are provided)
-        updated_event = event_to_update.copy()
-        original_event_copy = event_to_update.copy()  # Keep original for notifications
+        # Get user email for permissions
+        requester_email = payload.user_id
+        if payload.user_id and "@" not in payload.user_id:
+            # Try to get email from user validation
+            user_exists, user_msg, user_info = validate_user_exists(payload.user_id)
+            if user_exists:
+                requester_email = user_info.get('email', payload.user_id)
         
-        # Update only provided fields
+        # Prepare patch data (only include fields that were provided)
+        patch = {}
         if payload.title is not None:
-            updated_event["title"] = payload.title
+            patch["title"] = payload.title
         if payload.start_time is not None:
-            updated_event["start_time"] = payload.start_time
+            patch["start_time"] = payload.start_time
         if payload.end_time is not None:
-            updated_event["end_time"] = payload.end_time
-        if payload.location is not None:
-            updated_event["location"] = payload.location
+            patch["end_time"] = payload.end_time
         if payload.description is not None:
-            updated_event["description"] = payload.description
-        if payload.user_id is not None:
-            updated_event["organizer"] = payload.user_id
-            updated_event["attendees"] = [payload.user_id]  # Update attendees list
+            patch["description"] = payload.description
         
-        # If times are being updated, check for conflicts
+        # If times are being updated, check for conflicts first
         if payload.start_time or payload.end_time:
-            start_time = updated_event["start_time"]
-            end_time = updated_event["end_time"]
+            # Get current event to determine start/end times for conflict check
+            calendar_events_data = await async_list_events(calendar_id)
+            current_event = None
+            for event in calendar_events_data.get("events", []):
+                if event.get("id") == event_id:
+                    current_event = event
+                    break
+            
+            if not current_event:
+                raise HTTPException(status_code=404, detail=f"Event with ID '{event_id}' not found")
+            
+            start_time = payload.start_time or current_event["start_time"]
+            end_time = payload.end_time or current_event["end_time"]
             
             # Check for conflicts, excluding the current event
-            has_conflicts, conflicts = check_time_conflicts(calendar_id, start_time, end_time, exclude_event_id=event_id)
+            has_conflicts, conflicts = await check_time_conflicts(calendar_id, start_time, end_time, exclude_event_id=event_id)
             if has_conflicts:
                 conflict_details = [f"'{c['title']}' ({c['start_time']} - {c['end_time']})" for c in conflicts]
                 raise HTTPException(
@@ -709,37 +688,19 @@ async def update_event(calendar_id: str, event_id: str, payload: UpdateEventRequ
                     detail=f"Time conflict with existing events: {', '.join(conflict_details)}"
                 )
         
-        # Add modification tracking
-        updated_event["modified_at"] = datetime.utcnow().isoformat()
-        if "modification_history" not in updated_event:
-            updated_event["modification_history"] = []
+        # Update the event using SQL database
+        updated_event = await async_update_event(event_id, patch, requester_email)
         
-        # Save the previous state to history
-        history_entry = {
-            "modified_at": updated_event["modified_at"],
-            "previous_state": {
-                "title": event_to_update.get("title"),
-                "start_time": event_to_update.get("start_time"),
-                "end_time": event_to_update.get("end_time"),
-                "location": event_to_update.get("location"),
-                "description": event_to_update.get("description"),
-                "organizer": event_to_update.get("organizer")
-            },
-            "modified_by": payload.user_id if payload.user_id else event_to_update.get("organizer", "unknown")
-        }
-        updated_event["modification_history"].append(history_entry)
+        if not updated_event:
+            raise HTTPException(status_code=404, detail=f"Event with ID '{event_id}' not found or permission denied")
         
-        # Update the event in the data structure
-        events_data["events"][event_index] = updated_event
-        
-        # Save to file
-        await save_events()
+        # Refresh global cache by reloading events (optional - for immediate consistency)
+        await load_events()
         
         return {
             "success": True,
             "event": updated_event,
-            "original_event": original_event_copy,  # Include original event data for notifications
-            "message": f"Event '{updated_event['title']}' updated successfully"
+            "message": f"Event '{updated_event.get('title', event_id)}' updated successfully"
         }
         
     except HTTPException:
@@ -752,59 +713,45 @@ async def update_event(calendar_id: str, event_id: str, payload: UpdateEventRequ
 async def delete_event(calendar_id: str, event_id: str, user_id: str = None):
     """Delete an existing calendar event."""
     try:
-        # Find the event to delete
+        # Validate calendar exists first
+        calendar_exists, calendar_msg, calendar_info = validate_calendar_exists(calendar_id)
+        if not calendar_exists:
+            raise HTTPException(status_code=404, detail=calendar_msg)
+        
+        # Get the event first to validate it exists and belongs to this calendar
+        calendar_events_data = await async_list_events(calendar_id)
         event_to_delete = None
-        event_index = None
-        for i, event in enumerate(events_data.get("events", [])):
+        for event in calendar_events_data.get("events", []):
             if event.get("id") == event_id:
                 event_to_delete = event
-                event_index = i
                 break
         
         if not event_to_delete:
-            raise HTTPException(status_code=404, detail=f"Event with ID '{event_id}' not found")
+            raise HTTPException(status_code=404, detail=f"Event with ID '{event_id}' not found in calendar '{calendar_id}'")
         
-        # Check if the event belongs to the specified calendar
-        if event_to_delete.get("calendar_id") != calendar_id:
-            raise HTTPException(status_code=400, detail=f"Event '{event_id}' does not belong to calendar '{calendar_id}'")
+        # Get user email for permissions
+        requester_email = user_id
+        if user_id and "@" not in user_id:
+            # Try to get email from user validation
+            user_exists, user_msg, user_info = validate_user_exists(user_id)
+            if user_exists:
+                requester_email = user_info.get('email', user_id)
         
-        # ORGANIZER PERMISSION CHECK: Only the original organizer can delete the event
-        if user_id is not None:
-            original_organizer = event_to_delete.get("organizer", "")
-            requesting_user = user_id
-            
-            # Check if user_id matches organizer (handle both email and ID formats)
-            if original_organizer != requesting_user:
-                # Try flexible matching for different ID formats
-                user_exists, user_msg, user_info = validate_user_exists(requesting_user)
-                if user_exists:
-                    user_email = user_info.get('email', requesting_user)
-                    if original_organizer != user_email:
-                        raise HTTPException(
-                            status_code=403, 
-                            detail=f"Access denied. Only the original organizer '{original_organizer}' can delete this event"
-                        )
-                else:
-                    raise HTTPException(
-                        status_code=403, 
-                        detail=f"Access denied. Only the original organizer '{original_organizer}' can delete this event"
-                    )
+        # Cancel the event using SQL database
+        # The SQL function handles permission checking internally
+        cancelled_event = await async_cancel_event(event_id, requester_email)
         
-        # Store event details for response (include full event data for notifications)
-        deleted_event_title = event_to_delete.get("title", "Unknown Event")
-        deleted_event_copy = event_to_delete.copy()  # Keep full event data for response
+        if not cancelled_event:
+            raise HTTPException(status_code=404, detail=f"Event with ID '{event_id}' not found or permission denied")
         
-        # Remove the event from the data structure
-        events_data["events"].pop(event_index)
-        
-        # Save to file
-        await save_events()
+        # Refresh global cache by reloading events (optional - for immediate consistency)
+        await load_events()
         
         return {
             "success": True,
             "deleted_event_id": event_id,
-            "original_event": deleted_event_copy,  # Include full event data
-            "message": f"Event '{deleted_event_title}' deleted successfully"
+            "original_event": event_to_delete,  # Include original event data
+            "message": f"Event '{event_to_delete.get('title', 'Unknown Event')}' cancelled successfully"
         }
         
     except HTTPException:
@@ -817,10 +764,16 @@ async def delete_event(calendar_id: str, event_id: str, user_id: str = None):
 async def get_event(calendar_id: str, event_id: str):
     """Get details of a specific event."""
     try:
-        # Find the event
+        # Validate calendar exists
+        calendar_exists, calendar_msg, calendar_info = validate_calendar_exists(calendar_id)
+        if not calendar_exists:
+            raise HTTPException(status_code=404, detail=calendar_msg)
+        
+        # Get events from database for this calendar
+        calendar_events_data = await async_list_events(calendar_id)
         event = None
-        for e in events_data.get("events", []):
-            if e.get("id") == event_id and e.get("calendar_id") == calendar_id:
+        for e in calendar_events_data.get("events", []):
+            if e.get("id") == event_id:
                 event = e
                 break
         

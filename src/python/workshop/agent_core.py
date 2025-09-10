@@ -496,7 +496,7 @@ class CalendarAgentCore:
                 "message": f"Cannot cancel event with ID '{event_id}'"
             })
 
-    async def get_event_details_via_mcp(self, event_id: str, calendar_id: str) -> str:
+    async def get_event_details_via_mcp(self, event_id: str, calendar_id: str = None) -> str:
         """Get details of a specific event via MCP server."""
         try:
             health = await self.mcp_client.health_check()
@@ -506,6 +506,17 @@ class CalendarAgentCore:
                     "error": "MCP server not available",
                     "message": f"Cannot retrieve event details for ID '{event_id}'"
                 })
+            
+            # If calendar_id is not provided or is empty/default, find the calendar automatically
+            if not calendar_id or calendar_id in ["", "default"]:
+                find_result = await self.mcp_client.find_event_calendar_via_mcp(event_id)
+                if not find_result.get("success"):
+                    return json.dumps({
+                        "success": False,
+                        "error": find_result.get("error"),
+                        "message": f"Cannot find event with ID '{event_id}'"
+                    })
+                calendar_id = find_result.get("calendar_id")
             
             result = await self.mcp_client.get_event_via_mcp(calendar_id, event_id)
             

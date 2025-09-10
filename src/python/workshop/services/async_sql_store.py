@@ -3,7 +3,7 @@ Async wrapper for compat_sql_store.py
 Provides async versions of the SQL store functions for use in the MCP server.
 """
 import asyncio
-from compat_sql_store import get_rooms, list_events, create_event, update_event, cancel_event, check_availability
+from compat_sql_store import get_rooms, list_events, create_event, update_event, cancel_event, check_availability, lookup_entity_emails, get_user_by_id_or_email, get_org_structure
 
 
 async def async_get_rooms():
@@ -48,3 +48,18 @@ async def async_get_all_events():
         all_events.extend(room_events.get("events", []))
     
     return {"events": all_events}
+
+
+async def async_lookup_entity_emails(query: str):
+    """Async wrapper for lookup_entity_emails()"""
+    return await asyncio.to_thread(lookup_entity_emails, query)
+
+
+async def async_get_user_by_id_or_email(user_identifier: str):
+    """Async wrapper for get_user_by_id_or_email()"""
+    return await asyncio.to_thread(get_user_by_id_or_email, user_identifier)
+
+
+async def async_get_org_structure():
+    """Async wrapper for get_org_structure()"""
+    return await asyncio.to_thread(get_org_structure)

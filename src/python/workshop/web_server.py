@@ -16,6 +16,7 @@ import queue
 import json
 import logging
 from pathlib import Path
+from services.compat_sql_store import get_org_structure
 
 # Initialize Flask app
 app = Flask(__name__, 
@@ -70,11 +71,9 @@ class User(UserMixin):
         self.calendar_permissions = calendar_permissions or {}
 
 def load_user_directory():
-    """Load user directory from org_structure.json."""
-    org_path = Path(__file__).parent.parent.parent / 'shared' / 'database' / 'data-generator' / 'org_structure.json'
+    """Load user directory from database."""
     try:
-        with open(org_path, 'r') as f:
-            org_data = json.load(f)
+        org_data = get_org_structure()
         
         # Convert org_structure users to user directory format
         user_directory = {}
@@ -87,11 +86,8 @@ def load_user_directory():
                 'department_id': user.get('department_id', '')
             }
         return user_directory
-    except FileNotFoundError:
-        print(f"Warning: org_structure.json not found at {org_path}")
-        return {}
-    except json.JSONDecodeError:
-        print(f"Warning: Invalid JSON in org_structure.json at {org_path}")
+    except Exception as e:
+        print(f"Warning: Could not load org structure from database: {e}")
         return {}
 
 @login_manager.user_loader
@@ -111,13 +107,10 @@ def load_user(user_id):
 
 def authenticate_user(email, password=None):
     """Simple authentication - check if email exists in user directory."""
-    # Load org_structure.json and check email against users
-    org_path = Path(__file__).parent.parent.parent / 'shared' / 'database' / 'data-generator' / 'org_structure.json'
     try:
-        with open(org_path, 'r') as f:
-            org_data = json.load(f)
+        org_data = get_org_structure()
     except Exception as e:
-        print(f"Warning: Could not load org_structure.json: {e}")
+        print(f"Warning: Could not load org structure from database: {e}")
         return None
 
     for user in org_data.get('users', []):

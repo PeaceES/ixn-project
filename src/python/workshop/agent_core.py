@@ -25,6 +25,7 @@ from azure.identity import DefaultAzureCredential
 from agent.stream_event_handler import StreamEventHandler
 from utils.utilities import Utilities
 from services.mcp_client import CalendarMCPClient
+from services.compat_sql_store import get_org_structure, get_user_by_id_or_email
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -442,7 +443,17 @@ class CalendarAgentCore:
             })
 
     async def cancel_event_via_mcp(self, event_id: str, user_id: str = None) -> str:
-        """Cancel/delete an existing event via MCP server."""
+        """Cancel/delete an existing event via MCP server.
+        
+        Args:
+            event_id: The ID of the event to cancel
+            user_id: The user ID or email of the person requesting the cancellation. 
+                    Required for permission checking - only the event organizer can cancel events.
+                    If not provided, will ask the user to provide their ID.
+        
+        Returns:
+            JSON string with success status and event details
+        """
         try:
             # For terminal interface, require user_id to be provided for permission check
             if user_id is None and self.default_user_context is None:
@@ -454,6 +465,14 @@ class CalendarAgentCore:
             
             # Use provided user_id or fallback to default context (web interface)
             effective_user_id = user_id or (self.default_user_context.get('email') if self.default_user_context else None)
+            
+            # Additional validation - if we still don't have a valid user ID, return error
+            if not effective_user_id or effective_user_id.strip() == '':
+                return json.dumps({
+                    "success": False,
+                    "error": "User identification required",
+                    "message": "Please provide your user ID to cancel this event. Only the original organizer can cancel events."
+                })
             
             health = await self.mcp_client.health_check()
             if not health.get("status") == "healthy":
@@ -959,20 +978,8 @@ class CalendarAgentCore:
         """Get detailed information about a user from org structure."""
         import json
         try:
-            org_data = self._load_org_structure()
-            users = org_data.get('users', [])
-            
-            # Try to find user by various methods
-            user = None
-            try:
-                # Try by ID
-                user_id_int = int(user_id)
-                user = next((u for u in users if u.get('id') == user_id_int), None)
-            except ValueError:
-                # Try by email or name
-                user = next((u for u in users if 
-                           u.get('email', '').lower() == user_id.lower() or
-                           u.get('name', '').lower() == user_id.lower()), None)
+            # Use database lookup for user
+            user = get_user_by_id_or_email(user_id)
             
             if not user:
                 return json.dumps({
@@ -980,7 +987,8 @@ class CalendarAgentCore:
                     "error": f"User '{user_id}' not found in organization"
                 })
             
-            # Get department, courses, and societies this user can book for
+            # Load org structure to get booking entities
+            org_data = self._load_org_structure()
             booking_entities = self._get_user_booking_entities(user, org_data)
             
             return json.dumps({
@@ -1125,15 +1133,12 @@ class CalendarAgentCore:
             })
 
     def _load_org_structure(self) -> Dict:
-        """Load organization structure from JSON file."""
-        import os, json
-        org_path = os.path.join(os.path.dirname(__file__), '../../shared/database/data-generator/org_structure.json')
+        """Load organization structure from database."""
         try:
-            with open(org_path, 'r') as f:
-                return json.load(f)
+            return get_org_structure()
         except Exception as e:
-            logger.warning(f"Failed to load org_structure.json: {e}")
-            return {}
+            logger.warning(f"Failed to load org structure from database: {e}")
+            return {"users": [], "departments": [], "courses": [], "societies": []}
 
     def _get_user_booking_entities(self, user: Dict, org_data: Dict) -> List[Dict]:
         """Get all entities (departments, courses, societies) a user can book for."""
@@ -1645,7 +1650,8 @@ When they ask about bookings or what they can book for, use their ID ({self.defa
                                     )
                                 elif function_name == "cancel_event_via_mcp":
                                     result = await self.cancel_event_via_mcp(
-                                        args.get("event_id", "")
+                                        args.get("event_id", ""),
+                                        args.get("user_id")
                                     )
                                 elif function_name == "modify_event_via_mcp":
                                     result = await self.modify_event_via_mcp(

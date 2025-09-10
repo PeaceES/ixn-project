@@ -97,3 +97,19 @@ def lookup_entity_emails(query: str):
         row = cur.fetchone()
         return json.loads(row[0]) if row and row[0] else []
 
+
+def get_user_by_id_or_email(user_identifier: str):
+    """Return user data for a given user ID, email, or name. Returns dict or None."""
+    with _conn() as cn, cn.cursor() as cur:
+        cur.execute("EXEC api.get_user_by_identifier @identifier=?", user_identifier)
+        row = cur.fetchone()
+        return json.loads(row[0]) if row and row[0] else None
+
+
+def get_org_structure():
+    """Return the complete org structure as JSON (users, departments, courses, societies)."""
+    with _conn() as cn, cn.cursor() as cur:
+        cur.execute("EXEC api.get_org_structure_json")
+        row = cur.fetchone()
+        return json.loads(row[0]) if row and row[0] else {"users": [], "departments": [], "courses": [], "societies": []}
+

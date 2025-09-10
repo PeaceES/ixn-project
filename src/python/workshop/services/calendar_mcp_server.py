@@ -11,7 +11,7 @@ import uuid
 import uvicorn
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
-from async_sql_store import async_get_rooms, async_list_events, async_create_event, async_update_event, async_cancel_event, async_check_availability, async_get_all_events
+from async_sql_store import async_get_rooms, async_list_events, async_create_event, async_update_event, async_cancel_event, async_check_availability, async_get_all_events, async_lookup_entity_emails, async_get_user_by_id_or_email, async_get_org_structure
 
 # Load environment variables from .env file
 load_dotenv()
@@ -70,6 +70,9 @@ class UpdateEventRequest(BaseModel):
     end_time: Optional[str] = None
     location: Optional[str] = None
     description: Optional[str] = None
+
+
+
 
 
 # Utility functions
@@ -160,47 +163,26 @@ async def load_user_directory():
         user_directory = {}
 
 
-def validate_user_exists(user_id: str) -> tuple[bool, str, dict]:
+async def validate_user_exists(user_id: str) -> tuple[bool, str, dict]:
     """Validate if user exists in org structure with flexible matching."""
-    # Load org structure
-    org_data = load_org_structure()
-    if not org_data:
-        return False, "Organization structure not available", {}
-    
-    users = org_data.get('users', [])
-    
-    # Try matching by ID (as string)
     try:
-        user_id_int = int(user_id)
-        for user in users:
-            if user.get('id') == user_id_int:
-                return True, "User found", user
-    except ValueError:
-        pass
-    
-    # Try matching by email
-    for user in users:
-        if user.get('email', '').lower() == user_id.lower():
-            return True, "User found", user
-    
-    # Try matching by name
-    for user in users:
-        if user.get('name', '').lower() == user_id.lower():
-            return True, "User found", user
-    
-    return False, f"User '{user_id}' not found in organization", {}
-
-
-def load_org_structure() -> dict:
-    """Load the organization structure from JSON file."""
-    import os, json
-    try:
-        org_path = os.path.join(os.path.dirname(__file__), '../../../shared/database/data-generator/org_structure.json')
-        with open(org_path, 'r') as f:
-            return json.load(f)
+        user_data = await async_get_user_by_id_or_email(user_id)
+        if user_data:
+            return True, "User found", user_data
+        else:
+            return False, f"User '{user_id}' not found in organization", {}
     except Exception as e:
-        print(f"Warning: Failed to load org_structure.json: {e}")
-        return {}
+        print(f"Error validating user existence: {e}")
+        return False, "Database error occurred", {}
+
+
+async def load_org_structure() -> dict:
+    """Load the organization structure from database."""
+    try:
+        return await async_get_org_structure()
+    except Exception as e:
+        print(f"Warning: Failed to load org structure from database: {e}")
+        return {"users": [], "departments": [], "courses": [], "societies": []}
 
 
 def validate_group_exists(group_id: str) -> tuple[bool, str, dict]:
@@ -217,9 +199,9 @@ def validate_room_exists(room_id: str) -> tuple[bool, str, dict]:
     return False, f"Room '{room_id}' not found", {}
 
 
-def validate_user_permissions(user_id: str, calendar_id: str) -> tuple[bool, str]:
+async def validate_user_permissions(user_id: str, calendar_id: str) -> tuple[bool, str]:
     """Validate if user has permission to access the calendar based on org structure."""
-    user_exists, user_msg, user_info = validate_user_exists(user_id)
+    user_exists, user_msg, user_info = await validate_user_exists(user_id)
     if not user_exists:
         return False, user_msg
     
@@ -229,13 +211,13 @@ def validate_user_permissions(user_id: str, calendar_id: str) -> tuple[bool, str
     return True, "User has booking permissions based on organizational role"
 
 
-def can_user_book_for_entity(user_id: str, entity_type: str, entity_id: int) -> tuple[bool, str]:
+async def can_user_book_for_entity(user_id: str, entity_type: str, entity_id: int) -> tuple[bool, str]:
     """Check if user can book for a specific entity (department, course, society)."""
-    user_exists, user_msg, user_info = validate_user_exists(user_id)
+    user_exists, user_msg, user_info = await validate_user_exists(user_id)
     if not user_exists:
         return False, user_msg
     
-    org_data = load_org_structure()
+    org_data = await load_org_structure()
     if not org_data:
         return False, "Organization structure not available"
     
@@ -292,34 +274,21 @@ def extract_entity_from_description(description: str) -> Optional[str]:
     return None
 
 
-def find_entity_email(entity_name: str) -> Optional[str]:
-    """Find the email address for an entity (department, society, course) from org structure."""
+async def find_entity_email(entity_name: str) -> Optional[str]:
+    """Find the email address for an entity (department, society, course) using database lookup."""
     if not entity_name:
         return None
-        
-    org_data = load_org_structure()
-    if not org_data:
+    
+    try:
+        # Use the database lookup function to find entities by name
+        matches = await async_lookup_entity_emails(entity_name)
+        if matches:
+            # Return the email of the first match
+            return matches[0].get('email')
         return None
-    
-    # Normalize the entity name for comparison
-    normalized_name = entity_name.lower().strip()
-    
-    # Check departments
-    for dept in org_data.get('departments', []):
-        if dept.get('name', '').lower() == normalized_name:
-            return dept.get('email')
-    
-    # Check societies
-    for society in org_data.get('societies', []):
-        if society.get('name', '').lower() == normalized_name:
-            return society.get('email')
-    
-    # Check courses
-    for course in org_data.get('courses', []):
-        if course.get('name', '').lower() == normalized_name:
-            return course.get('email')
-    
-    return None
+    except Exception as e:
+        print(f"Error looking up entity email for '{entity_name}': {e}")
+        return None
 
 
 def validate_calendar_exists(calendar_id: str) -> tuple[bool, str, dict]:
@@ -417,12 +386,12 @@ async def create_event(calendar_id: str, payload: CreateEventRequest):
     """Create a new calendar event with full validation."""
     try:
         # 1. Validate user exists and get user info
-        user_exists, user_msg, user_info = validate_user_exists(payload.user_id)
+        user_exists, user_msg, user_info = await validate_user_exists(payload.user_id)
         if not user_exists:
             raise HTTPException(status_code=404, detail=user_msg)
         
         # 2. Validate user permissions
-        has_permission, permission_msg = validate_user_permissions(payload.user_id, calendar_id)
+        has_permission, permission_msg = await validate_user_permissions(payload.user_id, calendar_id)
         if not has_permission:
             raise HTTPException(status_code=403, detail=permission_msg)
         
@@ -450,7 +419,7 @@ async def create_event(calendar_id: str, payload: CreateEventRequest):
         
         # Extract entity from description and find its email for attendees
         entity_name = extract_entity_from_description(payload.description or "")
-        entity_email = find_entity_email(entity_name) if entity_name else None
+        entity_email = await find_entity_email(entity_name) if entity_name else None
         
         # Use entity email for attendees if found, otherwise use organizer email
         attendees = [entity_email] if entity_email else [organizer_email]
@@ -644,11 +613,22 @@ async def update_event(calendar_id: str, event_id: str, payload: UpdateEventRequ
         if not calendar_exists:
             raise HTTPException(status_code=404, detail=calendar_msg)
         
+        # Get the original event data first (before updating) for shared thread messaging
+        calendar_events_data = await async_list_events(calendar_id)
+        original_event = None
+        for event in calendar_events_data.get("events", []):
+            if event.get("id") == event_id:
+                original_event = event
+                break
+        
+        if not original_event:
+            raise HTTPException(status_code=404, detail=f"Event with ID '{event_id}' not found")
+        
         # Get user email for permissions
         requester_email = payload.user_id
         if payload.user_id and "@" not in payload.user_id:
             # Try to get email from user validation
-            user_exists, user_msg, user_info = validate_user_exists(payload.user_id)
+            user_exists, user_msg, user_info = await validate_user_exists(payload.user_id)
             if user_exists:
                 requester_email = user_info.get('email', payload.user_id)
         
@@ -665,19 +645,8 @@ async def update_event(calendar_id: str, event_id: str, payload: UpdateEventRequ
         
         # If times are being updated, check for conflicts first
         if payload.start_time or payload.end_time:
-            # Get current event to determine start/end times for conflict check
-            calendar_events_data = await async_list_events(calendar_id)
-            current_event = None
-            for event in calendar_events_data.get("events", []):
-                if event.get("id") == event_id:
-                    current_event = event
-                    break
-            
-            if not current_event:
-                raise HTTPException(status_code=404, detail=f"Event with ID '{event_id}' not found")
-            
-            start_time = payload.start_time or current_event["start_time"]
-            end_time = payload.end_time or current_event["end_time"]
+            start_time = payload.start_time or original_event["start_time"]
+            end_time = payload.end_time or original_event["end_time"]
             
             # Check for conflicts, excluding the current event
             has_conflicts, conflicts = await check_time_conflicts(calendar_id, start_time, end_time, exclude_event_id=event_id)
@@ -697,9 +666,27 @@ async def update_event(calendar_id: str, event_id: str, payload: UpdateEventRequ
         # Refresh global cache by reloading events (optional - for immediate consistency)
         await load_events()
         
+        # Ensure the original event includes organizer and attendee information for shared thread messaging
+        # This ensures the agent has complete contact info even if the database doesn't return it
+        original_event_enriched = original_event.copy()
+        
+        # Extract entity from description for attendee email lookup if not already present
+        if 'attendees' not in original_event_enriched or not original_event_enriched['attendees']:
+            if original_event_enriched.get('description'):
+                entity_name = extract_entity_from_description(original_event_enriched['description'])
+                if entity_name:
+                    entity_email = await find_entity_email(entity_name)
+                    if entity_email:
+                        original_event_enriched['attendees'] = [entity_email]
+        
+        # Ensure organizer email is included in original event
+        if 'organizer' not in original_event_enriched and requester_email:
+            original_event_enriched['organizer'] = requester_email
+        
         return {
             "success": True,
             "event": updated_event,
+            "original_event": original_event_enriched,  # Include enriched original event for shared thread messaging
             "message": f"Event '{updated_event.get('title', event_id)}' updated successfully"
         }
         
@@ -713,6 +700,10 @@ async def update_event(calendar_id: str, event_id: str, payload: UpdateEventRequ
 async def delete_event(calendar_id: str, event_id: str, user_id: str = None):
     """Delete an existing calendar event."""
     try:
+        # Validate that user_id is provided
+        if not user_id:
+            raise HTTPException(status_code=400, detail="user_id parameter is required for event cancellation")
+        
         # Validate calendar exists first
         calendar_exists, calendar_msg, calendar_info = validate_calendar_exists(calendar_id)
         if not calendar_exists:
@@ -733,9 +724,11 @@ async def delete_event(calendar_id: str, event_id: str, user_id: str = None):
         requester_email = user_id
         if user_id and "@" not in user_id:
             # Try to get email from user validation
-            user_exists, user_msg, user_info = validate_user_exists(user_id)
+            user_exists, user_msg, user_info = await validate_user_exists(user_id)
             if user_exists:
                 requester_email = user_info.get('email', user_id)
+            else:
+                raise HTTPException(status_code=404, detail=user_msg)
         
         # Cancel the event using SQL database
         # The SQL function handles permission checking internally
@@ -747,10 +740,28 @@ async def delete_event(calendar_id: str, event_id: str, user_id: str = None):
         # Refresh global cache by reloading events (optional - for immediate consistency)
         await load_events()
         
+        # Ensure the cancelled event includes organizer and attendee information for shared thread messaging
+        # Use the original event data we fetched earlier which should have complete information
+        event_for_response = event_to_delete.copy()
+        
+        # If the original event doesn't have attendees, try to extract them from description
+        if 'attendees' not in event_for_response or not event_for_response['attendees']:
+            if event_for_response.get('description'):
+                entity_name = extract_entity_from_description(event_for_response['description'])
+                if entity_name:
+                    entity_email = await find_entity_email(entity_name)
+                    if entity_email:
+                        event_for_response['attendees'] = [entity_email]
+        
+        # Ensure organizer email is included
+        if 'organizer' not in event_for_response and requester_email:
+            event_for_response['organizer'] = requester_email
+        
         return {
             "success": True,
             "deleted_event_id": event_id,
-            "original_event": event_to_delete,  # Include original event data
+            "event": event_for_response,  # Include complete event data with organizer/attendees
+            "original_event": event_for_response,  # Agent looks for this field - use enriched data
             "message": f"Event '{event_to_delete.get('title', 'Unknown Event')}' cancelled successfully"
         }
         

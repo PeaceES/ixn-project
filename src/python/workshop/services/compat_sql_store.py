@@ -113,3 +113,23 @@ def get_org_structure():
         row = cur.fetchone()
         return json.loads(row[0]) if row and row[0] else {"users": [], "departments": [], "courses": [], "societies": []}
 
+
+# --- Shared Thread helpers ----------------------------------------------
+
+def get_shared_thread():
+    """Return {'thread_id': str|None, 'updated_at_utc': str|None, 'updated_by': str|None}."""
+    with _conn() as cn, cn.cursor() as cur:
+        cur.execute("EXEC api.get_shared_thread")
+        row = cur.fetchone()
+        return json.loads(row[0]) if row and row[0] else {
+            "thread_id": None, "updated_at_utc": None, "updated_by": None
+        }
+
+def set_shared_thread(thread_id: str, updated_by: str | None = None):
+    """Upsert the current shared thread id and return the saved value as dict."""
+    with _conn() as cn, cn.cursor() as cur:
+        cur.execute("EXEC api.set_shared_thread @thread_id=?, @updated_by=?", (thread_id, updated_by))
+        row = cur.fetchone()
+        return json.loads(row[0]) if row and row[0] else {
+            "thread_id": thread_id, "updated_at_utc": None, "updated_by": updated_by
+        }

@@ -1370,6 +1370,22 @@ When they ask about bookings or what they can book for, use their ID ({self.defa
             shared_thread = await self.project_client.agents.create_thread()
             self.shared_thread_id = shared_thread.id
             # Shared thread created
+            
+            # Persist shared thread ID to database for inter-agent communication
+            try:
+                from services.async_sql_store import async_set_shared_thread
+                # Get requester email from default user context if available
+                requester_email = None
+                if self.default_user_context and self.default_user_context.get('email'):
+                    requester_email = self.default_user_context.get('email')
+                else:
+                    requester_email = 'calendar-agent'  # fallback identifier
+                
+                await async_set_shared_thread(self.shared_thread_id, requester_email)
+                logger.info(f"[AgentCore] Shared thread ID saved to database: {self.shared_thread_id}")
+            except Exception as e:
+                logger.warning(f"[AgentCore] Failed to save shared thread ID to database: {e}")
+                # Continue without failing the initialization
 
             # Send initialization event to shared thread - using hub-based API
             # Hub-based: project_client.agents.create_message()

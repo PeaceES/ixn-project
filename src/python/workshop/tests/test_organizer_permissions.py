@@ -61,7 +61,7 @@ async def test_organizer_permissions():
     
     # Test 3: Try to modify event as the original organizer (should succeed)
     print(f"\n3. Testing modification by original organizer ({user1_email})...")
-    modify_result = await client.update_event_via_mcp(
+    modify_result = await client.update_event(
         calendar_id=room_id,
         event_id=event_id,
         user_id=user1_email,
@@ -76,7 +76,7 @@ async def test_organizer_permissions():
     
     # Test 4: Try to modify event as a different user (should fail)
     print(f"\n4. Testing modification by different user ({user2_email})...")
-    unauthorized_modify = await client.update_event_via_mcp(
+    unauthorized_modify = await client.update_event(
         calendar_id=room_id,
         event_id=event_id,
         user_id=user2_email,

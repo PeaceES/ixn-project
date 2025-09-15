@@ -24,7 +24,7 @@ from azure.identity import DefaultAzureCredential
 
 from agent.stream_event_handler import StreamEventHandler
 from utils.utilities import Utilities
-from services.mcp_client import CalendarMCPClient
+from services.server_client import CalendarClient
 from services.compat_sql_store import get_org_structure, get_user_by_id_or_email
 
 # Configure logging
@@ -55,7 +55,7 @@ class CalendarAgentCore:
         self.thread: Optional[AgentThread] = None
         self.toolset = AsyncToolSet()
         self.utilities = Utilities()
-        self.mcp_client = CalendarMCPClient()
+        self.calendar_client = CalendarClient()
         self.shared_thread_id: Optional[str] = None
         self.functions = None
         self._operation_active = False  # Prevent concurrent runs
@@ -85,16 +85,16 @@ class CalendarAgentCore:
         """Destructor to ensure HTTP sessions are closed."""
         try:
             import asyncio
-            if hasattr(self, 'mcp_client') and self.mcp_client:
+            if hasattr(self, 'calendar_client') and self.calendar_client:
                 # Try to close the MCP client if we're in an event loop
                 try:
                     loop = asyncio.get_event_loop()
                     if loop.is_running():
                         # Schedule cleanup for later if loop is running
-                        loop.create_task(self.mcp_client.close())
+                        loop.create_task(self.calendar_client.close())
                     else:
                         # Run cleanup synchronously if no loop is running
-                        loop.run_until_complete(self.mcp_client.close())
+                        loop.run_until_complete(self.calendar_client.close())
                 except RuntimeError:
                     # No event loop available, can't clean up async resources
                     pass
@@ -182,17 +182,17 @@ class CalendarAgentCore:
             logger.info(f"[AgentCore] Initialized with {len(selected_names)} functions")
     
     async def get_events_via_mcp(self) -> str:
-        """Get events via MCP server."""
+        """Get events via calendar server."""
         try:
-            health = await self.mcp_client.health_check()
+            health = await self.calendar_client.health_check()
             if not health.get("status") == "healthy":
                 return json.dumps({
                     "success": False,
-                    "error": "MCP server not available",
+                    "error": "Calendar server not available",
                     "message": "Calendar service is currently unavailable"
                 })
             
-            result = await self.mcp_client.list_events_via_mcp("all")
+            result = await self.calendar_client.list_events("all")
             if result.get("success"):
                 return json.dumps(result)
             else:
@@ -209,23 +209,23 @@ class CalendarAgentCore:
             })
 
     async def check_room_availability_via_mcp(self, room_id: str, start_time: str, end_time: str) -> str:
-        """Check room availability via MCP server."""
+        """Check room availability via calendar server."""
         try:
-            health = await self.mcp_client.health_check()
+            health = await self.calendar_client.health_check()
             if not health.get("status") == "healthy":
                 return json.dumps({
                     "success": False,
-                    "error": "MCP server not available",
+                    "error": "Calendar server not available",
                     "message": f"Cannot check availability for room {room_id}"
                 })
             
-            result = await self.mcp_client.check_room_availability_via_mcp(room_id, start_time, end_time)
+            result = await self.calendar_client.check_room_availability(room_id, start_time, end_time)
             if result.get("success"):
                 return json.dumps(result)
             else:
                 return json.dumps({
                     "success": False,
-                    "error": f"MCP error: {result.get('error')}",
+                    "error": f"Calendar server error: {result.get('error')}",
                     "message": f"Could not check availability for room {room_id}"
                 })
         except Exception as e:
@@ -236,23 +236,23 @@ class CalendarAgentCore:
             })
 
     async def get_rooms_via_mcp(self) -> str:
-        """Get rooms via MCP server."""
+        """Get rooms via calendar server."""
         try:
-            health = await self.mcp_client.health_check()
+            health = await self.calendar_client.health_check()
             if not health.get("status") == "healthy":
                 return json.dumps({
                     "success": False,
-                    "error": "MCP server not available",
+                    "error": "Calendar server not available",
                     "message": "Cannot retrieve room list"
                 })
             
-            result = await self.mcp_client.get_rooms_via_mcp()
+            result = await self.calendar_client.get_rooms()
             if result.get("success"):
                 return json.dumps(result)
             else:
                 return json.dumps({
                     "success": False,
-                    "error": f"MCP error: {result.get('error')}",
+                    "error": f"Calendar server error: {result.get('error')}",
                     "message": "Could not retrieve room list"
                 })
         except Exception as e:
@@ -264,17 +264,17 @@ class CalendarAgentCore:
 
     async def schedule_event_via_mcp(self, title: str, start_time: str, end_time: str, 
                                    room_id: str, organizer: str, description: str = "") -> str:
-        """Schedule event via MCP server."""
+        """Schedule event via calendar server."""
         try:
-            health = await self.mcp_client.health_check()
+            health = await self.calendar_client.health_check()
             if not health.get("status") == "healthy":
                 return json.dumps({
                     "success": False,
-                    "error": "MCP server not available",
+                    "error": "Calendar server not available",
                     "message": f"Cannot schedule event '{title}'"
                 })
             
-            result = await self.mcp_client.create_event_via_mcp(
+            result = await self.calendar_client.create_event(
                 user_id=organizer,
                 calendar_id=room_id,
                 title=title,
@@ -311,7 +311,7 @@ class CalendarAgentCore:
             # Use provided user_id or fallback to default context (web interface)
             effective_user_id = user_id or (self.default_user_context.get('email') if self.default_user_context else None)
             
-            health = await self.mcp_client.health_check()
+            health = await self.calendar_client.health_check()
             if not health.get("status") == "healthy":
                 return json.dumps({
                     "success": False,
@@ -320,7 +320,7 @@ class CalendarAgentCore:
                 })
             
             # First, find which calendar contains this event
-            find_result = await self.mcp_client.find_event_calendar_via_mcp(event_id)
+            find_result = await self.calendar_client.find_event_calendar(event_id)
             if not find_result.get("success"):
                 return json.dumps({
                     "success": False,
@@ -331,7 +331,7 @@ class CalendarAgentCore:
             calendar_id = find_result.get("calendar_id")
             
             # Update only the times
-            result = await self.mcp_client.update_event_via_mcp(
+            result = await self.calendar_client.update_event(
                 calendar_id=calendar_id,
                 event_id=event_id,
                 user_id=effective_user_id,
@@ -379,7 +379,7 @@ class CalendarAgentCore:
             # Use provided user_id or fallback to default context (web interface)
             effective_user_id = user_id or (self.default_user_context.get('email') if self.default_user_context else None)
             
-            health = await self.mcp_client.health_check()
+            health = await self.calendar_client.health_check()
             if not health.get("status") == "healthy":
                 return json.dumps({
                     "success": False,
@@ -388,7 +388,7 @@ class CalendarAgentCore:
                 })
             
             # First, find which calendar contains this event
-            find_result = await self.mcp_client.find_event_calendar_via_mcp(event_id)
+            find_result = await self.calendar_client.find_event_calendar(event_id)
             if not find_result.get("success"):
                 return json.dumps({
                     "success": False,
@@ -399,7 +399,7 @@ class CalendarAgentCore:
             calendar_id = find_result.get("calendar_id")
             
             # Update the event with the provided fields
-            result = await self.mcp_client.update_event_via_mcp(
+            result = await self.calendar_client.update_event(
                 calendar_id=calendar_id,
                 event_id=event_id,
                 user_id=effective_user_id,
@@ -474,7 +474,7 @@ class CalendarAgentCore:
                     "message": "Please provide your user ID to cancel this event. Only the original organizer can cancel events."
                 })
             
-            health = await self.mcp_client.health_check()
+            health = await self.calendar_client.health_check()
             if not health.get("status") == "healthy":
                 return json.dumps({
                     "success": False,
@@ -483,7 +483,7 @@ class CalendarAgentCore:
                 })
             
             # First, find which calendar contains this event
-            find_result = await self.mcp_client.find_event_calendar_via_mcp(event_id)
+            find_result = await self.calendar_client.find_event_calendar(event_id)
             if not find_result.get("success"):
                 return json.dumps({
                     "success": False,
@@ -493,7 +493,7 @@ class CalendarAgentCore:
             
             calendar_id = find_result.get("calendar_id")
             
-            result = await self.mcp_client.delete_event_via_mcp(calendar_id, event_id, effective_user_id)
+            result = await self.calendar_client.delete_event(calendar_id, event_id, effective_user_id)
             
             if result.get("success"):
                 # Post cancellation notification to shared thread
@@ -518,7 +518,7 @@ class CalendarAgentCore:
     async def get_event_details_via_mcp(self, event_id: str, calendar_id: str = None) -> str:
         """Get details of a specific event via MCP server."""
         try:
-            health = await self.mcp_client.health_check()
+            health = await self.calendar_client.health_check()
             if not health.get("status") == "healthy":
                 return json.dumps({
                     "success": False,
@@ -528,7 +528,7 @@ class CalendarAgentCore:
             
             # If calendar_id is not provided or is empty/default, find the calendar automatically
             if not calendar_id or calendar_id in ["", "default"]:
-                find_result = await self.mcp_client.find_event_calendar_via_mcp(event_id)
+                find_result = await self.calendar_client.find_event_calendar(event_id)
                 if not find_result.get("success"):
                     return json.dumps({
                         "success": False,
@@ -537,7 +537,7 @@ class CalendarAgentCore:
                     })
                 calendar_id = find_result.get("calendar_id")
             
-            result = await self.mcp_client.get_event_via_mcp(calendar_id, event_id)
+            result = await self.calendar_client.get_event(calendar_id, event_id)
             
             if result.get("success"):
                 return json.dumps(result)
@@ -1325,7 +1325,7 @@ When they ask about bookings or what they can book for, use their ID ({self.defa
 
             # Check MCP health status
             try:
-                health = await self.mcp_client.health_check()
+                health = await self.calendar_client.health_check()
                 mcp_status = "healthy" if health.get("status") == "healthy" else "unhealthy"
             except Exception:
                 mcp_status = "unreachable"
@@ -1792,7 +1792,7 @@ When they ask about bookings or what they can book for, use their ID ({self.defa
         finally:
             # Properly clean up MCP client HTTP sessions
             try:
-                await self.mcp_client.close()
+                await self.calendar_client.close()
                 logger.info("[AgentCore] MCP client cleaned up successfully")
             except Exception as e:
                 logger.warning(f"[AgentCore] Error cleaning up MCP client: {e}")
@@ -1810,7 +1810,7 @@ When they ask about bookings or what they can book for, use their ID ({self.defa
         
         # Check MCP health
         try:
-            health = await self.mcp_client.health_check()
+            health = await self.calendar_client.health_check()
             status["mcp_status"] = "healthy" if health.get("status") == "healthy" else "unhealthy"
         except Exception:
             status["mcp_status"] = "unreachable"

@@ -5,7 +5,7 @@ import asyncio
 import json
 import os
 import httpx
-from datetime import datetime, timedelta, UTC
+from datetime import datetime, timedelta
 from dateutil import parser
 import uuid
 import uvicorn
@@ -18,26 +18,27 @@ load_dotenv()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Initialize the MCP server with data from files on startup."""
-    print("Starting Enhanced Calendar MCP Server...")
+    """Initialize the calendar server with data from files on startup."""
+    print("Starting Enhanced Calendar Server...")
     
-    # Load rooms first (required for calendars)
-    await load_rooms()
+    # Load configuration
+    load_config()
     
-    # Load calendars (creates room-based calendars)
-    await load_calendars()
+    # Initialize database connection if not exists
+    init_database()
     
-    # Load events
-    await load_events()
+    # Optional: Load sample events
+    await load_sample_events()
     
-    # Load user directory
-    await load_user_directory()
+    # Initialize store
+    store = get_sql_store()
+    print(f"Database initialized with {len(store.list_calendars())} calendars")
     
-    print("Enhanced Calendar MCP Server ready!")
+    print("Enhanced Calendar Server ready!")
     yield
     # Cleanup can go here if needed
 
-app = FastAPI(title="Enhanced Calendar MCP Server", version="2.0.0", lifespan=lifespan)
+app = FastAPI(title="Enhanced Calendar Server", version="2.0.0", lifespan=lifespan)
 
 # Global storage
 rooms_data = {}
@@ -434,7 +435,7 @@ async def create_event(calendar_id: str, payload: CreateEventRequest):
             "organizer": organizer_email,  # Now storing email instead of ID
             "location": payload.location or calendar_info.get("location", ""),
             "description": payload.description or "",
-            "created_at": datetime.now(UTC).isoformat(),
+            "created_at": datetime.utcnow().isoformat(),
             "attendees": attendees,  # Use entity email if available
             "status": "confirmed"
         }
@@ -807,7 +808,7 @@ async def health_check():
     """Health check endpoint."""
     return {
         "status": "healthy",
-        "service": "Enhanced Calendar MCP Server",
+        "service": "Enhanced Calendar Server",
         "version": "2.0.0",
         "calendars_loaded": len(calendars_data.get("calendars", [])),
         "events_count": len(events_data.get("events", [])),

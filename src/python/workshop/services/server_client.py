@@ -5,14 +5,14 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-# MCP Server Configuration
-MCP_BASE_URL = "http://localhost:8000"  # or container/service URL in deployment
+# Calendar Server Configuration
+CALENDAR_BASE_URL = "http://localhost:8000"  # or container/service URL in deployment
 
 
-class CalendarMCPClient:
-    """Client for interacting with the Calendar MCP Server."""
-    
-    def __init__(self, base_url: str = MCP_BASE_URL):
+class CalendarClient:
+    """Client for interacting with the Calendar Server."""
+
+    def __init__(self, base_url: str = CALENDAR_BASE_URL):
         self.base_url = base_url.rstrip('/')
         self._client: Optional[httpx.AsyncClient] = None
     
@@ -29,7 +29,7 @@ class CalendarMCPClient:
         """Close the HTTP client session properly."""
         if self._client and not self._client.is_closed:
             await self._client.aclose()
-            logger.debug("[MCP Client] HTTP session closed")
+            logger.debug("[Calendar Client] HTTP session closed")
     
     async def __aenter__(self):
         """Async context manager entry."""
@@ -39,7 +39,7 @@ class CalendarMCPClient:
         """Async context manager exit with cleanup."""
         await self.close()
     
-    async def create_event_via_mcp(
+    async def create_event(
         self, 
         user_id: str, 
         calendar_id: str, 
@@ -49,7 +49,7 @@ class CalendarMCPClient:
         location: Optional[str] = None, 
         description: Optional[str] = None
     ) -> dict:
-        """Create an event via the MCP server."""
+        """Create an event via the calendar server."""
         payload = {
             "user_id": user_id,
             "calendar_id": calendar_id,
@@ -80,8 +80,8 @@ class CalendarMCPClient:
         except Exception as e:
             return {"success": False, "error": f"Unexpected error: {e}"}
     
-    async def list_events_via_mcp(self, calendar_id: str) -> dict:
-        """List events via the MCP server."""
+    async def list_events(self, calendar_id: str) -> dict:
+        """List events via the calendar server."""
         try:
             client = await self._get_client()
             response = await client.get(
@@ -97,8 +97,8 @@ class CalendarMCPClient:
         except Exception as e:
             return {"success": False, "error": f"Unexpected error: {e}"}
     
-    async def get_rooms_via_mcp(self) -> dict:
-        """Get available calendars via the MCP server."""
+    async def get_rooms(self) -> dict:
+        """Get available calendars via the calendar server."""
         try:
             client = await self._get_client()
             response = await client.get(
@@ -114,13 +114,13 @@ class CalendarMCPClient:
         except Exception as e:
             return {"success": False, "error": f"Unexpected error: {e}"}
     
-    async def check_room_availability_via_mcp(
-        self, 
-        room_id: str, 
-        start_time: str, 
+    async def check_room_availability(
+        self,
+        room_id: str,
+        start_time: str,
         end_time: str
     ) -> dict:
-        """Check calendar availability via the MCP server."""
+        """Check calendar availability via the calendar server."""
         try:
             client = await self._get_client()
             response = await client.get(
@@ -141,7 +141,7 @@ class CalendarMCPClient:
             return {"success": False, "error": f"Unexpected error: {e}"}
     
     async def health_check(self) -> dict:
-        """Check if the MCP server is healthy."""
+        """Check if the calendar server is healthy."""
         try:
             client = await self._get_client()
             response = await client.get(
@@ -168,7 +168,7 @@ class CalendarMCPClient:
         location: Optional[str] = None,
         description: Optional[str] = None
     ) -> dict:
-        """Update an existing event via the MCP server."""
+        """Update an existing event via the calendar server."""
         payload = {}
         if user_id is not None:
             payload["user_id"] = user_id
@@ -207,8 +207,8 @@ class CalendarMCPClient:
         except Exception as e:
             return {"success": False, "error": f"Unexpected error: {e}"}
     
-    async def delete_event_via_mcp(self, calendar_id: str, event_id: str, user_id: str = None) -> dict:
-        """Delete an existing event via the MCP server."""
+    async def delete_event(self, calendar_id: str, event_id: str, user_id: str = None) -> dict:
+        """Delete an existing event via the calendar server."""
         try:
             client = await self._get_client()
             params = {}
@@ -233,8 +233,8 @@ class CalendarMCPClient:
         except Exception as e:
             return {"success": False, "error": f"Unexpected error: {e}"}
     
-    async def get_event_via_mcp(self, calendar_id: str, event_id: str) -> dict:
-        """Get event details via the MCP server."""
+    async def get_event(self, calendar_id: str, event_id: str) -> dict:
+        """Get event details via the calendar server."""
         try:
             client = await self._get_client()
             response = await client.get(
@@ -256,7 +256,7 @@ class CalendarMCPClient:
         """Find which calendar contains the given event ID."""
         try:
             # Get all calendars
-            calendars_result = await self.get_rooms_via_mcp()
+            calendars_result = await self.get_rooms()
             if not calendars_result.get("success", True):
                 return {"success": False, "error": "Cannot retrieve calendars"}
             
@@ -271,7 +271,7 @@ class CalendarMCPClient:
                     continue
                     
                 # Try to get the event from this calendar
-                event_result = await self.get_event_via_mcp(calendar_id, event_id)
+                event_result = await self.get_event(calendar_id, event_id)
                 if event_result.get("success", True) and "error" not in event_result:
                     # Found the event!
                     return {
@@ -289,37 +289,37 @@ class CalendarMCPClient:
 
 # Convenience functions for backward compatibility
 async def create_event_via_mcp(user_id: str, calendar_id: str, title: str, start_time: str, end_time: str, location: str = None, description: str = None):
-    """Convenience function for creating events via MCP."""
-    client = CalendarMCPClient()
-    return await client.create_event_via_mcp(user_id, calendar_id, title, start_time, end_time, location, description)
+    """Convenience function for creating events via calendar server."""
+    client = CalendarClient()
+    return await client.create_event(user_id, calendar_id, title, start_time, end_time, location, description)
 
 async def list_events_via_mcp(calendar_id: str):
-    """Convenience function for listing events via MCP."""
-    client = CalendarMCPClient()
-    return await client.list_events_via_mcp(calendar_id)
+    """Convenience function for listing events via calendar server."""
+    client = CalendarClient()
+    return await client.list_events(calendar_id)
 
 async def get_rooms_via_mcp():
-    """Convenience function for getting rooms via MCP."""
-    client = CalendarMCPClient()
-    return await client.get_rooms_via_mcp()
+    """Convenience function for getting rooms via calendar server."""
+    client = CalendarClient()
+    return await client.get_rooms()
 
 async def check_room_availability_via_mcp(room_id: str, start_time: str, end_time: str):
-    """Convenience function for checking room availability via MCP."""
-    client = CalendarMCPClient()
-    return await client.check_room_availability_via_mcp(room_id, start_time, end_time)
+    """Convenience function for checking room availability via calendar server."""
+    client = CalendarClient()
+    return await client.check_room_availability(room_id, start_time, end_time)
 
 async def update_event(calendar_id: str, event_id: str, user_id: str = None, title: str = None, 
                               start_time: str = None, end_time: str = None, location: str = None, description: str = None):
-    """Convenience function for updating events via MCP."""
-    client = CalendarMCPClient()
+    """Convenience function for updating events via calendar server."""
+    client = CalendarClient()
     return await client.update_event(calendar_id, event_id, user_id, title, start_time, end_time, location, description)
 
 async def delete_event_via_mcp(calendar_id: str, event_id: str, user_id: str = None):
-    """Convenience function for deleting events via MCP."""
-    client = CalendarMCPClient()
-    return await client.delete_event_via_mcp(calendar_id, event_id, user_id)
+    """Convenience function for deleting events via calendar server."""
+    client = CalendarClient()
+    return await client.delete_event(calendar_id, event_id, user_id)
 
 async def get_event_via_mcp(calendar_id: str, event_id: str):
-    """Convenience function for getting event details via MCP."""
-    client = CalendarMCPClient()
-    return await client.get_event_via_mcp(calendar_id, event_id)
+    """Convenience function for getting event details via calendar server."""
+    client = CalendarClient()
+    return await client.get_event(calendar_id, event_id)

@@ -10,49 +10,33 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from tests.test_framework import (
-    AsyncTestCase, MockResponseBuilder, TestDataFactory, 
-    TEST_USER_ID, TEST_CALENDAR_ID, TEST_ROOM_ID, TEST_THREAD_ID
+from services.async_sql_store import (
+    async_create_event, async_list_events, async_get_rooms
 )
+from agent.stream_event_handler import StreamEventHandler
+
+# Test constants
+TEST_USER_ID = "test-user-123"
+TEST_CALENDAR_ID = "test-calendar-456"
+TEST_ROOM_ID = "test-room-789"
+TEST_THREAD_ID = "test-thread-101"
 
 
 @pytest.mark.integration
 @pytest.mark.slow
-class TestAgentWorkflow(AsyncTestCase):
+class TestAgentWorkflow:
     """Test complete agent workflow integration."""
     
+    @pytest.fixture
     def setup_mocks(self):
         """Setup mocks for agent workflow tests."""
-        self.mock_azure_client = AsyncMock()
-        self.mock_calendar_client = AsyncMock()
-        self.mock_docs_client = AsyncMock()
-        self.mock_permissions = MagicMock()
-        self.mock_evaluator = AsyncMock()
-        
-        # Setup mock responses
-        self.setup_mock_responses()
-    
-    def setup_mock_responses(self):
-        """Setup mock responses for various services."""
-        # Calendar service responses
-        self.mock_calendar_client.get_events.return_value = '[]'
-        self.mock_calendar_client.get_rooms.return_value = '[{"id": "room1", "name": "Conference Room A"}]'
-        self.mock_calendar_client.check_room_availability.return_value = '{"available": true}'
-        
-        # Permissions responses
-        self.mock_permissions.check_permission.return_value = True
-        
-        # Evaluation responses
-        self.mock_evaluator.evaluate_response.return_value = {
-            "relevance": 0.85,
-            "helpfulness": 0.90,
-            "accuracy": 0.88,
-            "overall_score": 0.88
+        return {
+            'azure_client': AsyncMock(),
+            'calendar_client': AsyncMock(), 
+            'docs_client': AsyncMock(),
+            'permissions': MagicMock(),
+            'evaluator': AsyncMock()
         }
-    
-    def cleanup_mocks(self):
-        """Cleanup mocks after tests."""
-        pass
     
     @pytest.mark.asyncio
     async def test_complete_scheduling_workflow(self):
@@ -138,8 +122,8 @@ class TestAgentWorkflow(AsyncTestCase):
             
             # Test event creation
             event_result = await client.create_event_via_mcp(
-                user_id=TEST_USER_ID,
-                calendar_id=TEST_CALENDAR_ID,
+                user_id="test-user-123",
+                calendar_id="test-calendar-456", 
                 title="Test Meeting",
                 start_time="2024-01-15T10:00:00Z",
                 end_time="2024-01-15T11:00:00Z"
@@ -163,13 +147,13 @@ class TestAgentWorkflow(AsyncTestCase):
             permissions = mock_perms_class()
             
             # Test permission checks
-            can_read = permissions.check_permission(TEST_USER_ID, "read", "calendar")
+            can_read = permissions.check_permission("test-user-123", "read", "calendar")
             assert can_read is True
             
-            can_write = permissions.check_permission(TEST_USER_ID, "write", "calendar")
+            can_write = permissions.check_permission("test-user-123", "write", "calendar")
             assert can_write is True
             
-            can_book = permissions.check_permission(TEST_USER_ID, "book", "room")
+            can_book = permissions.check_permission("test-user-123", "book", "room")
             assert can_book is True
     
     @pytest.mark.asyncio
@@ -309,7 +293,7 @@ class TestAgentWorkflow(AsyncTestCase):
             await agent.initialize()
             
             # Step 2: Check permissions
-            can_schedule = permissions.check_permission(TEST_USER_ID, "create", "event")
+            can_schedule = permissions.check_permission("test-user-123", "create", "event")
             assert can_schedule is True
             
             # Step 3: Process request
@@ -318,8 +302,8 @@ class TestAgentWorkflow(AsyncTestCase):
             
             # Step 4: Create event via MCP
             event_result = await mcp_client.create_event_via_mcp(
-                user_id=TEST_USER_ID,
-                calendar_id=TEST_CALENDAR_ID,
+                user_id="test-user-123",
+                calendar_id="test-calendar-456",
                 title="Team Meeting",
                 start_time="2024-01-15T10:00:00Z",
                 end_time="2024-01-15T11:00:00Z"

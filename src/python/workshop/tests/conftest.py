@@ -160,6 +160,78 @@ def mock_permissions():
         yield mock_instance
 
 
+@pytest.fixture
+def temp_db_file():
+    """Create temporary database file for tests."""
+    fd, path = tempfile.mkstemp(suffix='.db')
+    os.close(fd)
+    yield path
+    os.unlink(path) if os.path.exists(path) else None
+
+
+@pytest.fixture
+def in_memory_db():
+    """Create in-memory SQLite database for fast tests."""
+    return ":memory:"
+
+
+@pytest.fixture
+def sample_events():
+    """Provide sample event data for tests."""
+    return [
+        {
+            "id": "event-1",
+            "title": "Morning Standup", 
+            "description": "Daily team standup",
+            "start_time": "2024-12-01T09:00:00Z",
+            "end_time": "2024-12-01T09:30:00Z",
+            "attendees": "team@company.com",
+            "organizer": "manager@company.com"
+        },
+        {
+            "id": "event-2",
+            "title": "Client Meeting",
+            "description": "Quarterly business review",
+            "start_time": "2024-12-01T14:00:00Z", 
+            "end_time": "2024-12-01T15:00:00Z",
+            "attendees": "client@external.com,sales@company.com",
+            "organizer": "sales@company.com"
+        },
+        {
+            "id": "event-3",
+            "title": "Team Lunch",
+            "description": "Monthly team lunch",
+            "start_time": "2024-12-02T12:00:00Z",
+            "end_time": "2024-12-02T13:00:00Z", 
+            "attendees": "team@company.com",
+            "organizer": "hr@company.com"
+        }
+    ]
+
+
+@pytest.fixture
+def sample_scheduling_request():
+    """Provide sample scheduling request for agent tests."""
+    return {
+        "action": "schedule_meeting",
+        "title": "Test Meeting",
+        "description": "Test meeting description",
+        "start_time": "2024-12-01T10:00:00Z",
+        "end_time": "2024-12-01T11:00:00Z",
+        "attendees": ["user1@test.com", "user2@test.com"],
+        "organizer": "organizer@test.com"
+    }
+
+
+@pytest.fixture
+def mock_sql_store():
+    """Mock SQL store for unit tests."""
+    from services.async_sql_store import AsyncSQLStore
+    with patch.object(AsyncSQLStore, '__init__', return_value=None):
+        mock_store = AsyncMock(spec=AsyncSQLStore)
+        yield mock_store
+
+
 @pytest.fixture(autouse=True)
 def cleanup_environment():
     """Cleanup environment after each test."""

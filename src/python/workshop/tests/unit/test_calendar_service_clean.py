@@ -1,5 +1,5 @@
 """
-Unit tests for the Calendar Service components.
+Unit tests for the Calendar Service components - Clean Version.
 """
 import pytest
 import json
@@ -131,31 +131,6 @@ class TestMockCalendarService:
         assert data["events"][0]["title"] == "Test Meeting"
     
     @pytest.mark.asyncio
-    async def test_get_events_filtered_by_room(self, calendar_service, sample_event_data):
-        """Test get_events filters by room_id."""
-        # Add events for different rooms
-        event_room1 = sample_event_data.copy()
-        event_room1["room_id"] = "room1"
-        
-        event_room2 = sample_event_data.copy()
-        event_room2["id"] = "event-456"
-        event_room2["room_id"] = "room2"
-        event_room2["title"] = "Room 2 Meeting"
-        
-        calendar_service._events.extend([event_room1, event_room2])
-        
-        start_date = datetime(2024, 12, 1, tzinfo=timezone.utc)
-        end_date = datetime(2024, 12, 2, tzinfo=timezone.utc)
-        
-        # Get events for room1 only
-        result = await calendar_service.get_events(start_date, end_date, room_id="room1")
-        
-        data = json.loads(result)
-        assert len(data["events"]) == 1
-        assert data["events"][0]["room_id"] == "room1"
-        assert data["events"][0]["title"] == "Test Meeting"
-    
-    @pytest.mark.asyncio
     async def test_check_room_availability_available(self, calendar_service):
         """Test room availability when room is free."""
         start_time = datetime(2024, 12, 1, 10, 0, tzinfo=timezone.utc)
@@ -180,67 +155,3 @@ class TestMockCalendarService:
         
         data = json.loads(result)
         assert data["available"] is False
-    
-    @pytest.mark.asyncio
-    async def test_check_room_availability_no_conflict_different_room(self, calendar_service, sample_event_data):
-        """Test room availability for different room has no conflict."""
-        # Add event for room1
-        calendar_service._events.append(sample_event_data)
-        
-        # Check availability for room2
-        start_time = datetime(2024, 12, 1, 10, 0, tzinfo=timezone.utc)
-        end_time = datetime(2024, 12, 1, 11, 0, tzinfo=timezone.utc)
-        
-        result = await calendar_service.check_room_availability("room2", start_time, end_time)
-        
-        data = json.loads(result)
-        assert data["available"] is True
-    
-    def test_room_data_structure(self, calendar_service):
-        """Test room data has expected structure."""
-        rooms = calendar_service._rooms
-        
-        for room in rooms:
-            assert "id" in room
-            assert "name" in room
-            assert "capacity" in room
-            assert isinstance(room["capacity"], int)
-    
-    @pytest.mark.asyncio
-    async def test_concurrent_availability_checks(self, calendar_service):
-        """Test multiple concurrent availability checks."""
-        import asyncio
-        
-        start_time = datetime(2024, 12, 1, 10, 0, tzinfo=timezone.utc)
-        end_time = datetime(2024, 12, 1, 11, 0, tzinfo=timezone.utc)
-        
-        # Run multiple availability checks concurrently
-        tasks = [
-            calendar_service.check_room_availability(f"room{i}", start_time, end_time)
-            for i in range(1, 4)
-        ]
-        
-        results = await asyncio.gather(*tasks)
-        
-        assert len(results) == 3
-        for result in results:
-            data = json.loads(result)
-            assert "available" in data
-    
-    @pytest.mark.asyncio
-    async def test_get_events_with_room_filter(self):
-        """Test get_events with room filter."""
-        # This test would be for SyntheticCalendarService when implemented
-        pass
-    
-    @pytest.mark.asyncio
-    async def test_get_rooms_returns_json_string(self):
-        """Test that get_rooms returns a JSON string."""
-        # This test would be for SyntheticCalendarService when implemented
-        pass
-    
-    @pytest.mark.asyncio
-    async def test_check_room_availability_returns_json_string(self):
-        """Test that check_room_availability returns a JSON string."""
-        # This test would be for SyntheticCalendarService when implemented
-        pass

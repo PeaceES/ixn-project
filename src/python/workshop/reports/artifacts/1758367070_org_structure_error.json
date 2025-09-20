@@ -1,0 +1,8 @@
+{
+  "data": {
+    "status_code": 302,
+    "response_data": "<!doctype html>\n<html lang=en>\n<title>Redirecting...</title>\n<h1>Redirecting...</h1>\n<p>You should be redirected automatically to the target URL: <a href=\"/login?next=%2Fapi%2Forg-structure\">/login?next=%2Fapi%2Forg-structure</a>. If not, click the link.\n"
+  },
+  "timestamp": 1758367070,
+  "test_name": null
+}

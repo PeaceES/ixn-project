@@ -1,0 +1,924 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="3" failures="23" skipped="0" tests="34" time="99.934" timestamp="2025-09-20T10:23:27.968629+00:00" hostname="eee96253007c"><testcase classname="tests.integration.test_agent_workflow.TestAgentWorkflow" name="test_complete_scheduling_workflow" time="0.163"><failure message="AttributeError: &lt;module 'agent_core' from '/workspaces/build-your-first-agent-with-azure-ai-agent-service-workshop/src/python/workshop/agent_core.py'&gt; does not have the attribute 'CalendarSchedulerAgent'">self = &lt;test_agent_workflow.TestAgentWorkflow object at 0xffff61556710&gt;
+
+    @pytest.mark.asyncio
+    async def test_complete_scheduling_workflow(self):
+        """Test complete meeting scheduling workflow."""
+        # Mock agent core
+&gt;       with patch('agent_core.CalendarSchedulerAgent') as mock_agent_class:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/integration/test_agent_workflow.py:45: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.13/unittest/mock.py:1497: in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;unittest.mock._patch object at 0xffff5afd25f0&gt;
+
+    def get_original(self):
+        target = self.getter()
+        name = self.attribute
+    
+        original = DEFAULT
+        local = False
+    
+        try:
+            original = target.__dict__[name]
+        except (AttributeError, KeyError):
+            original = getattr(target, name, DEFAULT)
+        else:
+            local = True
+    
+        if name in _builtins and isinstance(target, ModuleType):
+            self.create = True
+    
+        if not self.create and original is DEFAULT:
+&gt;           raise AttributeError(
+                "%s does not have the attribute %r" % (target, name)
+            )
+E           AttributeError: &lt;module 'agent_core' from '/workspaces/build-your-first-agent-with-azure-ai-agent-service-workshop/src/python/workshop/agent_core.py'&gt; does not have the attribute 'CalendarSchedulerAgent'
+
+/usr/local/lib/python3.13/unittest/mock.py:1467: AttributeError</failure></testcase><testcase classname="tests.integration.test_agent_workflow.TestAgentWorkflow" name="test_room_availability_workflow" time="0.001"><failure message="AttributeError: &lt;module 'services.calendar_service' from '/workspaces/build-your-first-agent-with-azure-ai-agent-service-workshop/src/python/workshop/services/calendar_service.py'&gt; does not have the attribute 'SyntheticCalendarService'">self = &lt;test_agent_workflow.TestAgentWorkflow object at 0xffff61556c10&gt;
+
+    @pytest.mark.asyncio
+    async def test_room_availability_workflow(self):
+        """Test room availability checking workflow."""
+&gt;       with patch('services.calendar_service.SyntheticCalendarService') as mock_service:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/integration/test_agent_workflow.py:84: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.13/unittest/mock.py:1497: in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;unittest.mock._patch object at 0xffff5ad67cb0&gt;
+
+    def get_original(self):
+        target = self.getter()
+        name = self.attribute
+    
+        original = DEFAULT
+        local = False
+    
+        try:
+            original = target.__dict__[name]
+        except (AttributeError, KeyError):
+            original = getattr(target, name, DEFAULT)
+        else:
+            local = True
+    
+        if name in _builtins and isinstance(target, ModuleType):
+            self.create = True
+    
+        if not self.create and original is DEFAULT:
+&gt;           raise AttributeError(
+                "%s does not have the attribute %r" % (target, name)
+            )
+E           AttributeError: &lt;module 'services.calendar_service' from '/workspaces/build-your-first-agent-with-azure-ai-agent-service-workshop/src/python/workshop/services/calendar_service.py'&gt; does not have the attribute 'SyntheticCalendarService'
+
+/usr/local/lib/python3.13/unittest/mock.py:1467: AttributeError</failure></testcase><testcase classname="tests.integration.test_agent_workflow.TestAgentWorkflow" name="test_mcp_client_workflow" time="0.002" /><testcase classname="tests.integration.test_agent_workflow.TestAgentWorkflow" name="test_permissions_workflow" time="0.006"><failure message="AttributeError: module 'services' has no attribute 'simple_permissions'">self = &lt;test_agent_workflow.TestAgentWorkflow object at 0xffff60b90770&gt;
+
+    @pytest.mark.asyncio
+    async def test_permissions_workflow(self):
+        """Test permissions checking workflow."""
+&gt;       with patch('services.simple_permissions.SimplePermissions') as mock_perms_class:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/integration/test_agent_workflow.py:139: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.13/unittest/mock.py:1481: in __enter__
+    self.target = self.getter()
+                  ^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = 'services.simple_permissions'
+
+    def resolve_name(name):
+        """
+        Resolve a name to an object.
+    
+        It is expected that `name` will be a string in one of the following
+        formats, where W is shorthand for a valid Python identifier and dot stands
+        for a literal period in these pseudo-regexes:
+    
+        W(.W)*
+        W(.W)*:(W(.W)*)?
+    
+        The first form is intended for backward compatibility only. It assumes that
+        some part of the dotted name is a package, and the rest is an object
+        somewhere within that package, possibly nested inside other objects.
+        Because the place where the package stops and the object hierarchy starts
+        can't be inferred by inspection, repeated attempts to import must be done
+        with this form.
+    
+        In the second form, the caller makes the division point clear through the
+        provision of a single colon: the dotted name to the left of the colon is a
+        package to be imported, and the dotted name to the right is the object
+        hierarchy within that package. Only one import is needed in this form. If
+        it ends with the colon, then a module object is returned.
+    
+        The function will return an object (which might be a module), or raise one
+        of the following exceptions:
+    
+        ValueError - if `name` isn't in a recognised format
+        ImportError - if an import failed when it shouldn't have
+        AttributeError - if a failure occurred when traversing the object hierarchy
+                         within the imported package to get to the desired object.
+        """
+        global _NAME_PATTERN
+        if _NAME_PATTERN is None:
+            # Lazy import to speedup Python startup time
+            import re
+            dotted_words = r'(?!\d)(\w+)(\.(?!\d)(\w+))*'
+            _NAME_PATTERN = re.compile(f'^(?P&lt;pkg&gt;{dotted_words})'
+                                       f'(?P&lt;cln&gt;:(?P&lt;obj&gt;{dotted_words})?)?$',
+                                       re.UNICODE)
+    
+        m = _NAME_PATTERN.match(name)
+        if not m:
+            raise ValueError(f'invalid format: {name!r}')
+        gd = m.groupdict()
+        if gd.get('cln'):
+            # there is a colon - a one-step import is all that's needed
+            mod = importlib.import_module(gd['pkg'])
+            parts = gd.get('obj')
+            parts = parts.split('.') if parts else []
+        else:
+            # no colon - have to iterate to find the package boundary
+            parts = name.split('.')
+            modname = parts.pop(0)
+            # first part *must* be a module/package.
+            mod = importlib.import_module(modname)
+            while parts:
+                p = parts[0]
+                s = f'{modname}.{p}'
+                try:
+                    mod = importlib.import_module(s)
+                    parts.pop(0)
+                    modname = s
+                except ImportError:
+                    break
+        # if we reach this point, mod is the module, already imported, and
+        # parts is the list of parts in the object hierarchy to be traversed, or
+        # an empty list if just the module is wanted.
+        result = mod
+        for p in parts:
+&gt;           result = getattr(result, p)
+                     ^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'services' has no attribute 'simple_permissions'
+
+/usr/local/lib/python3.13/pkgutil.py:528: AttributeError</failure></testcase><testcase classname="tests.integration.test_agent_workflow.TestAgentWorkflow" name="test_evaluation_workflow" time="0.002" /><testcase classname="tests.integration.test_agent_workflow.TestAgentWorkflow" name="test_error_handling_workflow" time="0.001"><failure message="AttributeError: &lt;module 'agent_core' from '/workspaces/build-your-first-agent-with-azure-ai-agent-service-workshop/src/python/workshop/agent_core.py'&gt; does not have the attribute 'CalendarSchedulerAgent'">self = &lt;test_agent_workflow.TestAgentWorkflow object at 0xffff60b885a0&gt;
+
+    @pytest.mark.asyncio
+    async def test_error_handling_workflow(self):
+        """Test error handling throughout the workflow."""
+&gt;       with patch('agent_core.CalendarSchedulerAgent') as mock_agent_class:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/integration/test_agent_workflow.py:190: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.13/unittest/mock.py:1497: in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;unittest.mock._patch object at 0xffff5adc6b30&gt;
+
+    def get_original(self):
+        target = self.getter()
+        name = self.attribute
+    
+        original = DEFAULT
+        local = False
+    
+        try:
+            original = target.__dict__[name]
+        except (AttributeError, KeyError):
+            original = getattr(target, name, DEFAULT)
+        else:
+            local = True
+    
+        if name in _builtins and isinstance(target, ModuleType):
+            self.create = True
+    
+        if not self.create and original is DEFAULT:
+&gt;           raise AttributeError(
+                "%s does not have the attribute %r" % (target, name)
+            )
+E           AttributeError: &lt;module 'agent_core' from '/workspaces/build-your-first-agent-with-azure-ai-agent-service-workshop/src/python/workshop/agent_core.py'&gt; does not have the attribute 'CalendarSchedulerAgent'
+
+/usr/local/lib/python3.13/unittest/mock.py:1467: AttributeError</failure></testcase><testcase classname="tests.integration.test_agent_workflow.TestAgentWorkflow" name="test_concurrent_requests_workflow" time="0.001"><failure message="AttributeError: &lt;module 'agent_core' from '/workspaces/build-your-first-agent-with-azure-ai-agent-service-workshop/src/python/workshop/agent_core.py'&gt; does not have the attribute 'CalendarSchedulerAgent'">self = &lt;test_agent_workflow.TestAgentWorkflow object at 0xffff60b887c0&gt;
+
+    @pytest.mark.asyncio
+    async def test_concurrent_requests_workflow(self):
+        """Test handling of concurrent requests."""
+&gt;       with patch('agent_core.CalendarSchedulerAgent') as mock_agent_class:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/integration/test_agent_workflow.py:215: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.13/unittest/mock.py:1497: in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;unittest.mock._patch object at 0xffff5acd0050&gt;
+
+    def get_original(self):
+        target = self.getter()
+        name = self.attribute
+    
+        original = DEFAULT
+        local = False
+    
+        try:
+            original = target.__dict__[name]
+        except (AttributeError, KeyError):
+            original = getattr(target, name, DEFAULT)
+        else:
+            local = True
+    
+        if name in _builtins and isinstance(target, ModuleType):
+            self.create = True
+    
+        if not self.create and original is DEFAULT:
+&gt;           raise AttributeError(
+                "%s does not have the attribute %r" % (target, name)
+            )
+E           AttributeError: &lt;module 'agent_core' from '/workspaces/build-your-first-agent-with-azure-ai-agent-service-workshop/src/python/workshop/agent_core.py'&gt; does not have the attribute 'CalendarSchedulerAgent'
+
+/usr/local/lib/python3.13/unittest/mock.py:1467: AttributeError</failure></testcase><testcase classname="tests.integration.test_agent_workflow.TestAgentWorkflow" name="test_stream_handler_workflow" time="0.001" /><testcase classname="tests.integration.test_agent_workflow.TestAgentWorkflow" name="test_full_integration_workflow" time="0.001"><failure message="AttributeError: &lt;module 'agent_core' from '/workspaces/build-your-first-agent-with-azure-ai-agent-service-workshop/src/python/workshop/agent_core.py'&gt; does not have the attribute 'CalendarSchedulerAgent'">self = &lt;test_agent_workflow.TestAgentWorkflow object at 0xffff61533a50&gt;
+
+    @pytest.mark.asyncio
+    async def test_full_integration_workflow(self):
+        """Test complete integration of all components."""
+        # Mock all major components
+&gt;       with patch('agent_core.CalendarSchedulerAgent') as mock_agent_class, \
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+             patch('services.mcp_client.CalendarMCPClient') as mock_mcp_class, \
+             patch('services.simple_permissions.SimplePermissions') as mock_perms_class, \
+             patch('evaluation.real_time_evaluator.RealTimeEvaluator') as mock_eval_class:
+
+tests/integration/test_agent_workflow.py:262: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.13/unittest/mock.py:1497: in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;unittest.mock._patch object at 0xffff5acd1470&gt;
+
+    def get_original(self):
+        target = self.getter()
+        name = self.attribute
+    
+        original = DEFAULT
+        local = False
+    
+        try:
+            original = target.__dict__[name]
+        except (AttributeError, KeyError):
+            original = getattr(target, name, DEFAULT)
+        else:
+            local = True
+    
+        if name in _builtins and isinstance(target, ModuleType):
+            self.create = True
+    
+        if not self.create and original is DEFAULT:
+&gt;           raise AttributeError(
+                "%s does not have the attribute %r" % (target, name)
+            )
+E           AttributeError: &lt;module 'agent_core' from '/workspaces/build-your-first-agent-with-azure-ai-agent-service-workshop/src/python/workshop/agent_core.py'&gt; does not have the attribute 'CalendarSchedulerAgent'
+
+/usr/local/lib/python3.13/unittest/mock.py:1467: AttributeError</failure></testcase><testcase classname="tests.integration.test_agent_workflow.TestAgentWorkflow" name="test_failure_recovery_workflow" time="0.001"><failure message="AttributeError: &lt;module 'agent_core' from '/workspaces/build-your-first-agent-with-azure-ai-agent-service-workshop/src/python/workshop/agent_core.py'&gt; does not have the attribute 'CalendarSchedulerAgent'">self = &lt;test_agent_workflow.TestAgentWorkflow object at 0xffff60b846e0&gt;
+
+    @pytest.mark.asyncio
+    async def test_failure_recovery_workflow(self):
+        """Test workflow recovery from failures."""
+&gt;       with patch('agent_core.CalendarSchedulerAgent') as mock_agent_class:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/integration/test_agent_workflow.py:320: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.13/unittest/mock.py:1497: in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;unittest.mock._patch object at 0xffff5adc5c50&gt;
+
+    def get_original(self):
+        target = self.getter()
+        name = self.attribute
+    
+        original = DEFAULT
+        local = False
+    
+        try:
+            original = target.__dict__[name]
+        except (AttributeError, KeyError):
+            original = getattr(target, name, DEFAULT)
+        else:
+            local = True
+    
+        if name in _builtins and isinstance(target, ModuleType):
+            self.create = True
+    
+        if not self.create and original is DEFAULT:
+&gt;           raise AttributeError(
+                "%s does not have the attribute %r" % (target, name)
+            )
+E           AttributeError: &lt;module 'agent_core' from '/workspaces/build-your-first-agent-with-azure-ai-agent-service-workshop/src/python/workshop/agent_core.py'&gt; does not have the attribute 'CalendarSchedulerAgent'
+
+/usr/local/lib/python3.13/unittest/mock.py:1467: AttributeError</failure></testcase><testcase classname="tests.integration.test_agent_workflow.TestAgentWorkflow" name="test_performance_workflow" time="0.001"><failure message="AttributeError: &lt;module 'agent_core' from '/workspaces/build-your-first-agent-with-azure-ai-agent-service-workshop/src/python/workshop/agent_core.py'&gt; does not have the attribute 'CalendarSchedulerAgent'">self = &lt;test_agent_workflow.TestAgentWorkflow object at 0xffff60b848c0&gt;
+
+    @pytest.mark.asyncio
+    async def test_performance_workflow(self):
+        """Test workflow performance characteristics."""
+        import time
+    
+&gt;       with patch('agent_core.CalendarSchedulerAgent') as mock_agent_class:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/integration/test_agent_workflow.py:346: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.13/unittest/mock.py:1497: in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;unittest.mock._patch object at 0xffff5adc4bb0&gt;
+
+    def get_original(self):
+        target = self.getter()
+        name = self.attribute
+    
+        original = DEFAULT
+        local = False
+    
+        try:
+            original = target.__dict__[name]
+        except (AttributeError, KeyError):
+            original = getattr(target, name, DEFAULT)
+        else:
+            local = True
+    
+        if name in _builtins and isinstance(target, ModuleType):
+            self.create = True
+    
+        if not self.create and original is DEFAULT:
+&gt;           raise AttributeError(
+                "%s does not have the attribute %r" % (target, name)
+            )
+E           AttributeError: &lt;module 'agent_core' from '/workspaces/build-your-first-agent-with-azure-ai-agent-service-workshop/src/python/workshop/agent_core.py'&gt; does not have the attribute 'CalendarSchedulerAgent'
+
+/usr/local/lib/python3.13/unittest/mock.py:1467: AttributeError</failure></testcase><testcase classname="tests.integration.test_agent_workflow.TestAgentWorkflow" name="test_data_validation_workflow" time="0.002"><failure message="AttributeError: &lt;module 'services.calendar_service' from '/workspaces/build-your-first-agent-with-azure-ai-agent-service-workshop/src/python/workshop/services/calendar_service.py'&gt; does not have the attribute 'SyntheticCalendarService'">self = &lt;test_agent_workflow.TestAgentWorkflow object at 0xffff60b77850&gt;
+
+    @pytest.mark.asyncio
+    async def test_data_validation_workflow(self):
+        """Test data validation throughout the workflow."""
+&gt;       with patch('services.calendar_service.SyntheticCalendarService') as mock_service:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/integration/test_agent_workflow.py:368: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.13/unittest/mock.py:1497: in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;unittest.mock._patch object at 0xffff5ad67770&gt;
+
+    def get_original(self):
+        target = self.getter()
+        name = self.attribute
+    
+        original = DEFAULT
+        local = False
+    
+        try:
+            original = target.__dict__[name]
+        except (AttributeError, KeyError):
+            original = getattr(target, name, DEFAULT)
+        else:
+            local = True
+    
+        if name in _builtins and isinstance(target, ModuleType):
+            self.create = True
+    
+        if not self.create and original is DEFAULT:
+&gt;           raise AttributeError(
+                "%s does not have the attribute %r" % (target, name)
+            )
+E           AttributeError: &lt;module 'services.calendar_service' from '/workspaces/build-your-first-agent-with-azure-ai-agent-service-workshop/src/python/workshop/services/calendar_service.py'&gt; does not have the attribute 'SyntheticCalendarService'
+
+/usr/local/lib/python3.13/unittest/mock.py:1467: AttributeError</failure></testcase><testcase classname="tests.integration.test_calendar_integration.TestCalendarIntegration" name="test_end_to_end_event_creation" time="0.001"><error message="failed on setup with &quot;file /workspaces/build-your-first-agent-with-azure-ai-agent-service-workshop/src/python/workshop/tests/integration/test_calendar_integration.py, line 26&#10;      @pytest.mark.asyncio&#10;      async def test_end_to_end_event_creation(self, sample_events, performance_tracker, save_test_artifact):&#10;          &quot;&quot;&quot;Test complete event creation workflow.&quot;&quot;&quot;&#10;          event_data = sample_events[0]&#10;&#10;          with patch('services.compat_sql_store.create_event') as mock_create, \&#10;               patch('services.compat_sql_store.list_events') as mock_list:&#10;&#10;              # Track performance&#10;              start_time = time.time()&#10;&#10;              # Mock successful creation&#10;              mock_create.return_value = {&quot;success&quot;: True, &quot;event_id&quot;: &quot;new-event-123&quot;}&#10;              mock_list.return_value = {&quot;events&quot;: [event_data]}&#10;&#10;              # Create event&#10;              create_result = await async_create_event(event_data)&#10;              create_time = time.time()&#10;&#10;              assert create_result[&quot;success&quot;] is True&#10;&#10;              # Verify event exists&#10;              list_result = await async_list_events(&quot;room1&quot;)&#10;              end_time = time.time()&#10;&#10;              assert len(list_result[&quot;events&quot;]) == 1&#10;              assert list_result[&quot;events&quot;][0][&quot;title&quot;] == event_data[&quot;title&quot;]&#10;&#10;              # Track performance metrics&#10;              performance_tracker(&quot;event_creation&quot;, start_time, create_time)&#10;              performance_tracker(&quot;event_listing&quot;, create_time, end_time)&#10;              performance_tracker(&quot;full_workflow&quot;, start_time, end_time)&#10;&#10;              # Save test results for thesis&#10;              save_test_artifact(&quot;event_creation_workflow&quot;, {&#10;                  &quot;test_type&quot;: &quot;integration&quot;,&#10;                  &quot;workflow&quot;: &quot;end_to_end_event_creation&quot;,&#10;                  &quot;performance&quot;: {&#10;                      &quot;creation_duration&quot;: create_time - start_time,&#10;                      &quot;total_duration&quot;: end_time - start_time&#10;                  },&#10;                  &quot;results&quot;: {&#10;                      &quot;create_success&quot;: create_result[&quot;success&quot;],&#10;                      &quot;events_found&quot;: len(list_result[&quot;events&quot;])&#10;                  }&#10;              })&#10;E       fixture 'save_test_artifact' not found&#10;&gt;       available fixtures: _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_faker, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, artifact_dir, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, class_mocker, cov, doctest_namespace, event_loop, event_loop_policy, extra, extras, faker, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, in_memory_db, include_metadata_in_junit_xml, metadata, mock_agent, mock_agent_thread, mock_azure_client, mock_calendar_mcp_client, mock_default_azure_credential, mock_httpx_client, mock_permissions, mock_stream_event_handler, mock_utilities, mocker, module_mocker, monkeypatch, no_cover, package_mocker, performance_tracker, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_calendar_events, sample_events, sample_rooms, sample_scheduling_request, session_mocker, temp_db_file, temp_directory, testrun_uid, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory, worker_id&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;/workspaces/build-your-first-agent-with-azure-ai-agent-service-workshop/src/python/workshop/tests/integration/test_calendar_integration.py:26&quot;">file /workspaces/build-your-first-agent-with-azure-ai-agent-service-workshop/src/python/workshop/tests/integration/test_calendar_integration.py, line 26
+      @pytest.mark.asyncio
+      async def test_end_to_end_event_creation(self, sample_events, performance_tracker, save_test_artifact):
+          """Test complete event creation workflow."""
+          event_data = sample_events[0]
+
+          with patch('services.compat_sql_store.create_event') as mock_create, \
+               patch('services.compat_sql_store.list_events') as mock_list:
+
+              # Track performance
+              start_time = time.time()
+
+              # Mock successful creation
+              mock_create.return_value = {"success": True, "event_id": "new-event-123"}
+              mock_list.return_value = {"events": [event_data]}
+
+              # Create event
+              create_result = await async_create_event(event_data)
+              create_time = time.time()
+
+              assert create_result["success"] is True
+
+              # Verify event exists
+              list_result = await async_list_events("room1")
+              end_time = time.time()
+
+              assert len(list_result["events"]) == 1
+              assert list_result["events"][0]["title"] == event_data["title"]
+
+              # Track performance metrics
+              performance_tracker("event_creation", start_time, create_time)
+              performance_tracker("event_listing", create_time, end_time)
+              performance_tracker("full_workflow", start_time, end_time)
+
+              # Save test results for thesis
+              save_test_artifact("event_creation_workflow", {
+                  "test_type": "integration",
+                  "workflow": "end_to_end_event_creation",
+                  "performance": {
+                      "creation_duration": create_time - start_time,
+                      "total_duration": end_time - start_time
+                  },
+                  "results": {
+                      "create_success": create_result["success"],
+                      "events_found": len(list_result["events"])
+                  }
+              })
+E       fixture 'save_test_artifact' not found
+&gt;       available fixtures: _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_faker, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, artifact_dir, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, class_mocker, cov, doctest_namespace, event_loop, event_loop_policy, extra, extras, faker, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, in_memory_db, include_metadata_in_junit_xml, metadata, mock_agent, mock_agent_thread, mock_azure_client, mock_calendar_mcp_client, mock_default_azure_credential, mock_httpx_client, mock_permissions, mock_stream_event_handler, mock_utilities, mocker, module_mocker, monkeypatch, no_cover, package_mocker, performance_tracker, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_calendar_events, sample_events, sample_rooms, sample_scheduling_request, session_mocker, temp_db_file, temp_directory, testrun_uid, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory, worker_id
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+/workspaces/build-your-first-agent-with-azure-ai-agent-service-workshop/src/python/workshop/tests/integration/test_calendar_integration.py:26</error></testcase><testcase classname="tests.integration.test_calendar_integration.TestCalendarIntegration" name="test_room_availability_workflow" time="15.139"><failure message="pyodbc.OperationalError: ('HYT00', '[HYT00] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0) (SQLDriverConnect)')">self = &lt;test_calendar_integration.TestCalendarIntegration object at 0xffff61556d50&gt;
+
+    @pytest.mark.asyncio
+    async def test_room_availability_workflow(self):
+        """Test room availability checking workflow."""
+        room_id = "room1"
+        start_time = "2024-12-01T10:00:00Z"
+        end_time = "2024-12-01T11:00:00Z"
+    
+        with patch('services.compat_sql_store.check_availability') as mock_check, \
+             patch('services.compat_sql_store.get_rooms') as mock_rooms:
+    
+            # Setup room data
+            mock_rooms.return_value = {"rooms": [{"id": room_id, "name": "Conference Room A"}]}
+            mock_check.return_value = True
+    
+            # Check room availability
+&gt;           rooms = await async_get_rooms()
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/integration/test_calendar_integration.py:88: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+services/async_sql_store.py:11: in async_get_rooms
+    return await asyncio.to_thread(get_rooms)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/asyncio/threads.py:25: in to_thread
+    return await loop.run_in_executor(None, func_call)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/concurrent/futures/thread.py:59: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+services/compat_sql_store.py:12: in get_rooms
+    with _conn() as cn, cn.cursor() as cur:
+         ^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _conn():
+&gt;       return pyodbc.connect(CS)
+               ^^^^^^^^^^^^^^^^^^
+E       pyodbc.OperationalError: ('HYT00', '[HYT00] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0) (SQLDriverConnect)')
+
+services/compat_sql_store.py:8: OperationalError</failure></testcase><testcase classname="tests.integration.test_calendar_integration.TestCalendarIntegration" name="test_conflict_detection_integration" time="15.152"><failure message="pyodbc.OperationalError: ('HYT00', '[HYT00] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0) (SQLDriverConnect)')">self = &lt;test_calendar_integration.TestCalendarIntegration object at 0xffff60b908a0&gt;
+sample_events = [{'attendees': 'team@company.com', 'description': 'Daily team standup', 'end_time': '2024-12-01T09:30:00Z', 'id': 'eve...s': 'team@company.com', 'description': 'Monthly team lunch', 'end_time': '2024-12-02T13:00:00Z', 'id': 'event-3', ...}]
+
+    @pytest.mark.asyncio
+    async def test_conflict_detection_integration(self, sample_events):
+        """Test that the system detects scheduling conflicts."""
+        event1 = sample_events[0]
+    
+        # Create overlapping event
+        event2 = event1.copy()
+        event2["id"] = "event-2"
+        event2["title"] = "Conflicting Meeting"
+        event2["start_time"] = "2024-12-01T09:15:00Z"  # Overlaps with event1
+    
+        with patch('services.compat_sql_store.check_availability') as mock_check, \
+             patch('services.compat_sql_store.create_event') as mock_create:
+    
+            # First event succeeds
+            mock_check.return_value = True
+            mock_create.return_value = {"success": True, "event_id": "event-1"}
+    
+&gt;           result1 = await async_create_event(event1)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/integration/test_calendar_integration.py:112: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+services/async_sql_store.py:21: in async_create_event
+    return await asyncio.to_thread(create_event, ev)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/asyncio/threads.py:25: in to_thread
+    return await loop.run_in_executor(None, func_call)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/concurrent/futures/thread.py:59: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+services/compat_sql_store.py:34: in create_event
+    with _conn() as cn, cn.cursor() as cur:
+         ^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _conn():
+&gt;       return pyodbc.connect(CS)
+               ^^^^^^^^^^^^^^^^^^
+E       pyodbc.OperationalError: ('HYT00', '[HYT00] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0) (SQLDriverConnect)')
+
+services/compat_sql_store.py:8: OperationalError</failure></testcase><testcase classname="tests.integration.test_calendar_integration.TestCalendarIntegration" name="test_multi_room_scheduling" time="15.158"><failure message="pyodbc.OperationalError: ('HYT00', '[HYT00] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0) (SQLDriverConnect)')">self = &lt;test_calendar_integration.TestCalendarIntegration object at 0xffff60b909d0&gt;
+
+    @pytest.mark.asyncio
+    async def test_multi_room_scheduling(self):
+        """Test scheduling across multiple rooms."""
+        rooms_data = {
+            "rooms": [
+                {"id": "room1", "name": "Conference Room A"},
+                {"id": "room2", "name": "Conference Room B"},
+                {"id": "room3", "name": "Meeting Room C"}
+            ]
+        }
+    
+        with patch('services.compat_sql_store.get_rooms') as mock_rooms, \
+             patch('services.compat_sql_store.check_availability') as mock_check:
+    
+            mock_rooms.return_value = rooms_data
+    
+            # Room1 not available, Room2 available
+            mock_check.side_effect = [False, True, True]
+    
+&gt;           rooms = await async_get_rooms()
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/integration/test_calendar_integration.py:142: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+services/async_sql_store.py:11: in async_get_rooms
+    return await asyncio.to_thread(get_rooms)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/asyncio/threads.py:25: in to_thread
+    return await loop.run_in_executor(None, func_call)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/concurrent/futures/thread.py:59: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+services/compat_sql_store.py:12: in get_rooms
+    with _conn() as cn, cn.cursor() as cur:
+         ^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _conn():
+&gt;       return pyodbc.connect(CS)
+               ^^^^^^^^^^^^^^^^^^
+E       pyodbc.OperationalError: ('HYT00', '[HYT00] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0) (SQLDriverConnect)')
+
+services/compat_sql_store.py:8: OperationalError</failure></testcase><testcase classname="tests.integration.test_calendar_integration.TestCalendarIntegration" name="test_database_transaction_integrity" time="15.149" /><testcase classname="tests.integration.test_calendar_integration.TestCalendarIntegration" name="test_comprehensive_workflow_with_artifacts" time="15.183"><failure message="pyodbc.OperationalError: ('HYT00', '[HYT00] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0) (SQLDriverConnect)')">self = &lt;test_calendar_integration.TestCalendarIntegration object at 0xffff60b88490&gt;
+sample_events = [{'attendees': 'team@company.com', 'description': 'Daily team standup', 'end_time': '2024-12-01T09:30:00Z', 'id': 'eve...s': 'team@company.com', 'description': 'Monthly team lunch', 'end_time': '2024-12-02T13:00:00Z', 'id': 'event-3', ...}]
+artifact_dir = PosixPath('reports/artifacts')
+performance_tracker = &lt;conftest.performance_tracker.&lt;locals&gt;.PerformanceTracker object at 0xffff5aecf380&gt;
+
+    @pytest.mark.asyncio
+    async def test_comprehensive_workflow_with_artifacts(self, sample_events, artifact_dir, performance_tracker):
+        """Test complete workflow with comprehensive artifact collection."""
+        from tests.conftest import save_artifact
+    
+        # Start overall performance tracking
+        performance_tracker.start_timer("complete_workflow")
+    
+        event_data = sample_events[0]
+    
+        with patch('services.compat_sql_store.create_event') as mock_create, \
+             patch('services.compat_sql_store.list_events') as mock_list, \
+             patch('services.compat_sql_store.check_availability') as mock_check:
+    
+            # Performance tracking for availability check
+            performance_tracker.start_timer("availability_check")
+    
+            # Mock availability check
+            mock_check.return_value = True
+&gt;           availability = await async_check_availability("room1", "2024-12-01T10:00:00Z", "2024-12-01T11:00:00Z")
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/integration/test_calendar_integration.py:192: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+services/async_sql_store.py:36: in async_check_availability
+    return await asyncio.to_thread(check_availability, calendar_id, start_iso, end_iso, exclude_event_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/asyncio/threads.py:25: in to_thread
+    return await loop.run_in_executor(None, func_call)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/concurrent/futures/thread.py:59: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+services/compat_sql_store.py:84: in check_availability
+    with _conn() as cn, cn.cursor() as cur:
+         ^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _conn():
+&gt;       return pyodbc.connect(CS)
+               ^^^^^^^^^^^^^^^^^^
+E       pyodbc.OperationalError: ('HYT00', '[HYT00] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0) (SQLDriverConnect)')
+
+services/compat_sql_store.py:8: OperationalError</failure></testcase><testcase classname="tests.integration.test_web_server_integration.TestWebServerIntegration" name="test_home_route" time="0.072"><failure message="assert 302 == 200&#10; +  where 302 = &lt;WrapperTestResponse streamed [302 FOUND]&gt;.status_code">self = &lt;test_web_server_integration.TestWebServerIntegration object at 0xffff5b544b90&gt;
+client = &lt;FlaskClient &lt;Flask 'web_server'&gt;&gt;
+
+    def test_home_route(self, client):
+        """Test home route responds correctly."""
+        response = client.get('/')
+&gt;       assert response.status_code == 200
+E       assert 302 == 200
+E        +  where 302 = &lt;WrapperTestResponse streamed [302 FOUND]&gt;.status_code
+
+tests/integration/test_web_server_integration.py:41: AssertionError</failure></testcase><testcase classname="tests.integration.test_web_server_integration.TestWebServerIntegration" name="test_login_route" time="15.225" /><testcase classname="tests.integration.test_web_server_integration.TestWebServerIntegration" name="test_api_org_structure" time="0.004"><error message="failed on setup with &quot;file /workspaces/build-your-first-agent-with-azure-ai-agent-service-workshop/src/python/workshop/tests/integration/test_web_server_integration.py, line 50&#10;      @patch('services.compat_sql_store.get_org_structure')&#10;      def test_api_org_structure(self, mock_org, authenticated_client, save_test_artifact):&#10;E       fixture 'save_test_artifact' not found&#10;&gt;       available fixtures: _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_faker, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, artifact_dir, authenticated_client, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, class_mocker, client, cov, doctest_namespace, event_loop, event_loop_policy, extra, extras, faker, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, in_memory_db, include_metadata_in_junit_xml, metadata, mock_agent, mock_agent_thread, mock_azure_client, mock_calendar_mcp_client, mock_default_azure_credential, mock_httpx_client, mock_permissions, mock_stream_event_handler, mock_utilities, mocker, module_mocker, monkeypatch, no_cover, package_mocker, performance_tracker, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_calendar_events, sample_events, sample_rooms, sample_scheduling_request, session_mocker, temp_db_file, temp_directory, testrun_uid, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory, worker_id&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;/workspaces/build-your-first-agent-with-azure-ai-agent-service-workshop/src/python/workshop/tests/integration/test_web_server_integration.py:50&quot;">file /workspaces/build-your-first-agent-with-azure-ai-agent-service-workshop/src/python/workshop/tests/integration/test_web_server_integration.py, line 50
+      @patch('services.compat_sql_store.get_org_structure')
+      def test_api_org_structure(self, mock_org, authenticated_client, save_test_artifact):
+E       fixture 'save_test_artifact' not found
+&gt;       available fixtures: _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_faker, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, artifact_dir, authenticated_client, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, class_mocker, client, cov, doctest_namespace, event_loop, event_loop_policy, extra, extras, faker, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, in_memory_db, include_metadata_in_junit_xml, metadata, mock_agent, mock_agent_thread, mock_azure_client, mock_calendar_mcp_client, mock_default_azure_credential, mock_httpx_client, mock_permissions, mock_stream_event_handler, mock_utilities, mocker, module_mocker, monkeypatch, no_cover, package_mocker, performance_tracker, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_calendar_events, sample_events, sample_rooms, sample_scheduling_request, session_mocker, temp_db_file, temp_directory, testrun_uid, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory, worker_id
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+/workspaces/build-your-first-agent-with-azure-ai-agent-service-workshop/src/python/workshop/tests/integration/test_web_server_integration.py:50</error></testcase><testcase classname="tests.integration.test_web_server_integration.TestWebServerIntegration" name="test_api_rooms" time="0.001"><error message="failed on setup with &quot;file /workspaces/build-your-first-agent-with-azure-ai-agent-service-workshop/src/python/workshop/tests/integration/test_web_server_integration.py, line 82&#10;      @patch('services.async_sql_store.async_get_rooms')&#10;      def test_api_rooms(self, mock_rooms, authenticated_client, save_test_artifact):&#10;E       fixture 'save_test_artifact' not found&#10;&gt;       available fixtures: _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_faker, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, artifact_dir, authenticated_client, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, class_mocker, client, cov, doctest_namespace, event_loop, event_loop_policy, extra, extras, faker, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, in_memory_db, include_metadata_in_junit_xml, metadata, mock_agent, mock_agent_thread, mock_azure_client, mock_calendar_mcp_client, mock_default_azure_credential, mock_httpx_client, mock_permissions, mock_stream_event_handler, mock_utilities, mocker, module_mocker, monkeypatch, no_cover, package_mocker, performance_tracker, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_calendar_events, sample_events, sample_rooms, sample_scheduling_request, session_mocker, temp_db_file, temp_directory, testrun_uid, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory, worker_id&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;/workspaces/build-your-first-agent-with-azure-ai-agent-service-workshop/src/python/workshop/tests/integration/test_web_server_integration.py:82&quot;">file /workspaces/build-your-first-agent-with-azure-ai-agent-service-workshop/src/python/workshop/tests/integration/test_web_server_integration.py, line 82
+      @patch('services.async_sql_store.async_get_rooms')
+      def test_api_rooms(self, mock_rooms, authenticated_client, save_test_artifact):
+E       fixture 'save_test_artifact' not found
+&gt;       available fixtures: _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_faker, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, artifact_dir, authenticated_client, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, class_mocker, client, cov, doctest_namespace, event_loop, event_loop_policy, extra, extras, faker, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, in_memory_db, include_metadata_in_junit_xml, metadata, mock_agent, mock_agent_thread, mock_azure_client, mock_calendar_mcp_client, mock_default_azure_credential, mock_httpx_client, mock_permissions, mock_stream_event_handler, mock_utilities, mocker, module_mocker, monkeypatch, no_cover, package_mocker, performance_tracker, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_calendar_events, sample_events, sample_rooms, sample_scheduling_request, session_mocker, temp_db_file, temp_directory, testrun_uid, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory, worker_id
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+/workspaces/build-your-first-agent-with-azure-ai-agent-service-workshop/src/python/workshop/tests/integration/test_web_server_integration.py:82</error></testcase><testcase classname="tests.integration.test_web_server_integration.TestWebServerIntegration" name="test_api_events" time="0.008"><failure message="assert 404 == 200&#10; +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code">self = &lt;test_web_server_integration.TestWebServerIntegration object at 0xffff5b529370&gt;
+mock_events = &lt;AsyncMock name='async_list_events' id='281472204431648'&gt;
+authenticated_client = &lt;FlaskClient &lt;Flask 'web_server'&gt;&gt;
+
+    @patch('services.async_sql_store.async_list_events')
+    def test_api_events(self, mock_events, authenticated_client):
+        """Test events API endpoint."""
+        mock_events.return_value = {
+            "events": [
+                {
+                    "id": "event1",
+                    "title": "Test Meeting",
+                    "start_time": "2024-12-01T10:00:00Z",
+                    "end_time": "2024-12-01T11:00:00Z"
+                }
+            ]
+        }
+    
+        response = authenticated_client.get('/api/events')
+&gt;       assert response.status_code == 200
+E       assert 404 == 200
+E        +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code
+
+tests/integration/test_web_server_integration.py:131: AssertionError</failure></testcase><testcase classname="tests.integration.test_web_server_integration.TestWebServerIntegration" name="test_api_create_event" time="0.002"><failure message="assert 404 == 200&#10; +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code">self = &lt;test_web_server_integration.TestWebServerIntegration object at 0xffff5bfa7020&gt;
+mock_create = &lt;AsyncMock name='async_create_event' id='281472204424928'&gt;
+authenticated_client = &lt;FlaskClient &lt;Flask 'web_server'&gt;&gt;
+
+    @patch('services.async_sql_store.async_create_event')
+    def test_api_create_event(self, mock_create, authenticated_client):
+        """Test event creation API endpoint."""
+        mock_create.return_value = {"success": True, "event_id": "new-event-123"}
+    
+        event_data = {
+            "title": "New Meeting",
+            "description": "Test meeting",
+            "start_time": "2024-12-01T14:00:00Z",
+            "end_time": "2024-12-01T15:00:00Z",
+            "attendees": "user1@test.com,user2@test.com",
+            "room_id": "room1"
+        }
+    
+        response = authenticated_client.post('/api/events',
+                                           data=json.dumps(event_data),
+                                           content_type='application/json')
+    
+&gt;       assert response.status_code == 200
+E       assert 404 == 200
+E        +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code
+
+tests/integration/test_web_server_integration.py:155: AssertionError</failure></testcase><testcase classname="tests.integration.test_web_server_integration.TestWebServerIntegration" name="test_api_unauthorized_access" time="0.002"><failure message="assert 404 in [302, 401]&#10; +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code">self = &lt;test_web_server_integration.TestWebServerIntegration object at 0xffff5bfa7130&gt;
+client = &lt;FlaskClient &lt;Flask 'web_server'&gt;&gt;
+
+    def test_api_unauthorized_access(self, client):
+        """Test API endpoints require authentication."""
+        endpoints = ['/api/events', '/api/rooms', '/api/org-structure']
+    
+        for endpoint in endpoints:
+            response = client.get(endpoint)
+            # Should either redirect to login or return 401
+&gt;           assert response.status_code in [302, 401]
+E           assert 404 in [302, 401]
+E            +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code
+
+tests/integration/test_web_server_integration.py:167: AssertionError</failure></testcase><testcase classname="tests.integration.test_web_server_integration.TestWebServerIntegration" name="test_api_check_availability" time="0.004"><failure message="assert 404 == 200&#10; +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code">self = &lt;test_web_server_integration.TestWebServerIntegration object at 0xffff61533650&gt;
+mock_check = &lt;AsyncMock name='async_check_availability' id='281472204435008'&gt;
+authenticated_client = &lt;FlaskClient &lt;Flask 'web_server'&gt;&gt;
+
+    @patch('services.async_sql_store.async_check_availability')
+    def test_api_check_availability(self, mock_check, authenticated_client):
+        """Test availability checking API endpoint."""
+        mock_check.return_value = True
+    
+        data = {
+            "room_id": "room1",
+            "start_time": "2024-12-01T10:00:00Z",
+            "end_time": "2024-12-01T11:00:00Z"
+        }
+    
+        response = authenticated_client.post('/api/check-availability',
+                                           data=json.dumps(data),
+                                           content_type='application/json')
+    
+&gt;       assert response.status_code == 200
+E       assert 404 == 200
+E        +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code
+
+tests/integration/test_web_server_integration.py:184: AssertionError</failure></testcase><testcase classname="tests.integration.test_web_server_integration.TestWebServerIntegration" name="test_chat_endpoint" time="0.002"><failure message="AttributeError: &lt;module 'agent_core' from '/workspaces/build-your-first-agent-with-azure-ai-agent-service-workshop/src/python/workshop/agent_core.py'&gt; does not have the attribute 'chat'">args = (&lt;test_web_server_integration.TestWebServerIntegration object at 0xffff5bfaa850&gt;,)
+keywargs = {'authenticated_client': &lt;FlaskClient &lt;Flask 'web_server'&gt;&gt;}
+
+    @wraps(func)
+    def patched(*args, **keywargs):
+&gt;       with self.decoration_helper(patched,
+                                    args,
+                                    keywargs) as (newargs, newkeywargs):
+
+/usr/local/lib/python3.13/unittest/mock.py:1423: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.13/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/unittest/mock.py:1405: in decoration_helper
+    arg = exit_stack.enter_context(patching)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/contextlib.py:530: in enter_context
+    result = _enter(cm)
+             ^^^^^^^^^^
+/usr/local/lib/python3.13/unittest/mock.py:1497: in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;unittest.mock._patch object at 0xffff5bf709f0&gt;
+
+    def get_original(self):
+        target = self.getter()
+        name = self.attribute
+    
+        original = DEFAULT
+        local = False
+    
+        try:
+            original = target.__dict__[name]
+        except (AttributeError, KeyError):
+            original = getattr(target, name, DEFAULT)
+        else:
+            local = True
+    
+        if name in _builtins and isinstance(target, ModuleType):
+            self.create = True
+    
+        if not self.create and original is DEFAULT:
+&gt;           raise AttributeError(
+                "%s does not have the attribute %r" % (target, name)
+            )
+E           AttributeError: &lt;module 'agent_core' from '/workspaces/build-your-first-agent-with-azure-ai-agent-service-workshop/src/python/workshop/agent_core.py'&gt; does not have the attribute 'chat'
+
+/usr/local/lib/python3.13/unittest/mock.py:1467: AttributeError</failure></testcase><testcase classname="tests.integration.test_web_server_integration.TestWebServerIntegration" name="test_static_files_served" time="0.003" /><testcase classname="tests.integration.test_web_server_integration.TestWebServerIntegration" name="test_error_handling" time="0.001" /><testcase classname="tests.integration.test_web_server_integration.TestWebServerIntegration" name="test_api_update_event" time="0.002"><failure message="assert 404 == 200&#10; +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code">self = &lt;test_web_server_integration.TestWebServerIntegration object at 0xffff5b56c910&gt;
+mock_update = &lt;AsyncMock name='async_update_event' id='281472204438704'&gt;
+authenticated_client = &lt;FlaskClient &lt;Flask 'web_server'&gt;&gt;
+
+    @patch('services.async_sql_store.async_update_event')
+    def test_api_update_event(self, mock_update, authenticated_client):
+        """Test event update API endpoint."""
+        mock_update.return_value = {"success": True}
+    
+        event_id = "event-123"
+        update_data = {
+            "title": "Updated Meeting Title",
+            "description": "Updated description"
+        }
+    
+        response = authenticated_client.put(f'/api/events/{event_id}',
+                                          data=json.dumps(update_data),
+                                          content_type='application/json')
+    
+&gt;       assert response.status_code == 200
+E       assert 404 == 200
+E        +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code
+
+tests/integration/test_web_server_integration.py:240: AssertionError</failure></testcase><testcase classname="tests.integration.test_web_server_integration.TestWebServerIntegration" name="test_api_delete_event" time="0.004"><failure message="assert 404 == 200&#10; +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code">self = &lt;test_web_server_integration.TestWebServerIntegration object at 0xffff5b56cbb0&gt;
+mock_cancel = &lt;AsyncMock name='async_cancel_event' id='281472203948784'&gt;
+authenticated_client = &lt;FlaskClient &lt;Flask 'web_server'&gt;&gt;
+
+    @patch('services.async_sql_store.async_cancel_event')
+    def test_api_delete_event(self, mock_cancel, authenticated_client):
+        """Test event deletion API endpoint."""
+        mock_cancel.return_value = {"success": True}
+    
+        event_id = "event-123"
+    
+        response = authenticated_client.delete(f'/api/events/{event_id}')
+    
+&gt;       assert response.status_code == 200
+E       assert 404 == 200
+E        +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code
+
+tests/integration/test_web_server_integration.py:253: AssertionError</failure></testcase><testcase classname="tests.integration.test_web_server_integration.TestWebServerIntegration" name="test_api_rooms_with_artifacts" time="0.004"><failure message="assert 404 == 200&#10; +  where 404 = &lt;WrapperTestResponse 207 bytes [404 NOT FOUND]&gt;.status_code">self = &lt;test_web_server_integration.TestWebServerIntegration object at 0xffff5bff7380&gt;
+mock_rooms = &lt;AsyncMock name='async_get_rooms' id='281472204438368'&gt;
+authenticated_client = &lt;FlaskClient &lt;Flask 'web_server'&gt;&gt;
+artifact_dir = PosixPath('reports/artifacts')
+performance_tracker = &lt;conftest.performance_tracker.&lt;locals&gt;.PerformanceTracker object at 0xffff5ac27cb0&gt;
+
+    @patch('services.async_sql_store.async_get_rooms')
+    def test_api_rooms_with_artifacts(self, mock_rooms, authenticated_client, artifact_dir, performance_tracker):
+        """Test rooms API endpoint with artifact collection and performance tracking."""
+        # Start performance tracking
+        performance_tracker.start_timer("api_rooms_request")
+    
+        mock_rooms.return_value = {
+            "rooms": [
+                {"id": "room1", "name": "Conference Room A", "capacity": 10},
+                {"id": "room2", "name": "Conference Room B", "capacity": 6}
+            ]
+        }
+    
+        response = authenticated_client.get('/api/rooms')
+    
+        # End performance tracking
+        performance_tracker.end_timer("api_rooms_request")
+    
+        # Save artifacts for analysis
+        from tests.conftest import save_artifact
+    
+        if response.status_code != 200:
+            save_artifact(artifact_dir, "rooms_api_error", response, "test_api_rooms_with_artifacts")
+    
+&gt;       assert response.status_code == 200
+E       assert 404 == 200
+E        +  where 404 = &lt;WrapperTestResponse 207 bytes [404 NOT FOUND]&gt;.status_code
+
+tests/integration/test_web_server_integration.py:281: AssertionError</failure></testcase><testcase classname="tests.integration.test_web_server_integration.TestWebServerIntegration" name="test_api_create_event_with_validation_artifacts" time="0.003"><failure message="assert 404 == 200&#10; +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code">self = &lt;test_web_server_integration.TestWebServerIntegration object at 0xffff60b52150&gt;
+mock_create = &lt;AsyncMock name='async_create_event' id='281472204433664'&gt;
+authenticated_client = &lt;FlaskClient &lt;Flask 'web_server'&gt;&gt;
+artifact_dir = PosixPath('reports/artifacts')
+
+    @patch('services.async_sql_store.async_create_event')
+    def test_api_create_event_with_validation_artifacts(self, mock_create, authenticated_client, artifact_dir):
+        """Test event creation with validation error artifacts."""
+        mock_create.return_value = {"success": False, "error": "Room conflict detected"}
+    
+        # Test with conflicting event data
+        event_data = {
+            "title": "Conflicting Meeting",
+            "description": "This should conflict",
+            "start_time": "2024-12-01T14:00:00Z",
+            "end_time": "2024-12-01T15:00:00Z",
+            "attendees": "user1@test.com,user2@test.com",
+            "room_id": "room1"
+        }
+    
+        response = authenticated_client.post('/api/events',
+                                           data=json.dumps(event_data),
+                                           content_type='application/json')
+    
+        from tests.conftest import save_artifact
+    
+        # This should be a validation error for our thesis analysis
+        if response.status_code == 200:
+            response_data = json.loads(response.data)
+            if not response_data.get("success", True):
+                save_artifact(artifact_dir, "event_creation_validation_error", {
+                    "request_data": event_data,
+                    "response": response_data,
+                    "error_type": "business_logic_validation",
+                    "error_message": response_data.get("error")
+                }, "test_api_create_event_with_validation_artifacts")
+    
+&gt;       assert response.status_code == 200
+E       assert 404 == 200
+E        +  where 404 = &lt;WrapperTestResponse streamed [404 NOT FOUND]&gt;.status_code
+
+tests/integration/test_web_server_integration.py:331: AssertionError</failure></testcase><testcase classname="tests.integration.test_web_server_integration.TestWebServerIntegration" name="test_api_error_handling_artifacts" time="0.006" /></testsuite></testsuites>

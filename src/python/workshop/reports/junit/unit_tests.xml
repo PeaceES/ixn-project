@@ -1,0 +1,626 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="13" failures="22" skipped="0" tests="52" time="190.190" timestamp="2025-09-20T10:20:15.479633+00:00" hostname="eee96253007c"><testcase classname="tests.unit.test_calendar_service.TestCalendarServiceInterface" name="test_interface_cannot_be_instantiated" time="0.225" /><testcase classname="tests.unit.test_calendar_service.TestCalendarServiceInterface" name="test_interface_methods_are_abstract" time="0.041"><failure message="AssertionError: assert frozenset({'c...edule_event'}) == {'check_room_..., 'get_rooms'}&#10;  &#10;  Extra items in the left set:&#10;  #x1B[0m#x1B[33m'#x1B[39;49;00m#x1B[33mgenerate_synthetic_data#x1B[39;49;00m#x1B[33m'#x1B[39;49;00m#x1B[90m#x1B[39;49;00m&#10;  #x1B[0m#x1B[33m'#x1B[39;49;00m#x1B[33mschedule_event#x1B[39;49;00m#x1B[33m'#x1B[39;49;00m#x1B[90m#x1B[39;49;00m&#10;  &#10;  Full diff:&#10;  #x1B[0m#x1B[91m- {#x1B[39;49;00m#x1B[90m#x1B[39;49;00m...&#10;  &#10;  ...Full output truncated (8 lines hidden), use '-vv' to show">self = &lt;test_calendar_service.TestCalendarServiceInterface object at 0xffff64e72c10&gt;
+
+    def test_interface_methods_are_abstract(self):
+        """Test that all interface methods are abstract."""
+        abstract_methods = CalendarServiceInterface.__abstractmethods__
+        expected_methods = {"get_events", "get_rooms", "check_room_availability"}
+&gt;       assert abstract_methods == expected_methods
+E       AssertionError: assert frozenset({'c...edule_event'}) == {'check_room_..., 'get_rooms'}
+E         
+E         Extra items in the left set:
+E         #x1B[0m#x1B[33m'#x1B[39;49;00m#x1B[33mgenerate_synthetic_data#x1B[39;49;00m#x1B[33m'#x1B[39;49;00m#x1B[90m#x1B[39;49;00m
+E         #x1B[0m#x1B[33m'#x1B[39;49;00m#x1B[33mschedule_event#x1B[39;49;00m#x1B[33m'#x1B[39;49;00m#x1B[90m#x1B[39;49;00m
+E         
+E         Full diff:
+E         #x1B[0m#x1B[91m- {#x1B[39;49;00m#x1B[90m#x1B[39;49;00m...
+E         
+E         ...Full output truncated (8 lines hidden), use '-vv' to show
+
+tests/unit/test_calendar_service.py:30: AssertionError</failure></testcase><testcase classname="tests.unit.test_calendar_service.TestMockCalendarService" name="test_get_rooms_returns_json_string" time="0.005" /><testcase classname="tests.unit.test_calendar_service.TestMockCalendarService" name="test_get_events_empty_result" time="0.001"><error message="failed on setup with &quot;TypeError: Can't instantiate abstract class MockCalendarService without an implementation for abstract methods 'generate_synthetic_data', 'schedule_event'&quot;">self = &lt;test_calendar_service.TestMockCalendarService object at 0xffff64e72d50&gt;
+
+    @pytest.fixture
+    def calendar_service(self):
+        """Create MockCalendarService instance."""
+&gt;       return MockCalendarService()
+               ^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: Can't instantiate abstract class MockCalendarService without an implementation for abstract methods 'generate_synthetic_data', 'schedule_event'
+
+tests/unit/test_calendar_service.py:75: TypeError</error></testcase><testcase classname="tests.unit.test_calendar_service.TestMockCalendarService" name="test_get_events_with_data" time="0.001"><error message="failed on setup with &quot;TypeError: Can't instantiate abstract class MockCalendarService without an implementation for abstract methods 'generate_synthetic_data', 'schedule_event'&quot;">self = &lt;test_calendar_service.TestMockCalendarService object at 0xffff64e656e0&gt;
+
+    @pytest.fixture
+    def calendar_service(self):
+        """Create MockCalendarService instance."""
+&gt;       return MockCalendarService()
+               ^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: Can't instantiate abstract class MockCalendarService without an implementation for abstract methods 'generate_synthetic_data', 'schedule_event'
+
+tests/unit/test_calendar_service.py:75: TypeError</error></testcase><testcase classname="tests.unit.test_calendar_service.TestMockCalendarService" name="test_get_events_filtered_by_room" time="0.000"><error message="failed on setup with &quot;TypeError: Can't instantiate abstract class MockCalendarService without an implementation for abstract methods 'generate_synthetic_data', 'schedule_event'&quot;">self = &lt;test_calendar_service.TestMockCalendarService object at 0xffff64e65810&gt;
+
+    @pytest.fixture
+    def calendar_service(self):
+        """Create MockCalendarService instance."""
+&gt;       return MockCalendarService()
+               ^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: Can't instantiate abstract class MockCalendarService without an implementation for abstract methods 'generate_synthetic_data', 'schedule_event'
+
+tests/unit/test_calendar_service.py:75: TypeError</error></testcase><testcase classname="tests.unit.test_calendar_service.TestMockCalendarService" name="test_check_room_availability_available" time="0.001"><error message="failed on setup with &quot;TypeError: Can't instantiate abstract class MockCalendarService without an implementation for abstract methods 'generate_synthetic_data', 'schedule_event'&quot;">self = &lt;test_calendar_service.TestMockCalendarService object at 0xffff64ec2450&gt;
+
+    @pytest.fixture
+    def calendar_service(self):
+        """Create MockCalendarService instance."""
+&gt;       return MockCalendarService()
+               ^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: Can't instantiate abstract class MockCalendarService without an implementation for abstract methods 'generate_synthetic_data', 'schedule_event'
+
+tests/unit/test_calendar_service.py:75: TypeError</error></testcase><testcase classname="tests.unit.test_calendar_service.TestMockCalendarService" name="test_check_room_availability_conflict" time="0.001"><error message="failed on setup with &quot;TypeError: Can't instantiate abstract class MockCalendarService without an implementation for abstract methods 'generate_synthetic_data', 'schedule_event'&quot;">self = &lt;test_calendar_service.TestMockCalendarService object at 0xffff64e41590&gt;
+
+    @pytest.fixture
+    def calendar_service(self):
+        """Create MockCalendarService instance."""
+&gt;       return MockCalendarService()
+               ^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: Can't instantiate abstract class MockCalendarService without an implementation for abstract methods 'generate_synthetic_data', 'schedule_event'
+
+tests/unit/test_calendar_service.py:75: TypeError</error></testcase><testcase classname="tests.unit.test_calendar_service.TestMockCalendarService" name="test_check_room_availability_no_conflict_different_room" time="0.000"><error message="failed on setup with &quot;TypeError: Can't instantiate abstract class MockCalendarService without an implementation for abstract methods 'generate_synthetic_data', 'schedule_event'&quot;">self = &lt;test_calendar_service.TestMockCalendarService object at 0xffff64e41ae0&gt;
+
+    @pytest.fixture
+    def calendar_service(self):
+        """Create MockCalendarService instance."""
+&gt;       return MockCalendarService()
+               ^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: Can't instantiate abstract class MockCalendarService without an implementation for abstract methods 'generate_synthetic_data', 'schedule_event'
+
+tests/unit/test_calendar_service.py:75: TypeError</error></testcase><testcase classname="tests.unit.test_calendar_service.TestMockCalendarService" name="test_room_data_structure" time="0.001"><error message="failed on setup with &quot;TypeError: Can't instantiate abstract class MockCalendarService without an implementation for abstract methods 'generate_synthetic_data', 'schedule_event'&quot;">self = &lt;test_calendar_service.TestMockCalendarService object at 0xffff64fcf150&gt;
+
+    @pytest.fixture
+    def calendar_service(self):
+        """Create MockCalendarService instance."""
+&gt;       return MockCalendarService()
+               ^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: Can't instantiate abstract class MockCalendarService without an implementation for abstract methods 'generate_synthetic_data', 'schedule_event'
+
+tests/unit/test_calendar_service.py:75: TypeError</error></testcase><testcase classname="tests.unit.test_calendar_service.TestMockCalendarService" name="test_concurrent_availability_checks" time="0.001"><error message="failed on setup with &quot;TypeError: Can't instantiate abstract class MockCalendarService without an implementation for abstract methods 'generate_synthetic_data', 'schedule_event'&quot;">self = &lt;test_calendar_service.TestMockCalendarService object at 0xffff64fcf750&gt;
+
+    @pytest.fixture
+    def calendar_service(self):
+        """Create MockCalendarService instance."""
+&gt;       return MockCalendarService()
+               ^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: Can't instantiate abstract class MockCalendarService without an implementation for abstract methods 'generate_synthetic_data', 'schedule_event'
+
+tests/unit/test_calendar_service.py:75: TypeError</error></testcase><testcase classname="tests.unit.test_calendar_service.TestMockCalendarService" name="test_get_events_with_room_filter" time="0.001" /><testcase classname="tests.unit.test_calendar_service.TestMockCalendarService" name="test_check_room_availability_returns_json_string" time="0.001" /><testcase classname="tests.unit.test_calendar_service_clean.TestCalendarServiceInterface" name="test_interface_cannot_be_instantiated" time="0.000" /><testcase classname="tests.unit.test_calendar_service_clean.TestCalendarServiceInterface" name="test_interface_methods_are_abstract" time="0.001"><failure message="AssertionError: assert frozenset({'c...edule_event'}) == {'check_room_..., 'get_rooms'}&#10;  &#10;  Extra items in the left set:&#10;  #x1B[0m#x1B[33m'#x1B[39;49;00m#x1B[33mgenerate_synthetic_data#x1B[39;49;00m#x1B[33m'#x1B[39;49;00m#x1B[90m#x1B[39;49;00m&#10;  #x1B[0m#x1B[33m'#x1B[39;49;00m#x1B[33mschedule_event#x1B[39;49;00m#x1B[33m'#x1B[39;49;00m#x1B[90m#x1B[39;49;00m&#10;  &#10;  Full diff:&#10;  #x1B[0m#x1B[91m- {#x1B[39;49;00m#x1B[90m#x1B[39;49;00m...&#10;  &#10;  ...Full output truncated (8 lines hidden), use '-vv' to show">self = &lt;test_calendar_service_clean.TestCalendarServiceInterface object at 0xffff64e72fd0&gt;
+
+    def test_interface_methods_are_abstract(self):
+        """Test that all interface methods are abstract."""
+        abstract_methods = CalendarServiceInterface.__abstractmethods__
+        expected_methods = {"get_events", "get_rooms", "check_room_availability"}
+&gt;       assert abstract_methods == expected_methods
+E       AssertionError: assert frozenset({'c...edule_event'}) == {'check_room_..., 'get_rooms'}
+E         
+E         Extra items in the left set:
+E         #x1B[0m#x1B[33m'#x1B[39;49;00m#x1B[33mgenerate_synthetic_data#x1B[39;49;00m#x1B[33m'#x1B[39;49;00m#x1B[90m#x1B[39;49;00m
+E         #x1B[0m#x1B[33m'#x1B[39;49;00m#x1B[33mschedule_event#x1B[39;49;00m#x1B[33m'#x1B[39;49;00m#x1B[90m#x1B[39;49;00m
+E         
+E         Full diff:
+E         #x1B[0m#x1B[91m- {#x1B[39;49;00m#x1B[90m#x1B[39;49;00m...
+E         
+E         ...Full output truncated (8 lines hidden), use '-vv' to show
+
+tests/unit/test_calendar_service_clean.py:30: AssertionError</failure></testcase><testcase classname="tests.unit.test_calendar_service_clean.TestMockCalendarService" name="test_get_rooms_returns_json_string" time="0.000"><error message="failed on setup with &quot;TypeError: Can't instantiate abstract class MockCalendarService without an implementation for abstract methods 'generate_synthetic_data', 'schedule_event'&quot;">self = &lt;test_calendar_service_clean.TestMockCalendarService object at 0xffff64e73110&gt;
+
+    @pytest.fixture
+    def calendar_service(self):
+        """Create MockCalendarService instance."""
+&gt;       return MockCalendarService()
+               ^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: Can't instantiate abstract class MockCalendarService without an implementation for abstract methods 'generate_synthetic_data', 'schedule_event'
+
+tests/unit/test_calendar_service_clean.py:75: TypeError</error></testcase><testcase classname="tests.unit.test_calendar_service_clean.TestMockCalendarService" name="test_get_events_empty_result" time="0.001"><error message="failed on setup with &quot;TypeError: Can't instantiate abstract class MockCalendarService without an implementation for abstract methods 'generate_synthetic_data', 'schedule_event'&quot;">self = &lt;test_calendar_service_clean.TestMockCalendarService object at 0xffff64e73250&gt;
+
+    @pytest.fixture
+    def calendar_service(self):
+        """Create MockCalendarService instance."""
+&gt;       return MockCalendarService()
+               ^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: Can't instantiate abstract class MockCalendarService without an implementation for abstract methods 'generate_synthetic_data', 'schedule_event'
+
+tests/unit/test_calendar_service_clean.py:75: TypeError</error></testcase><testcase classname="tests.unit.test_calendar_service_clean.TestMockCalendarService" name="test_get_events_with_data" time="0.001"><error message="failed on setup with &quot;TypeError: Can't instantiate abstract class MockCalendarService without an implementation for abstract methods 'generate_synthetic_data', 'schedule_event'&quot;">self = &lt;test_calendar_service_clean.TestMockCalendarService object at 0xffff64e65940&gt;
+
+    @pytest.fixture
+    def calendar_service(self):
+        """Create MockCalendarService instance."""
+&gt;       return MockCalendarService()
+               ^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: Can't instantiate abstract class MockCalendarService without an implementation for abstract methods 'generate_synthetic_data', 'schedule_event'
+
+tests/unit/test_calendar_service_clean.py:75: TypeError</error></testcase><testcase classname="tests.unit.test_calendar_service_clean.TestMockCalendarService" name="test_check_room_availability_available" time="0.000"><error message="failed on setup with &quot;TypeError: Can't instantiate abstract class MockCalendarService without an implementation for abstract methods 'generate_synthetic_data', 'schedule_event'&quot;">self = &lt;test_calendar_service_clean.TestMockCalendarService object at 0xffff64e65a70&gt;
+
+    @pytest.fixture
+    def calendar_service(self):
+        """Create MockCalendarService instance."""
+&gt;       return MockCalendarService()
+               ^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: Can't instantiate abstract class MockCalendarService without an implementation for abstract methods 'generate_synthetic_data', 'schedule_event'
+
+tests/unit/test_calendar_service_clean.py:75: TypeError</error></testcase><testcase classname="tests.unit.test_calendar_service_clean.TestMockCalendarService" name="test_check_room_availability_conflict" time="0.000"><error message="failed on setup with &quot;TypeError: Can't instantiate abstract class MockCalendarService without an implementation for abstract methods 'generate_synthetic_data', 'schedule_event'&quot;">self = &lt;test_calendar_service_clean.TestMockCalendarService object at 0xffff64ef1370&gt;
+
+    @pytest.fixture
+    def calendar_service(self):
+        """Create MockCalendarService instance."""
+&gt;       return MockCalendarService()
+               ^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: Can't instantiate abstract class MockCalendarService without an implementation for abstract methods 'generate_synthetic_data', 'schedule_event'
+
+tests/unit/test_calendar_service_clean.py:75: TypeError</error></testcase><testcase classname="tests.unit.test_shared_thread_manager.TestSharedThreadManager" name="test_create_shared_thread" time="0.003" /><testcase classname="tests.unit.test_shared_thread_manager.TestSharedThreadManager" name="test_get_shared_thread" time="0.002" /><testcase classname="tests.unit.test_shared_thread_manager.TestSharedThreadManager" name="test_delete_shared_thread" time="0.002" /><testcase classname="tests.unit.test_shared_thread_manager.TestSharedThreadManager" name="test_list_user_threads" time="0.003" /><testcase classname="tests.unit.test_shared_thread_manager.TestSharedThreadManager" name="test_thread_permissions" time="0.005" /><testcase classname="tests.unit.test_shared_thread_manager.TestSharedThreadManager" name="test_thread_validation" time="0.002" /><testcase classname="tests.unit.test_shared_thread_manager.TestSharedThreadManager" name="test_concurrent_thread_access" time="0.002" /><testcase classname="tests.unit.test_shared_thread_manager.TestSharedThreadManager" name="test_thread_message_history" time="0.004" /><testcase classname="tests.unit.test_sql_store.TestAsyncSQLStore" name="test_async_get_rooms" time="15.186"><failure message="pyodbc.OperationalError: ('HYT00', '[HYT00] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0) (SQLDriverConnect)')">self = &lt;test_sql_store.TestAsyncSQLStore object at 0xffff64e73890&gt;
+
+    @pytest.mark.asyncio
+    async def test_async_get_rooms(self):
+        """Test async wrapper for get_rooms."""
+        expected_rooms = {"rooms": [{"id": "room1", "name": "Conference Room A"}]}
+    
+        with patch('services.compat_sql_store.get_rooms', return_value=expected_rooms):
+&gt;           result = await async_get_rooms()
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_sql_store.py:37: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+services/async_sql_store.py:11: in async_get_rooms
+    return await asyncio.to_thread(get_rooms)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/asyncio/threads.py:25: in to_thread
+    return await loop.run_in_executor(None, func_call)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/concurrent/futures/thread.py:59: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+services/compat_sql_store.py:12: in get_rooms
+    with _conn() as cn, cn.cursor() as cur:
+         ^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _conn():
+&gt;       return pyodbc.connect(CS)
+               ^^^^^^^^^^^^^^^^^^
+E       pyodbc.OperationalError: ('HYT00', '[HYT00] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0) (SQLDriverConnect)')
+
+services/compat_sql_store.py:8: OperationalError</failure></testcase><testcase classname="tests.unit.test_sql_store.TestAsyncSQLStore" name="test_async_list_events" time="15.131"><failure message="pyodbc.OperationalError: ('HYT00', '[HYT00] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0) (SQLDriverConnect)')">self = &lt;test_sql_store.TestAsyncSQLStore object at 0xffff64e739d0&gt;
+
+    @pytest.mark.asyncio
+    async def test_async_list_events(self):
+        """Test async wrapper for list_events."""
+        calendar_id = "room1"
+        expected_events = {"events": [{"id": "event1", "title": "Test Meeting"}]}
+    
+        with patch('services.compat_sql_store.list_events', return_value=expected_events):
+&gt;           result = await async_list_events(calendar_id)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_sql_store.py:47: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+services/async_sql_store.py:16: in async_list_events
+    return await asyncio.to_thread(list_events, calendar_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/asyncio/threads.py:25: in to_thread
+    return await loop.run_in_executor(None, func_call)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/concurrent/futures/thread.py:59: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+services/compat_sql_store.py:20: in list_events
+    with _conn() as cn, cn.cursor() as cur:
+         ^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _conn():
+&gt;       return pyodbc.connect(CS)
+               ^^^^^^^^^^^^^^^^^^
+E       pyodbc.OperationalError: ('HYT00', '[HYT00] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0) (SQLDriverConnect)')
+
+services/compat_sql_store.py:8: OperationalError</failure></testcase><testcase classname="tests.unit.test_sql_store.TestAsyncSQLStore" name="test_async_create_event" time="15.149"><failure message="pyodbc.OperationalError: ('HYT00', '[HYT00] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0) (SQLDriverConnect)')">self = &lt;test_sql_store.TestAsyncSQLStore object at 0xffff64e65e00&gt;
+sample_events = [{'attendees': 'team@company.com', 'description': 'Daily team standup', 'end_time': '2024-12-01T09:30:00Z', 'id': 'eve...s': 'team@company.com', 'description': 'Monthly team lunch', 'end_time': '2024-12-02T13:00:00Z', 'id': 'event-3', ...}]
+
+    @pytest.mark.asyncio
+    async def test_async_create_event(self, sample_events):
+        """Test async wrapper for create_event."""
+        event_data = sample_events[0]
+        expected_result = {"success": True, "event_id": "new-event-123"}
+    
+        with patch('services.compat_sql_store.create_event', return_value=expected_result):
+&gt;           result = await async_create_event(event_data)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_sql_store.py:57: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+services/async_sql_store.py:21: in async_create_event
+    return await asyncio.to_thread(create_event, ev)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/asyncio/threads.py:25: in to_thread
+    return await loop.run_in_executor(None, func_call)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/concurrent/futures/thread.py:59: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+services/compat_sql_store.py:34: in create_event
+    with _conn() as cn, cn.cursor() as cur:
+         ^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _conn():
+&gt;       return pyodbc.connect(CS)
+               ^^^^^^^^^^^^^^^^^^
+E       pyodbc.OperationalError: ('HYT00', '[HYT00] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0) (SQLDriverConnect)')
+
+services/compat_sql_store.py:8: OperationalError</failure></testcase><testcase classname="tests.unit.test_sql_store.TestAsyncSQLStore" name="test_async_update_event" time="15.166"><failure message="pyodbc.OperationalError: ('HYT00', '[HYT00] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0) (SQLDriverConnect)')">self = &lt;test_sql_store.TestAsyncSQLStore object at 0xffff64e65f30&gt;
+
+    @pytest.mark.asyncio
+    async def test_async_update_event(self):
+        """Test async wrapper for update_event."""
+        event_id = "event-123"
+        patch_data = {"title": "Updated Meeting"}
+        requester_email = "user@test.com"
+        expected_result = {"success": True}
+    
+        with patch('services.compat_sql_store.update_event', return_value=expected_result):
+&gt;           result = await async_update_event(event_id, patch_data, requester_email)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_sql_store.py:69: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+services/async_sql_store.py:26: in async_update_event
+    return await asyncio.to_thread(update_event, event_id, patch, requester_email)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/asyncio/threads.py:25: in to_thread
+    return await loop.run_in_executor(None, func_call)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/concurrent/futures/thread.py:59: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+services/compat_sql_store.py:57: in update_event
+    with _conn() as cn, cn.cursor() as cur:
+         ^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _conn():
+&gt;       return pyodbc.connect(CS)
+               ^^^^^^^^^^^^^^^^^^
+E       pyodbc.OperationalError: ('HYT00', '[HYT00] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0) (SQLDriverConnect)')
+
+services/compat_sql_store.py:8: OperationalError</failure></testcase><testcase classname="tests.unit.test_sql_store.TestAsyncSQLStore" name="test_async_cancel_event" time="15.172"><failure message="pyodbc.OperationalError: ('HYT00', '[HYT00] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0) (SQLDriverConnect)')">self = &lt;test_sql_store.TestAsyncSQLStore object at 0xffff64ec29f0&gt;
+
+    @pytest.mark.asyncio
+    async def test_async_cancel_event(self):
+        """Test async wrapper for cancel_event."""
+        event_id = "event-123"
+        requester_email = "user@test.com"
+        expected_result = {"success": True}
+    
+        with patch('services.compat_sql_store.cancel_event', return_value=expected_result):
+&gt;           result = await async_cancel_event(event_id, requester_email)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_sql_store.py:80: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+services/async_sql_store.py:31: in async_cancel_event
+    return await asyncio.to_thread(cancel_event, event_id, requester_email)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/asyncio/threads.py:25: in to_thread
+    return await loop.run_in_executor(None, func_call)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/concurrent/futures/thread.py:59: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+services/compat_sql_store.py:73: in cancel_event
+    with _conn() as cn, cn.cursor() as cur:
+         ^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _conn():
+&gt;       return pyodbc.connect(CS)
+               ^^^^^^^^^^^^^^^^^^
+E       pyodbc.OperationalError: ('HYT00', '[HYT00] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0) (SQLDriverConnect)')
+
+services/compat_sql_store.py:8: OperationalError</failure></testcase><testcase classname="tests.unit.test_sql_store.TestAsyncSQLStore" name="test_async_check_availability" time="15.146"><failure message="pyodbc.OperationalError: ('HYT00', '[HYT00] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0) (SQLDriverConnect)')">self = &lt;test_sql_store.TestAsyncSQLStore object at 0xffff64e42030&gt;
+
+    @pytest.mark.asyncio
+    async def test_async_check_availability(self):
+        """Test async wrapper for check_availability."""
+        calendar_id = "room1"
+        start_iso = "2024-12-01T09:00:00Z"
+        end_iso = "2024-12-01T10:00:00Z"
+        expected_result = True
+    
+        with patch('services.compat_sql_store.check_availability', return_value=expected_result):
+&gt;           result = await async_check_availability(calendar_id, start_iso, end_iso)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_sql_store.py:92: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+services/async_sql_store.py:36: in async_check_availability
+    return await asyncio.to_thread(check_availability, calendar_id, start_iso, end_iso, exclude_event_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/asyncio/threads.py:25: in to_thread
+    return await loop.run_in_executor(None, func_call)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/concurrent/futures/thread.py:59: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+services/compat_sql_store.py:84: in check_availability
+    with _conn() as cn, cn.cursor() as cur:
+         ^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _conn():
+&gt;       return pyodbc.connect(CS)
+               ^^^^^^^^^^^^^^^^^^
+E       pyodbc.OperationalError: ('HYT00', '[HYT00] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0) (SQLDriverConnect)')
+
+services/compat_sql_store.py:8: OperationalError</failure></testcase><testcase classname="tests.unit.test_sql_store.TestAsyncSQLStore" name="test_async_get_all_events" time="0.005" /><testcase classname="tests.unit.test_sql_store.TestCompatSQLStore" name="test_get_rooms_structure" time="15.142"><failure message="pyodbc.OperationalError: ('HYT00', '[HYT00] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0) (SQLDriverConnect)')">self = &lt;test_sql_store.TestCompatSQLStore object at 0xffff64e73b10&gt;
+
+    def test_get_rooms_structure(self):
+        """Test that get_rooms returns expected structure."""
+        with patch('services.compat_sql_store.get_rooms') as mock_get_rooms:
+            mock_get_rooms.return_value = {"rooms": []}
+&gt;           result = get_rooms()
+                     ^^^^^^^^^^^
+
+tests/unit/test_sql_store.py:121: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+services/compat_sql_store.py:12: in get_rooms
+    with _conn() as cn, cn.cursor() as cur:
+         ^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _conn():
+&gt;       return pyodbc.connect(CS)
+               ^^^^^^^^^^^^^^^^^^
+E       pyodbc.OperationalError: ('HYT00', '[HYT00] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0) (SQLDriverConnect)')
+
+services/compat_sql_store.py:8: OperationalError</failure></testcase><testcase classname="tests.unit.test_sql_store.TestCompatSQLStore" name="test_list_events_structure" time="15.151"><failure message="pyodbc.OperationalError: ('HYT00', '[HYT00] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0) (SQLDriverConnect)')">self = &lt;test_sql_store.TestCompatSQLStore object at 0xffff64e73c50&gt;
+
+    def test_list_events_structure(self):
+        """Test that list_events returns expected structure."""
+        with patch('services.compat_sql_store.list_events') as mock_list_events:
+            mock_list_events.return_value = {"events": []}
+&gt;           result = list_events("room1")
+                     ^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_sql_store.py:129: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+services/compat_sql_store.py:20: in list_events
+    with _conn() as cn, cn.cursor() as cur:
+         ^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _conn():
+&gt;       return pyodbc.connect(CS)
+               ^^^^^^^^^^^^^^^^^^
+E       pyodbc.OperationalError: ('HYT00', '[HYT00] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0) (SQLDriverConnect)')
+
+services/compat_sql_store.py:8: OperationalError</failure></testcase><testcase classname="tests.unit.test_sql_store.TestCompatSQLStore" name="test_create_event_validation" time="15.142"><failure message="pyodbc.OperationalError: ('HYT00', '[HYT00] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0) (SQLDriverConnect)')">self = &lt;test_sql_store.TestCompatSQLStore object at 0xffff64e66060&gt;
+sample_events = [{'attendees': 'team@company.com', 'description': 'Daily team standup', 'end_time': '2024-12-01T09:30:00Z', 'id': 'eve...s': 'team@company.com', 'description': 'Monthly team lunch', 'end_time': '2024-12-02T13:00:00Z', 'id': 'event-3', ...}]
+
+    def test_create_event_validation(self, sample_events):
+        """Test event creation with valid data."""
+        event_data = sample_events[0]
+    
+        with patch('services.compat_sql_store.create_event') as mock_create:
+            mock_create.return_value = {"success": True, "event_id": "new-123"}
+&gt;           result = create_event(event_data)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_sql_store.py:139: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+services/compat_sql_store.py:34: in create_event
+    with _conn() as cn, cn.cursor() as cur:
+         ^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _conn():
+&gt;       return pyodbc.connect(CS)
+               ^^^^^^^^^^^^^^^^^^
+E       pyodbc.OperationalError: ('HYT00', '[HYT00] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0) (SQLDriverConnect)')
+
+services/compat_sql_store.py:8: OperationalError</failure></testcase><testcase classname="tests.unit.test_sql_store.TestCompatSQLStore" name="test_update_event_permissions" time="15.123"><failure message="pyodbc.OperationalError: ('HYT00', '[HYT00] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0) (SQLDriverConnect)')">self = &lt;test_sql_store.TestCompatSQLStore object at 0xffff64e66190&gt;
+
+    def test_update_event_permissions(self):
+        """Test event update requires proper permissions."""
+        event_id = "event-123"
+        patch_data = {"title": "Updated Title"}
+        requester_email = "unauthorized@test.com"
+    
+        with patch('services.compat_sql_store.update_event') as mock_update:
+            mock_update.return_value = {"success": False, "error": "Unauthorized"}
+&gt;           result = update_event(event_id, patch_data, requester_email)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_sql_store.py:151: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+services/compat_sql_store.py:57: in update_event
+    with _conn() as cn, cn.cursor() as cur:
+         ^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _conn():
+&gt;       return pyodbc.connect(CS)
+               ^^^^^^^^^^^^^^^^^^
+E       pyodbc.OperationalError: ('HYT00', '[HYT00] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0) (SQLDriverConnect)')
+
+services/compat_sql_store.py:8: OperationalError</failure></testcase><testcase classname="tests.unit.test_sql_store.TestCompatSQLStore" name="test_check_availability_conflict" time="15.150"><failure message="pyodbc.OperationalError: ('HYT00', '[HYT00] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0) (SQLDriverConnect)')">self = &lt;test_sql_store.TestCompatSQLStore object at 0xffff64ef2e70&gt;
+
+    def test_check_availability_conflict(self):
+        """Test availability check detects conflicts."""
+        calendar_id = "room1"
+        start_iso = "2024-12-01T09:00:00Z"
+        end_iso = "2024-12-01T10:00:00Z"
+    
+        with patch('services.compat_sql_store.check_availability') as mock_check:
+            mock_check.return_value = False  # Room is not available
+&gt;           result = check_availability(calendar_id, start_iso, end_iso)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_sql_store.py:163: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+services/compat_sql_store.py:84: in check_availability
+    with _conn() as cn, cn.cursor() as cur:
+         ^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _conn():
+&gt;       return pyodbc.connect(CS)
+               ^^^^^^^^^^^^^^^^^^
+E       pyodbc.OperationalError: ('HYT00', '[HYT00] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0) (SQLDriverConnect)')
+
+services/compat_sql_store.py:8: OperationalError</failure></testcase><testcase classname="tests.unit.test_sql_store.TestCompatSQLStore" name="test_cancel_event_permissions" time="15.138"><failure message="pyodbc.OperationalError: ('HYT00', '[HYT00] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0) (SQLDriverConnect)')">self = &lt;test_sql_store.TestCompatSQLStore object at 0xffff64e42250&gt;
+
+    def test_cancel_event_permissions(self):
+        """Test event cancellation requires proper permissions."""
+        event_id = "event-123"
+        requester_email = "unauthorized@test.com"
+    
+        with patch('services.compat_sql_store.cancel_event') as mock_cancel:
+            mock_cancel.return_value = {"success": False, "error": "Unauthorized"}
+&gt;           result = cancel_event(event_id, requester_email)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_sql_store.py:173: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+services/compat_sql_store.py:73: in cancel_event
+    with _conn() as cn, cn.cursor() as cur:
+         ^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _conn():
+&gt;       return pyodbc.connect(CS)
+               ^^^^^^^^^^^^^^^^^^
+E       pyodbc.OperationalError: ('HYT00', '[HYT00] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0) (SQLDriverConnect)')
+
+services/compat_sql_store.py:8: OperationalError</failure></testcase><testcase classname="tests.unit.test_stream_event_handler.TestStreamEventHandler" name="test_initialization" time="0.009" /><testcase classname="tests.unit.test_stream_event_handler.TestStreamEventHandler" name="test_on_message_created" time="0.011"><failure message="AttributeError: 'StreamEventHandler' object has no attribute 'on_message_created'. Did you mean: 'on_message_delta'?">self = &lt;test_stream_event_handler.TestStreamEventHandler object at 0xffff64e73d90&gt;
+event_handler = &lt;agent.stream_event_handler.StreamEventHandler object at 0xffff64a64050&gt;
+
+    @pytest.mark.asyncio
+    async def test_on_message_created(self, event_handler):
+        """Test message creation event handling."""
+        mock_message = Mock(spec=ThreadMessage)
+        mock_message.id = "msg-123"
+        mock_message.content = [{"type": "text", "text": {"value": "Hello"}}]
+    
+        # Should not raise exception
+&gt;       await event_handler.on_message_created(mock_message)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'StreamEventHandler' object has no attribute 'on_message_created'. Did you mean: 'on_message_delta'?
+
+tests/unit/test_stream_event_handler.py:70: AttributeError</failure></testcase><testcase classname="tests.unit.test_stream_event_handler.TestStreamEventHandler" name="test_on_message_delta" time="0.006" /><testcase classname="tests.unit.test_stream_event_handler.TestStreamEventHandler" name="test_on_run_created" time="0.005"><failure message="AttributeError: 'StreamEventHandler' object has no attribute 'on_run_created'">self = &lt;test_stream_event_handler.TestStreamEventHandler object at 0xffff64e663f0&gt;
+event_handler = &lt;agent.stream_event_handler.StreamEventHandler object at 0xffff64a64550&gt;
+
+    @pytest.mark.asyncio
+    async def test_on_run_created(self, event_handler):
+        """Test run creation event handling."""
+        mock_run = Mock(spec=ThreadRun)
+        mock_run.id = "run-123"
+        mock_run.thread_id = "thread-456"
+        mock_run.status = RunStatus.IN_PROGRESS
+    
+&gt;       await event_handler.on_run_created(mock_run)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'StreamEventHandler' object has no attribute 'on_run_created'
+
+tests/unit/test_stream_event_handler.py:91: AttributeError</failure></testcase><testcase classname="tests.unit.test_stream_event_handler.TestStreamEventHandler" name="test_on_run_completed" time="0.008"><failure message="AttributeError: 'StreamEventHandler' object has no attribute 'on_run_completed'">self = &lt;test_stream_event_handler.TestStreamEventHandler object at 0xffff64ef0dd0&gt;
+event_handler = &lt;agent.stream_event_handler.StreamEventHandler object at 0xffff64a647d0&gt;
+
+    @pytest.mark.asyncio
+    async def test_on_run_completed(self, event_handler):
+        """Test run completion event handling."""
+        mock_run = Mock(spec=ThreadRun)
+        mock_run.id = "run-123"
+        mock_run.status = RunStatus.COMPLETED
+        mock_run.thread_id = "thread-456"
+    
+        with patch.object(event_handler.util, 'log_info') as mock_log:
+&gt;           await event_handler.on_run_completed(mock_run)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'StreamEventHandler' object has no attribute 'on_run_completed'
+
+tests/unit/test_stream_event_handler.py:105: AttributeError</failure></testcase><testcase classname="tests.unit.test_stream_event_handler.TestStreamEventHandler" name="test_on_run_failed" time="0.005"><failure message="AttributeError: 'StreamEventHandler' object has no attribute 'on_run_failed'">self = &lt;test_stream_event_handler.TestStreamEventHandler object at 0xffff64e42360&gt;
+event_handler = &lt;agent.stream_event_handler.StreamEventHandler object at 0xffff64a64b90&gt;
+
+    @pytest.mark.asyncio
+    async def test_on_run_failed(self, event_handler):
+        """Test run failure event handling."""
+        mock_run = Mock(spec=ThreadRun)
+        mock_run.id = "run-123"
+        mock_run.status = RunStatus.FAILED
+        mock_run.last_error = Mock()
+        mock_run.last_error.message = "Test error"
+    
+        with patch.object(event_handler.util, 'log_error') as mock_log:
+&gt;           await event_handler.on_run_failed(mock_run)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'StreamEventHandler' object has no attribute 'on_run_failed'
+
+tests/unit/test_stream_event_handler.py:118: AttributeError</failure></testcase><testcase classname="tests.unit.test_stream_event_handler.TestStreamEventHandler" name="test_on_run_step_created" time="0.004"><failure message="AttributeError: 'StreamEventHandler' object has no attribute 'on_run_step_created'. Did you mean: 'on_run_step_delta'?">self = &lt;test_stream_event_handler.TestStreamEventHandler object at 0xffff64e42470&gt;
+event_handler = &lt;agent.stream_event_handler.StreamEventHandler object at 0xffff64a64a50&gt;
+
+    @pytest.mark.asyncio
+    async def test_on_run_step_created(self, event_handler):
+        """Test run step creation event handling."""
+        mock_step = Mock(spec=RunStep)
+        mock_step.id = "step-123"
+        mock_step.type = "message_creation"
+        mock_step.status = RunStepStatus.IN_PROGRESS
+    
+        # Should not raise exception
+&gt;       await event_handler.on_run_step_created(mock_step)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'StreamEventHandler' object has no attribute 'on_run_step_created'. Did you mean: 'on_run_step_delta'?
+
+tests/unit/test_stream_event_handler.py:130: AttributeError</failure></testcase><testcase classname="tests.unit.test_stream_event_handler.TestStreamEventHandler" name="test_on_run_step_completed" time="0.004"><failure message="AttributeError: 'StreamEventHandler' object has no attribute 'on_run_step_completed'">self = &lt;test_stream_event_handler.TestStreamEventHandler object at 0xffff64fcf650&gt;
+event_handler = &lt;agent.stream_event_handler.StreamEventHandler object at 0xffff64a64e10&gt;
+
+    @pytest.mark.asyncio
+    async def test_on_run_step_completed(self, event_handler):
+        """Test run step completion event handling."""
+        mock_step = Mock(spec=RunStep)
+        mock_step.id = "step-123"
+        mock_step.status = RunStepStatus.COMPLETED
+        mock_step.type = "tool_calls"
+    
+        with patch.object(event_handler.util, 'log_info') as mock_log:
+&gt;           await event_handler.on_run_step_completed(mock_step)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'StreamEventHandler' object has no attribute 'on_run_step_completed'
+
+tests/unit/test_stream_event_handler.py:141: AttributeError</failure></testcase><testcase classname="tests.unit.test_stream_event_handler.TestStreamEventHandler" name="test_function_call_handling" time="0.002" /><testcase classname="tests.unit.test_stream_event_handler.TestStreamEventHandler" name="test_error_handling_during_stream" time="0.005"><failure message="AttributeError: 'StreamEventHandler' object has no attribute 'on_run_failed'">self = &lt;test_stream_event_handler.TestStreamEventHandler object at 0xffff64e13980&gt;
+event_handler = &lt;agent.stream_event_handler.StreamEventHandler object at 0xffff64a651d0&gt;
+
+    @pytest.mark.asyncio
+    async def test_error_handling_during_stream(self, event_handler):
+        """Test error handling during streaming."""
+        mock_run = Mock(spec=ThreadRun)
+        mock_run.id = "run-123"
+        mock_run.status = RunStatus.FAILED
+        mock_run.last_error = None  # No error message
+    
+        with patch.object(event_handler.util, 'log_error') as mock_log:
+&gt;           await event_handler.on_run_failed(mock_run)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'StreamEventHandler' object has no attribute 'on_run_failed'
+
+tests/unit/test_stream_event_handler.py:168: AttributeError</failure></testcase><testcase classname="tests.unit.test_stream_event_handler.TestStreamEventHandler" name="test_evaluation_integration" time="0.008"><failure message="AttributeError: 'StreamEventHandler' object has no attribute 'on_message_created'. Did you mean: 'on_message_delta'?">self = &lt;test_stream_event_handler.TestStreamEventHandler object at 0xffff64e13a70&gt;
+event_handler = &lt;agent.stream_event_handler.StreamEventHandler object at 0xffff64d239d0&gt;
+
+    @pytest.mark.asyncio
+    async def test_evaluation_integration(self, event_handler):
+        """Test integration with evaluation system."""
+        # Test that evaluation is triggered when configured
+        with patch.dict(os.environ, {"ENABLE_AUTO_EVALUATION": "true"}):
+            with patch("evaluation.working_evaluator.quick_evaluate_response") as mock_eval:
+                mock_eval.return_value = {"score": 0.8}
+    
+                mock_message = Mock(spec=ThreadMessage)
+                mock_message.content = [{"type": "text", "text": {"value": "Response text"}}]
+    
+&gt;               await event_handler.on_message_created(mock_message)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AttributeError: 'StreamEventHandler' object has no attribute 'on_message_created'. Did you mean: 'on_message_delta'?
+
+tests/unit/test_stream_event_handler.py:182: AttributeError</failure></testcase></testsuite></testsuites>

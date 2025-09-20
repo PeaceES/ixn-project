@@ -1,0 +1,31 @@
+{
+  "data": {
+    "workflow_steps": [
+      "availability_check",
+      "event_creation",
+      "event_listing"
+    ],
+    "final_event_list": {
+      "events": [
+        {
+          "id": "event-1",
+          "calendar_id": "cal-123",
+          "title": "Morning Standup",
+          "description": "Daily team standup",
+          "start_time": "2024-12-01T09:00:00Z",
+          "end_time": "2024-12-01T09:30:00Z",
+          "attendees": "team@company.com",
+          "organizer": "manager@company.com"
+        }
+      ]
+    },
+    "total_duration": 0.006651163101196289,
+    "step_durations": {
+      "availability_check": 0.0007214546203613281,
+      "event_creation": 0.0016803741455078125,
+      "event_listing": 0.0004982948303222656
+    }
+  },
+  "timestamp": 1758369511,
+  "test_name": "test_comprehensive_workflow_with_artifacts"
+}

@@ -1,0 +1,20 @@
+{
+  "data": {
+    "workflow_steps": [
+      "availability_check",
+      "event_creation",
+      "event_listing"
+    ],
+    "final_event_list": {
+      "events": []
+    },
+    "total_duration": 0.0028624534606933594,
+    "step_durations": {
+      "availability_check": 0.0004246234893798828,
+      "event_creation": 0.00030231475830078125,
+      "event_listing": 0.00016689300537109375
+    }
+  },
+  "timestamp": 1758367696,
+  "test_name": "test_comprehensive_workflow_with_artifacts"
+}

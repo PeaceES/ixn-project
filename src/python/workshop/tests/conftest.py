@@ -10,6 +10,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import tempfile
 import shutil
 from typing import AsyncGenerator, Generator
+import json
+import time
 
 # Add the project root to the path
 project_root = Path(__file__).parent.parent
@@ -54,6 +56,50 @@ def mock_calendar_mcp_client():
     with patch("services.mcp_client.CalendarMCPClient") as mock_client:
         mock_instance = AsyncMock()
         mock_client.return_value = mock_instance
+        yield mock_instance
+
+
+@pytest.fixture
+def mock_calendar_client():
+    """Mock Calendar HTTP Client."""
+    with patch("services.server_client.CalendarClient") as mock_client:
+        mock_instance = AsyncMock()
+        mock_client.return_value = mock_instance
+        
+        # Mock health check to return healthy
+        mock_instance.health_check.return_value = {"status": "healthy"}
+        
+        # Mock calendar operations
+        mock_instance.list_events.return_value = {
+            "success": True,
+            "events": [
+                {
+                    "id": "event1",
+                    "title": "Test Event",
+                    "start": "2024-01-15T10:00:00Z",
+                    "end": "2024-01-15T11:00:00Z",
+                    "location": "Test Room"
+                }
+            ]
+        }
+        
+        mock_instance.get_rooms.return_value = {
+            "success": True,
+            "rooms": [
+                {"id": "room1", "name": "Test Room", "capacity": 10}
+            ]
+        }
+        
+        mock_instance.check_availability.return_value = {
+            "success": True,
+            "available": True
+        }
+        
+        mock_instance.create_event.return_value = {
+            "success": True,
+            "event_id": "new-event-123"
+        }
+        
         yield mock_instance
 
 
@@ -181,6 +227,7 @@ def sample_events():
     return [
         {
             "id": "event-1",
+            "calendar_id": "cal-123",
             "title": "Morning Standup", 
             "description": "Daily team standup",
             "start_time": "2024-12-01T09:00:00Z",
@@ -190,6 +237,7 @@ def sample_events():
         },
         {
             "id": "event-2",
+            "calendar_id": "cal-123",
             "title": "Client Meeting",
             "description": "Quarterly business review",
             "start_time": "2024-12-01T14:00:00Z", 
@@ -199,6 +247,7 @@ def sample_events():
         },
         {
             "id": "event-3",
+            "calendar_id": "cal-123",
             "title": "Team Lunch",
             "description": "Monthly team lunch",
             "start_time": "2024-12-02T12:00:00Z",
@@ -224,22 +273,112 @@ def sample_scheduling_request():
 
 
 @pytest.fixture
-def mock_sql_store():
-    """Mock SQL store for unit tests."""
-    from services.async_sql_store import AsyncSQLStore
-    with patch.object(AsyncSQLStore, '__init__', return_value=None):
-        mock_store = AsyncMock(spec=AsyncSQLStore)
-        yield mock_store
+def artifact_dir():
+    """Create artifacts directory for saving test data and responses."""
+    import pathlib
+    out = pathlib.Path("reports/artifacts")
+    out.mkdir(parents=True, exist_ok=True)
+    return out
+
+
+def save_artifact(artifact_dir, name, data, test_name=None):
+    """Save test artifacts (API responses, errors, etc.) for analysis."""
+    import json
+    import time
+    
+    timestamp = int(time.time())
+    test_prefix = f"{test_name}_" if test_name else ""
+    filename = f"{timestamp}_{test_prefix}{name}.json"
+    
+    file_path = artifact_dir / filename
+    
+    # Convert data to JSON-serializable format
+    if hasattr(data, 'json'):  # Flask/requests response object
+        try:
+            artifact_data = {
+                "status_code": getattr(data, 'status_code', None),
+                "headers": dict(getattr(data, 'headers', {})),
+                "response": data.json() if hasattr(data, 'json') else str(data.data),
+                "timestamp": timestamp,
+                "test_name": test_name
+            }
+        except:
+            artifact_data = {
+                "status_code": getattr(data, 'status_code', None),
+                "headers": dict(getattr(data, 'headers', {})),
+                "response": str(getattr(data, 'data', data)),
+                "timestamp": timestamp,
+                "test_name": test_name
+            }
+    else:
+        artifact_data = {
+            "data": data,
+            "timestamp": timestamp,
+            "test_name": test_name
+        }
+    
+    file_path.write_text(json.dumps(artifact_data, indent=2, default=str), encoding="utf-8")
+    return file_path
+
+
+@pytest.fixture
+def performance_tracker(artifact_dir):
+    """Track test performance metrics."""
+    import time
+    
+    class PerformanceTracker:
+        def __init__(self, artifact_dir):
+            self.artifact_dir = artifact_dir
+            self.metrics = {}
+            
+        def start_timer(self, operation_name):
+            self.metrics[operation_name] = {"start_time": time.time()}
+            
+        def end_timer(self, operation_name):
+            if operation_name in self.metrics:
+                self.metrics[operation_name]["end_time"] = time.time()
+                self.metrics[operation_name]["duration"] = (
+                    self.metrics[operation_name]["end_time"] - 
+                    self.metrics[operation_name]["start_time"]
+                )
+                
+        def save_metrics(self, test_name):
+            save_artifact(self.artifact_dir, "performance_metrics", self.metrics, test_name)
+            
+    return PerformanceTracker(artifact_dir)
+
+
+@pytest.fixture
+def save_test_artifact(artifact_dir):
+    """Fixture that returns a partial function for saving test artifacts."""
+    def _save_artifact(name, data, test_name=None):
+        return save_artifact(artifact_dir, name, data, test_name)
+    return _save_artifact
 
 
 @pytest.fixture(autouse=True)
-def cleanup_environment():
-    """Cleanup environment after each test."""
-    yield
-    # Clean up any test-specific environment variables
-    test_env_vars = [k for k in os.environ.keys() if k.startswith("TEST_")]
-    for var in test_env_vars:
-        del os.environ[var]
+def mock_database_connections():
+    """Mock all database connections to avoid timeout errors in tests."""
+    with patch('services.compat_sql_store._conn') as mock_conn, \
+         patch('services.compat_sql_store.CS', 'mocked_connection_string'):
+        
+        # Create a mock connection and cursor
+        mock_connection = MagicMock()
+        mock_cursor = MagicMock()
+        mock_connection.cursor.return_value.__enter__ = MagicMock(return_value=mock_cursor)
+        mock_connection.cursor.return_value.__exit__ = MagicMock(return_value=None)
+        mock_connection.__enter__ = MagicMock(return_value=mock_connection)
+        mock_connection.__exit__ = MagicMock(return_value=None)
+        
+        mock_conn.return_value = mock_connection
+        
+        # Mock common database operations with sample data for unit tests
+        # Database procedures return JSON strings, so mock accordingly
+        mock_cursor.fetchall.return_value = []
+        mock_cursor.fetchone.return_value = ['[]']  # JSON string in row[0]
+        mock_cursor.rowcount = 1
+        
+        yield mock_cursor
 
 
 # Markers for test organization

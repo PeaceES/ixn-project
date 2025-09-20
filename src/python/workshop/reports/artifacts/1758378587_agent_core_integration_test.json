@@ -1,0 +1,9 @@
+{
+  "data": {
+    "rooms_call_successful": false,
+    "agent_tools_initialized": true,
+    "test_type": "real_agent_core_integration"
+  },
+  "timestamp": 1758378587,
+  "test_name": null
+}

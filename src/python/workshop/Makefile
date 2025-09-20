@@ -17,7 +17,12 @@ VENV_PYTHON := $(VENV_BIN)/python
 VENV_PIP := $(VENV_BIN)/pip
 
 # Test and coverage settings
-PYTEST_ARGS := --tb=short --strict-markers --disable-warnings
+PYTEST_ARGS := --tb=short --strict-markers
+COVERAGE_ARGS := --cov=services --cov=agent --cov=web_server
+REPORTS_DIR := reports
+
+# Test targets with comprehensive reporting
+.PHONY: test-thesis test-unit test-integration test-all test-coverage test-performance clean-reports
 COVERAGE_ARGS := --cov=. --cov-report=html --cov-report=term-missing --cov-fail-under=70
 
 # Colors for terminal output
@@ -157,6 +162,98 @@ test-marker: ## Run tests with specific marker (use MARKER=marker_name)
 test-full: ## Run complete test suite including all checks
 	@echo "$(BLUE)Running complete test suite...$(NC)"
 	$(PYTHON) run_tests.py --full-suite
+
+# Thesis Testing Commands
+# =======================
+
+test-thesis: clean-reports install-test-deps
+	@echo "🎓 Running comprehensive test suite for thesis documentation..."
+	$(PYTHON) run_comprehensive_tests.py
+
+test-unit:
+	@echo "🧪 Running unit tests with reporting..."
+	$(PYTHON) -m pytest tests/unit/ -v \
+		--junitxml=$(REPORTS_DIR)/junit/unit_tests.xml \
+		$(COVERAGE_ARGS) \
+		--cov-report=html:$(REPORTS_DIR)/coverage_html_unit \
+		--cov-report=xml:$(REPORTS_DIR)/coverage_unit.xml \
+		--html=$(REPORTS_DIR)/unit_test_report.html \
+		--self-contained-html \
+		-m unit
+
+test-integration:
+	@echo "🔗 Running integration tests with reporting..."
+	$(PYTHON) -m pytest tests/integration/ -v \
+		--junitxml=$(REPORTS_DIR)/junit/integration_tests.xml \
+		$(COVERAGE_ARGS) \
+		--cov-report=html:$(REPORTS_DIR)/coverage_html_integration \
+		--cov-report=xml:$(REPORTS_DIR)/coverage_integration.xml \
+		--html=$(REPORTS_DIR)/integration_test_report.html \
+		--self-contained-html \
+		-m integration
+
+test-all:
+	@echo "🚀 Running complete test suite..."
+	$(PYTHON) -m pytest -v \
+		--junitxml=$(REPORTS_DIR)/junit/all_tests.xml \
+		$(COVERAGE_ARGS) \
+		--cov-report=term-missing \
+		--cov-report=html:$(REPORTS_DIR)/coverage_html_combined \
+		--cov-report=xml:$(REPORTS_DIR)/coverage_combined.xml \
+		--cov-fail-under=75 \
+		--html=$(REPORTS_DIR)/complete_test_report.html \
+		--self-contained-html
+
+test-coverage:
+	@echo "📊 Generating detailed coverage report..."
+	$(PYTHON) -m pytest \
+		$(COVERAGE_ARGS) \
+		--cov-report=html:$(REPORTS_DIR)/coverage_detailed \
+		--cov-report=xml:$(REPORTS_DIR)/coverage_detailed.xml \
+		--cov-report=term-missing \
+		--cov-fail-under=85
+
+test-performance:
+	@echo "⏱️  Running performance tests..."
+	$(PYTHON) -m pytest -v \
+		--tb=short \
+		--durations=0 \
+		--durations-min=0.1 \
+		-m "not slow"
+
+install-test-deps:
+	@echo "📦 Installing test dependencies..."
+	$(PIP) install pytest-html pytest-cov pytest-xdist pytest-mock
+
+clean-reports:
+	@echo "🧹 Cleaning old reports..."
+	rm -rf $(REPORTS_DIR)
+	mkdir -p $(REPORTS_DIR)/junit
+	mkdir -p $(REPORTS_DIR)/artifacts
+
+# Individual test categories
+test-fast:
+	$(PYTHON) -m pytest -m "not slow" -v
+
+test-slow:
+	$(PYTHON) -m pytest -m slow -v
+
+test-api:
+	$(PYTHON) -m pytest tests/integration/test_web_server_integration.py -v
+
+test-database:
+	$(PYTHON) -m pytest tests/unit/test_sql_store.py tests/integration/test_calendar_integration.py -v
+
+# Thesis-specific commands
+thesis-data:
+	@echo "📊 Collecting thesis data..."
+	$(MAKE) test-thesis
+	@echo "✅ Test data collected in $(REPORTS_DIR)/"
+	@echo "Key files for thesis:"
+	@echo "  - Complete test report: $(REPORTS_DIR)/complete_test_report.html"
+	@echo "  - Coverage report: $(REPORTS_DIR)/coverage_html_combined/index.html"
+	@echo "  - Test artifacts: $(REPORTS_DIR)/artifacts/"
+	@echo "  - Performance data: Look for performance_*.json in artifacts/"
 
 # Security and dependency checking
 .PHONY: security

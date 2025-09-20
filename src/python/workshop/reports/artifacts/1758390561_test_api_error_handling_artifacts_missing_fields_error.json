@@ -1,0 +1,12 @@
+{
+  "data": {
+    "request_data": {
+      "title": "Meeting"
+    },
+    "status_code": 400,
+    "error_type": "validation_error",
+    "response": "{\n  \"error\": \"Missing required field: room_id\",\n  \"success\": false\n}\n"
+  },
+  "timestamp": 1758390561,
+  "test_name": "test_api_error_handling_artifacts"
+}

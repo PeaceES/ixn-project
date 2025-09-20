@@ -5,12 +5,14 @@ Simple test script to validate the agent_core module works.
 import asyncio
 import sys
 import os
+import pytest
 
 # Add the current directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from agent_core import CalendarAgentCore
 
+@pytest.mark.asyncio
 async def test_agent_core():
     """Test the agent core functionality."""
     print("🧪 Testing CalendarAgentCore...")

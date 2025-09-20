@@ -1,0 +1,22 @@
+{
+  "data": {
+    "endpoint": "/api/rooms",
+    "method": "GET",
+    "status_code": 200,
+    "response_data": {
+      "rooms": [
+        {
+          "id": "room1",
+          "name": "Conference Room A"
+        },
+        {
+          "id": "room2",
+          "name": "Conference Room B"
+        }
+      ]
+    },
+    "test_category": "api_integration"
+  },
+  "timestamp": 1758389875,
+  "test_name": null
+}

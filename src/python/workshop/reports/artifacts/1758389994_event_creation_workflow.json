@@ -1,0 +1,16 @@
+{
+  "data": {
+    "test_type": "integration",
+    "workflow": "end_to_end_event_creation",
+    "performance": {
+      "creation_duration": 0.0030624866485595703,
+      "total_duration": 0.003957986831665039
+    },
+    "results": {
+      "create_success": true,
+      "events_found": 1
+    }
+  },
+  "timestamp": 1758389994,
+  "test_name": null
+}

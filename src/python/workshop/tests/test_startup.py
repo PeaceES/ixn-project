@@ -3,11 +3,13 @@
 import sys
 import os
 import json
+import pytest
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import the module to get access to global variables
 import services.calendar_mcp_server as mcp_server
 
+@pytest.mark.asyncio
 async def test():
     # Call startup_event which should load everything
     await mcp_server.startup_event()

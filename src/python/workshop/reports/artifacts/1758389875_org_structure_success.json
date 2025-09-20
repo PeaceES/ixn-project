@@ -1,0 +1,21 @@
+{
+  "data": {
+    "status_code": 200,
+    "response_data": [
+      {
+        "email": "user1@test.com",
+        "id": "user1",
+        "name": "User One"
+      },
+      {
+        "email": "user2@test.com",
+        "id": "user2",
+        "name": "User Two"
+      }
+    ],
+    "users_count": 2,
+    "test_type": "api_integration"
+  },
+  "timestamp": 1758389875,
+  "test_name": null
+}

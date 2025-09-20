@@ -7,12 +7,14 @@ This test creates events and verifies that only the original organizer can modif
 import asyncio
 import sys
 import os
+import pytest
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from services.mcp_client import CalendarMCPClient
 import json
 from datetime import datetime, timedelta
 
+@pytest.mark.asyncio
 async def test_organizer_permissions():
     """Test that only event organizers can modify/delete their events."""
     client = CalendarMCPClient()
@@ -133,6 +135,7 @@ async def test_organizer_permissions():
     
     return True
 
+@pytest.mark.asyncio
 async def test_terminal_user_id_requirement():
     """Test that agent core functions require user_id when no default context is set."""
     print("\n=== Testing Terminal Interface User ID Requirements ===\n")

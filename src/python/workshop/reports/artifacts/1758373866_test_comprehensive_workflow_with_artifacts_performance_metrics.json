@@ -1,0 +1,26 @@
+{
+  "data": {
+    "complete_workflow": {
+      "start_time": 1758373866.900927,
+      "end_time": 1758373866.9113126,
+      "duration": 0.010385513305664062
+    },
+    "availability_check": {
+      "start_time": 1758373866.9071035,
+      "end_time": 1758373866.9084675,
+      "duration": 0.001363992691040039
+    },
+    "event_creation": {
+      "start_time": 1758373866.9095242,
+      "end_time": 1758373866.9100404,
+      "duration": 0.0005161762237548828
+    },
+    "event_listing": {
+      "start_time": 1758373866.9107513,
+      "end_time": 1758373866.911311,
+      "duration": 0.0005595684051513672
+    }
+  },
+  "timestamp": 1758373866,
+  "test_name": "test_comprehensive_workflow_with_artifacts"
+}

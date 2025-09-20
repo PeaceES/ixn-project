@@ -266,6 +266,28 @@ class CalendarAgentCore:
                                    room_id: str, organizer: str, description: str = "") -> str:
         """Schedule event via calendar server."""
         try:
+            # Validate required fields
+            if not title or title.strip() == "":
+                return json.dumps({
+                    "success": False,
+                    "error": "Title is required",
+                    "message": "Event title cannot be empty"
+                })
+            
+            if not room_id or room_id.strip() == "":
+                return json.dumps({
+                    "success": False,
+                    "error": "Room ID is required",
+                    "message": "Room ID cannot be empty"
+                })
+            
+            if not organizer or organizer.strip() == "":
+                return json.dumps({
+                    "success": False,
+                    "error": "Organizer is required",
+                    "message": "Organizer cannot be empty"
+                })
+            
             health = await self.calendar_client.health_check()
             if not health.get("status") == "healthy":
                 return json.dumps({

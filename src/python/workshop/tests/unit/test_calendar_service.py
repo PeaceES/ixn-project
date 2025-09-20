@@ -26,7 +26,7 @@ class TestCalendarServiceInterface:
     def test_interface_methods_are_abstract(self):
         """Test that all interface methods are abstract."""
         abstract_methods = CalendarServiceInterface.__abstractmethods__
-        expected_methods = {"get_events", "get_rooms", "check_room_availability"}
+        expected_methods = {"get_events", "get_rooms", "check_room_availability", "schedule_event", "generate_synthetic_data"}
         assert abstract_methods == expected_methods
 
 
@@ -63,6 +63,20 @@ class MockCalendarService(CalendarServiceInterface):
             for event in self._events
         )
         return json.dumps({"available": not overlapping})
+    
+    async def schedule_event(self, event_data):
+        """Mock schedule_event implementation."""
+        # Add event to internal storage
+        event = dict(event_data)
+        if "id" not in event:
+            event["id"] = f"event-{len(self._events) + 1}"
+        self._events.append(event)
+        return json.dumps({"success": True, "event": event})
+    
+    async def generate_synthetic_data(self, num_rooms=10, num_events=50):
+        """Mock generate_synthetic_data implementation."""
+        # Mock implementation - just return the numbers
+        return (num_rooms, num_events)
 
 
 @pytest.mark.unit  

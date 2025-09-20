@@ -3,6 +3,7 @@ Integration tests for the agent workflow.
 """
 import pytest
 import asyncio
+import json
 from unittest.mock import AsyncMock, MagicMock, patch
 import sys
 from pathlib import Path
@@ -40,48 +41,106 @@ class TestAgentWorkflow:
     
     @pytest.mark.asyncio
     async def test_complete_scheduling_workflow(self):
-        """Test complete meeting scheduling workflow."""
-        # Mock agent core
-        with patch('agent_core.CalendarSchedulerAgent') as mock_agent_class:
-            mock_agent = AsyncMock()
-            mock_agent_class.return_value = mock_agent
+        """Test complete meeting scheduling workflow with real agent_core."""
+        # Mock the database connection using the same pattern that works for other tests
+        with patch('services.compat_sql_store._conn') as mock_conn:
+            # Setup mock cursor and connection for database operations
+            mock_cursor = MagicMock()
+            mock_connection = MagicMock()
             
-            # Mock agent methods
-            mock_agent.initialize.return_value = True
-            mock_agent.process_request.return_value = "Meeting scheduled successfully"
-            mock_agent.get_available_rooms.return_value = ["Conference Room A", "Conference Room B"]
-            mock_agent.schedule_meeting.return_value = "Meeting scheduled for 2024-01-15 at 10:00 AM"
+            # Set up context manager behavior
+            mock_conn.return_value.__enter__.return_value = mock_connection
+            mock_conn.return_value.__exit__.return_value = None
+            mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
+            mock_connection.cursor.return_value.__exit__.return_value = None
             
-            # Test workflow
-            agent = mock_agent_class()
+            # Mock database responses for health check
+            mock_cursor.fetchone.return_value = [json.dumps({"status": "healthy"})]
             
-            # Step 1: Initialize agent
-            init_result = await agent.initialize()
-            assert init_result is True
-            
-            # Step 2: Get available rooms
-            rooms = await agent.get_available_rooms()
-            assert len(rooms) >= 2
-            assert "Conference Room A" in rooms
-            
-            # Step 3: Schedule meeting
-            meeting_result = await agent.schedule_meeting(
-                title="Team Meeting",
-                start_time="2024-01-15T10:00:00Z",
-                end_time="2024-01-15T11:00:00Z",
-                room="Conference Room A"
-            )
-            assert "Meeting scheduled" in meeting_result
-            
-            # Step 4: Process user request
-            user_request = "Schedule a meeting for tomorrow at 2 PM"
-            response = await agent.process_request(user_request)
-            assert response == "Meeting scheduled successfully"
+            # Mock only external dependencies, not agent_core
+            with patch('agent_core.AIProjectClient') as mock_ai_client, \
+                 patch('agent_core.CalendarClient') as mock_calendar_client_class:
+                
+                # Setup Azure AI mocks
+                mock_project_client = AsyncMock()
+                mock_ai_client.from_connection_string.return_value = mock_project_client
+                
+                mock_agent = MagicMock()
+                mock_agent.id = "test-agent-id"
+                mock_project_client.agents.create_agent.return_value = mock_agent
+                
+                mock_thread = MagicMock()
+                mock_thread.id = "test-thread-id"
+                mock_project_client.agents.create_thread.return_value = mock_thread
+                
+                # Setup calendar client mocks
+                mock_calendar_client = AsyncMock()
+                mock_calendar_client_class.return_value = mock_calendar_client
+                
+                # Setup async coroutine returns for health check and other operations
+                async def mock_health_check():
+                    return {"status": "healthy"}
+                
+                async def mock_get_rooms(*args, **kwargs):
+                    return {
+                        "success": True,
+                        "rooms": [
+                            {"id": "room1", "name": "Conference Room A"},
+                            {"id": "room2", "name": "Conference Room B"}
+                        ]
+                    }
+                
+                async def mock_create_event(*args, **kwargs):
+                    return {
+                        "success": True,
+                        "event_id": "event-123",
+                        "message": "Meeting scheduled successfully"
+                    }
+                
+                mock_calendar_client.health_check.side_effect = mock_health_check
+                mock_calendar_client.get_rooms.side_effect = mock_get_rooms
+                mock_calendar_client.create_event.side_effect = mock_create_event
+                
+                # Mock utilities
+                with patch('utils.utilities.Utilities') as mock_utils_class:
+                    mock_utils = MagicMock()
+                    mock_utils_class.return_value = mock_utils
+                    mock_utils.load_instructions.return_value = "You are a calendar agent."
+                    
+                    with patch('agent_core.open', create=True), \
+                         patch('os.path.exists', return_value=True):
+                        
+                        # Create real agent core instance
+                        from agent_core import CalendarAgentCore
+                        agent_core = CalendarAgentCore(enable_tools=True)
+                        
+                        # Test real function calls
+                        rooms_result = await agent_core.get_rooms_via_mcp()
+                        rooms_data = json.loads(rooms_result)
+                        assert rooms_data["success"] is True
+                    assert len(rooms_data["rooms"]) >= 2
+                    
+                    # Test event creation
+                    # Test event creation
+                with patch.object(agent_core, '_load_org_structure', return_value={
+                    'users': [{'id': 1, 'email': 'test@example.com', 'name': 'Test User'}]
+                }):
+                    event_result = await agent_core.schedule_event_with_organizer(
+                        room_id="room1",
+                        title="Integration Test Meeting",
+                        start_time="2024-01-15T10:00:00Z",
+                        end_time="2024-01-15T11:00:00Z",
+                        organizer="test@example.com",
+                        description="Test meeting description"
+                    )
+                    event_data = json.loads(event_result)
+                    assert event_data["success"] is True
+                    assert "event_id" in event_data
     
     @pytest.mark.asyncio
     async def test_room_availability_workflow(self):
         """Test room availability checking workflow."""
-        with patch('services.calendar_service.SyntheticCalendarService') as mock_service:
+        with patch('services.calendar_service.CalendarServiceInterface') as mock_service:
             mock_calendar = AsyncMock()
             mock_service.return_value = mock_calendar
             
@@ -136,83 +195,96 @@ class TestAgentWorkflow:
     @pytest.mark.asyncio
     async def test_permissions_workflow(self):
         """Test permissions checking workflow."""
-        with patch('services.simple_permissions.SimplePermissions') as mock_perms_class:
-            mock_perms = MagicMock()
-            mock_perms_class.return_value = mock_perms
+        with patch('services.calendar_mcp_server.validate_user_permissions', new_callable=AsyncMock) as mock_perms_func:
+            # Setup mock response for the function
+            mock_perms_func.return_value = (True, "User has permission")
             
-            # Setup mock responses
-            mock_perms.check_permission.return_value = True
-            mock_perms.grant_permission.return_value = True
+            # Test permission validation
+            has_permission, message = await mock_perms_func("test-user-123", "cal-123")
+            assert has_permission is True
+            assert "permission" in message
             
-            permissions = mock_perms_class()
-            
-            # Test permission checks
-            can_read = permissions.check_permission("test-user-123", "read", "calendar")
-            assert can_read is True
-            
-            can_write = permissions.check_permission("test-user-123", "write", "calendar")
-            assert can_write is True
-            
-            can_book = permissions.check_permission("test-user-123", "book", "room")
-            assert can_book is True
+            # Test denied permission
+            mock_perms_func.return_value = (False, "Permission denied")
+            has_permission, message = await mock_perms_func("invalid-user", "cal-123")
+            assert has_permission is False
+            assert "denied" in message
     
     @pytest.mark.asyncio
     async def test_evaluation_workflow(self):
         """Test evaluation workflow."""
-        with patch('evaluation.real_time_evaluator.RealTimeEvaluator') as mock_eval_class:
+        with patch('evaluation.working_evaluator.WorkingRealTimeEvaluator') as mock_eval_class:
             mock_evaluator = AsyncMock()
             mock_eval_class.return_value = mock_evaluator
             
-            # Setup mock responses
+            # Setup mock responses compatible with working evaluator format
             mock_evaluator.evaluate_response.return_value = {
-                "relevance": 0.85,
-                "helpfulness": 0.90,
-                "accuracy": 0.88,
-                "overall_score": 0.88
+                "enabled": True,
+                "scores": {
+                    "intent_resolution": 0.85,
+                    "coherence": 0.90,
+                    "tool_call_accuracy": 0.88
+                },
+                "overall_score": 0.88,
+                "method": "heuristic"
             }
             
             evaluator = mock_eval_class()
             
-            # Test evaluation
+            # Test evaluation with working evaluator format
+            thread_id = "test-thread-123"
+            run_id = "test-run-456"
             response = "Meeting scheduled for tomorrow at 2 PM in Conference Room A"
-            context = "User requested to schedule a meeting"
+            user_query = "Schedule a meeting for tomorrow at 2 PM"
             
-            evaluation_result = await evaluator.evaluate_response(response, context)
+            evaluation_result = await evaluator.evaluate_response(thread_id, run_id, response, user_query)
             
-            assert evaluation_result["relevance"] == 0.85
-            assert evaluation_result["helpfulness"] == 0.90
-            assert evaluation_result["accuracy"] == 0.88
+            assert evaluation_result["enabled"] is True
+            assert evaluation_result["scores"]["intent_resolution"] == 0.85
+            assert evaluation_result["scores"]["coherence"] == 0.90
             assert evaluation_result["overall_score"] == 0.88
     
     @pytest.mark.asyncio
     async def test_error_handling_workflow(self):
-        """Test error handling throughout the workflow."""
-        with patch('agent_core.CalendarSchedulerAgent') as mock_agent_class:
-            mock_agent = AsyncMock()
-            mock_agent_class.return_value = mock_agent
+        """Test agent error handling in workflow with real agent_core."""
+        # Mock the database connection using the same pattern that works for other tests
+        with patch('services.compat_sql_store._conn') as mock_conn:
+            # Setup mock cursor and connection for database operations
+            mock_cursor = MagicMock()
+            mock_connection = MagicMock()
             
-            # Simulate various errors
-            mock_agent.initialize.side_effect = Exception("Initialization failed")
+            # Set up context manager behavior
+            mock_conn.return_value.__enter__.return_value = mock_connection
+            mock_conn.return_value.__exit__.return_value = None
+            mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
+            mock_connection.cursor.return_value.__exit__.return_value = None
             
-            agent = mock_agent_class()
+            # Mock database responses for health check - but calendar will still fail
+            mock_cursor.fetchone.return_value = [json.dumps({"status": "healthy"})]
             
-            # Test error handling
-            with pytest.raises(Exception) as exc_info:
-                await agent.initialize()
-            
-            assert "Initialization failed" in str(exc_info.value)
-            
-            # Test recovery
-            mock_agent.initialize.side_effect = None
-            mock_agent.initialize.return_value = True
-            
-            init_result = await agent.initialize()
-            assert init_result is True
+            with patch('agent_core.AIProjectClient') as mock_ai_client, \
+                 patch('services.server_client.CalendarClient') as mock_calendar_client_class:
+                
+                # Setup calendar client to fail
+                mock_calendar_client = AsyncMock()
+                mock_calendar_client_class.return_value = mock_calendar_client
+                mock_calendar_client.health_check.side_effect = Exception("Connection failed")
+                
+                # Create real agent core instance
+                from agent_core import CalendarAgentCore
+                agent_core = CalendarAgentCore(enable_tools=True)
+                
+                # Test error handling in real function
+                events_result = await agent_core.get_events_via_mcp()
+                events_data = json.loads(events_result)
+                
+                assert events_data["success"] is False
+                assert "failed" in events_data["error"] or "not available" in events_data["error"]
     
     @pytest.mark.asyncio
     async def test_concurrent_requests_workflow(self):
         """Test handling of concurrent requests."""
-        with patch('agent_core.CalendarSchedulerAgent') as mock_agent_class:
+        with patch('agent_core.CalendarAgentCore') as mock_agent_class:
             mock_agent = AsyncMock()
             mock_agent_class.return_value = mock_agent
             
@@ -259,33 +331,30 @@ class TestAgentWorkflow:
     async def test_full_integration_workflow(self):
         """Test complete integration of all components."""
         # Mock all major components
-        with patch('agent_core.CalendarSchedulerAgent') as mock_agent_class, \
+        with patch('agent_core.CalendarAgentCore') as mock_agent_class, \
              patch('services.mcp_client.CalendarMCPClient') as mock_mcp_class, \
-             patch('services.simple_permissions.SimplePermissions') as mock_perms_class, \
-             patch('evaluation.real_time_evaluator.RealTimeEvaluator') as mock_eval_class:
+             patch('services.calendar_mcp_server.validate_user_permissions', new_callable=AsyncMock) as mock_perms_func, \
+             patch('evaluation.working_evaluator.WorkingRealTimeEvaluator') as mock_eval_class:
             
             # Setup mocks
             mock_agent = AsyncMock()
             mock_mcp = AsyncMock()
-            mock_perms = MagicMock()
             mock_eval = AsyncMock()
             
             mock_agent_class.return_value = mock_agent
             mock_mcp_class.return_value = mock_mcp
-            mock_perms_class.return_value = mock_perms
+            mock_perms_func.return_value = (True, "Permission granted")
             mock_eval_class.return_value = mock_eval
             
             # Setup responses
             mock_agent.initialize.return_value = True
             mock_agent.process_request.return_value = "Meeting scheduled successfully"
             mock_mcp.create_event_via_mcp.return_value = {"id": "event123", "status": "created"}
-            mock_perms.check_permission.return_value = True
             mock_eval.evaluate_response.return_value = {"overall_score": 0.88}
             
             # Create instances
             agent = mock_agent_class()
             mcp_client = mock_mcp_class()
-            permissions = mock_perms_class()
             evaluator = mock_eval_class()
             
             # Test complete workflow
@@ -293,8 +362,8 @@ class TestAgentWorkflow:
             await agent.initialize()
             
             # Step 2: Check permissions
-            can_schedule = permissions.check_permission("test-user-123", "create", "event")
-            assert can_schedule is True
+            has_permission, message = await mock_perms_func("test-user-123", "cal-123")
+            assert has_permission is True
             
             # Step 3: Process request
             response = await agent.process_request("Schedule a meeting for tomorrow")
@@ -317,7 +386,7 @@ class TestAgentWorkflow:
     @pytest.mark.asyncio
     async def test_failure_recovery_workflow(self):
         """Test workflow recovery from failures."""
-        with patch('agent_core.CalendarSchedulerAgent') as mock_agent_class:
+        with patch('agent_core.CalendarAgentCore') as mock_agent_class:
             mock_agent = AsyncMock()
             mock_agent_class.return_value = mock_agent
             
@@ -343,7 +412,7 @@ class TestAgentWorkflow:
         """Test workflow performance characteristics."""
         import time
         
-        with patch('agent_core.CalendarSchedulerAgent') as mock_agent_class:
+        with patch('agent_core.CalendarAgentCore') as mock_agent_class:
             mock_agent = AsyncMock()
             mock_agent_class.return_value = mock_agent
             
@@ -365,7 +434,7 @@ class TestAgentWorkflow:
     @pytest.mark.asyncio
     async def test_data_validation_workflow(self):
         """Test data validation throughout the workflow."""
-        with patch('services.calendar_service.SyntheticCalendarService') as mock_service:
+        with patch('services.calendar_service.CalendarServiceInterface') as mock_service:
             mock_calendar = AsyncMock()
             mock_service.return_value = mock_calendar
             

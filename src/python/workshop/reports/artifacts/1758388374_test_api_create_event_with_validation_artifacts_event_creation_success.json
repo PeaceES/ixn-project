@@ -1,0 +1,25 @@
+{
+  "data": {
+    "request_data": {
+      "title": "Conflicting Meeting",
+      "description": "This should conflict",
+      "start_time": "2024-12-01T14:00:00Z",
+      "end_time": "2024-12-01T15:00:00Z",
+      "attendees": "user1@test.com,user2@test.com",
+      "room_id": "room1"
+    },
+    "response": {
+      "event": {
+        "event_id": "new-event-123",
+        "success": true
+      },
+      "event_id": "event-1758388374-oom1",
+      "message": "Event created successfully",
+      "success": true
+    },
+    "test_type": "successful_creation",
+    "event_id": "event-1758388374-oom1"
+  },
+  "timestamp": 1758388374,
+  "test_name": "test_api_create_event_with_validation_artifacts"
+}

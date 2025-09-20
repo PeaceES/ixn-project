@@ -1,0 +1,10 @@
+{
+  "data": {
+    "request_data": "{\"invalid\": json}",
+    "status_code": 500,
+    "error_type": "malformed_request",
+    "response": "{\n  \"error\": \"Failed to create event: 400 Bad Request: Failed to decode JSON object: Expecting value: line 1 column 13 (char 12)\",\n  \"success\": false\n}\n"
+  },
+  "timestamp": 1758389693,
+  "test_name": "test_api_error_handling_artifacts"
+}

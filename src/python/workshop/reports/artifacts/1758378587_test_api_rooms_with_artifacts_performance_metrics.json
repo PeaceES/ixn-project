@@ -1,0 +1,11 @@
+{
+  "data": {
+    "api_rooms_request": {
+      "start_time": 1758378587.8476663,
+      "end_time": 1758378587.8489764,
+      "duration": 0.001310110092163086
+    }
+  },
+  "timestamp": 1758378587,
+  "test_name": "test_api_rooms_with_artifacts"
+}

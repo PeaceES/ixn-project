@@ -5,6 +5,7 @@ Quick test script to test just the evaluation without the full agent interaction
 import asyncio
 import sys
 import os
+import pytest
 sys.path.insert(0, '.')
 
 from dotenv import load_dotenv
@@ -13,6 +14,7 @@ from azure.identity import DefaultAzureCredential
 
 load_dotenv()
 
+@pytest.mark.asyncio
 async def test_azure_evaluator():
     """Test Azure AI evaluator initialization"""
     print("🔍 Testing Azure AI Evaluator...")
@@ -25,7 +27,7 @@ async def test_azure_evaluator():
         )
         
         async with project_client:
-            from evaluation.real_time_evaluator import RealTimeEvaluator
+            from evaluation.working_evaluator import WorkingRealTimeEvaluator as RealTimeEvaluator
             
             # Create evaluator
             evaluator = RealTimeEvaluator(project_client)

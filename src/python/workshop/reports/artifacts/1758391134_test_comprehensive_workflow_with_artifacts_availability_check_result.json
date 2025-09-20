@@ -1,0 +1,11 @@
+{
+  "data": {
+    "room_id": "room1",
+    "start_time": "2024-12-01T10:00:00Z",
+    "end_time": "2024-12-01T11:00:00Z",
+    "available": true,
+    "check_duration": 0.0010809898376464844
+  },
+  "timestamp": 1758391134,
+  "test_name": "test_comprehensive_workflow_with_artifacts"
+}

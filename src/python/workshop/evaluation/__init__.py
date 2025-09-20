@@ -3,23 +3,22 @@
 """
 Calendar Agent Evaluation Module
 
-This module provides comprehensive evaluation capabilities for the calendar scheduling agent
-using the Azure AI Evaluation SDK. It includes:
+This module provides evaluation capabilities for the calendar scheduling agent
+using simple heuristic-based evaluation. It includes:
 
-- Agent response quality evaluation (relevance, coherence, fluency)
-- Content safety evaluation
-- Groundedness evaluation
-- Test scenario management
-- Batch evaluation and reporting
+- Agent response quality evaluation (coherence, intent resolution)
+- Tool call accuracy assessment
+- Basic content evaluation
+- Real-time evaluation support
 
 Usage:
-    from evaluation.agent_evaluator import CalendarAgentEvaluator
+    from evaluation.working_evaluator import WorkingRealTimeEvaluator, quick_evaluate_response
     
-    evaluator = CalendarAgentEvaluator()
-    results = await evaluator.run_quick_evaluation()
+    evaluator = WorkingRealTimeEvaluator()
+    results = await evaluator.evaluate_response(thread_id, run_id, response_text, user_query)
 """
 
-from .agent_evaluator import CalendarAgentEvaluator
+from .working_evaluator import WorkingRealTimeEvaluator, quick_evaluate_response
 
-__all__ = ['CalendarAgentEvaluator']
+__all__ = ['WorkingRealTimeEvaluator', 'quick_evaluate_response']
 __version__ = '1.0.0'

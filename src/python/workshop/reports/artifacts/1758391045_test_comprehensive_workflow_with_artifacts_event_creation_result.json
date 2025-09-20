@@ -1,0 +1,27 @@
+{
+  "data": {
+    "event_data": {
+      "id": "event-1",
+      "calendar_id": "cal-123",
+      "title": "Morning Standup",
+      "description": "Daily team standup",
+      "start_time": "2024-12-01T09:00:00Z",
+      "end_time": "2024-12-01T09:30:00Z",
+      "attendees": "team@company.com",
+      "organizer": "manager@company.com"
+    },
+    "creation_result": {
+      "id": "event-1",
+      "calendar_id": "cal-123",
+      "title": "Morning Standup",
+      "description": "Daily team standup",
+      "start_time": "2024-12-01T09:00:00Z",
+      "end_time": "2024-12-01T09:30:00Z",
+      "attendees": "team@company.com",
+      "organizer": "manager@company.com"
+    },
+    "creation_duration": 0.00034427642822265625
+  },
+  "timestamp": 1758391045,
+  "test_name": "test_comprehensive_workflow_with_artifacts"
+}

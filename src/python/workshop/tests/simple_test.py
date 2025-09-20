@@ -19,7 +19,7 @@ print(f"   AUTO_EVAL_METRICS: {os.getenv('AUTO_EVAL_METRICS', 'Not Set')}")
 # Test 2: Try importing modules
 print("\n2. Module Imports:")
 try:
-    from evaluation.real_time_evaluator import RealTimeEvaluator
+    from evaluation.working_evaluator import WorkingRealTimeEvaluator as RealTimeEvaluator
     print("   ✅ RealTimeEvaluator imported successfully")
 except Exception as e:
     print(f"   ❌ RealTimeEvaluator import failed: {e}")
@@ -43,7 +43,7 @@ except Exception as e:
 # Test 4: Test quick_evaluate_response import
 print("\n4. Quick Evaluate Function:")
 try:
-    from evaluation.real_time_evaluator import quick_evaluate_response
+    from evaluation.working_evaluator import quick_evaluate_response
     print("   ✅ quick_evaluate_response imported successfully")
 except Exception as e:
     print(f"   ❌ quick_evaluate_response import failed: {e}")

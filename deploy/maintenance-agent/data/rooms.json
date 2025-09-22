@@ -1,0 +1,285 @@
+{
+  "rooms": [
+    {
+      "id": "central-lecture-hall-main",
+      "name": "Main Lecture Hall",
+      "type": "lecture_room",
+      "floor": 1,
+      "equipment": [
+        "projector",
+        "microphone",
+        "speakers",
+        "whiteboard"
+      ],
+      "last_maintenance": "2025-07-29",
+      "status": "operational",
+      "temperature": 23.1,
+      "humidity": 63
+    },
+    {
+      "id": "central-lecture-hall-secondary",
+      "name": "Secondary Lecture Hall",
+      "type": "lecture_room",
+      "floor": 1,
+      "equipment": [
+        "projector",
+        "microphone",
+        "speakers"
+      ],
+      "last_maintenance": "2025-08-05",
+      "status": "operational",
+      "temperature": 21.7,
+      "humidity": 50
+    },
+    {
+      "id": "central-seminar-room-alpha",
+      "name": "Alpha Seminar Room",
+      "type": "meeting_room",
+      "floor": 1,
+      "equipment": [
+        "whiteboard",
+        "projector",
+        "tables"
+      ],
+      "last_maintenance": "2025-08-21",
+      "status": "operational",
+      "temperature": 21.6,
+      "humidity": 45
+    },
+    {
+      "id": "central-seminar-room-beta",
+      "name": "Beta Seminar Room",
+      "type": "meeting_room",
+      "floor": 1,
+      "equipment": [
+        "whiteboard",
+        "projector",
+        "tables"
+      ],
+      "last_maintenance": "2025-08-12",
+      "status": "operational",
+      "temperature": 22.5,
+      "humidity": 61
+    },
+    {
+      "id": "cs-lab-programming",
+      "name": "Programming Lab",
+      "type": "technical",
+      "floor": 2,
+      "equipment": [
+        "computers",
+        "projector",
+        "network"
+      ],
+      "last_maintenance": "2025-08-03",
+      "status": "needs_attention",
+      "temperature": 19.2,
+      "humidity": 54
+    },
+    {
+      "id": "engineering-workshop-mechanical",
+      "name": "Mechanical Engineering Workshop",
+      "type": "technical",
+      "floor": 1,
+      "equipment": [
+        "workbenches",
+        "tools",
+        "safety_equipment"
+      ],
+      "last_maintenance": "2025-08-24",
+      "status": "needs_attention",
+      "temperature": 20.0,
+      "humidity": 60
+    },
+    {
+      "id": "student-union-main-hall",
+      "name": "Student Union Main Hall",
+      "type": "event_space",
+      "floor": 1,
+      "equipment": [
+        "stage",
+        "sound_system",
+        "lighting",
+        "projector"
+      ],
+      "last_maintenance": "2025-08-24",
+      "status": "needs_attention",
+      "temperature": 22.8,
+      "humidity": 36
+    },
+    {
+      "id": "central-conference-room-main",
+      "name": "Main Conference Room",
+      "type": "meeting_room",
+      "floor": 2,
+      "equipment": [
+        "projector",
+        "whiteboard",
+        "video_conference"
+      ],
+      "last_maintenance": "2025-07-08",
+      "status": "operational",
+      "temperature": 23.7,
+      "humidity": 38
+    },
+    {
+      "id": "central-conference-room-secondary",
+      "name": "Secondary Conference Room",
+      "type": "meeting_room",
+      "floor": 2,
+      "equipment": [
+        "projector",
+        "whiteboard"
+      ],
+      "last_maintenance": "2025-08-06",
+      "status": "operational",
+      "temperature": 23.3,
+      "humidity": 42
+    },
+    {
+      "id": "central-meeting-room-alpha",
+      "name": "Alpha Meeting Room",
+      "type": "meeting_room",
+      "floor": 1,
+      "equipment": [
+        "whiteboard",
+        "monitor"
+      ],
+      "last_maintenance": "2025-08-26",
+      "status": "needs_attention",
+      "temperature": 21.6,
+      "humidity": 47
+    },
+    {
+      "id": "central-meeting-room-beta",
+      "name": "Beta Meeting Room",
+      "type": "meeting_room",
+      "floor": 1,
+      "equipment": [
+        "whiteboard",
+        "monitor"
+      ],
+      "last_maintenance": "2025-07-08",
+      "status": "needs_attention",
+      "temperature": 22.6,
+      "humidity": 35
+    },
+    {
+      "id": "central-boardroom-executive",
+      "name": "Executive Boardroom",
+      "type": "meeting_room",
+      "floor": 3,
+      "equipment": [
+        "projector",
+        "whiteboard",
+        "video_conference",
+        "executive_table"
+      ],
+      "last_maintenance": "2025-07-29",
+      "status": "operational",
+      "temperature": 22.3,
+      "humidity": 59
+    },
+    {
+      "id": "central-training-room-tech",
+      "name": "Technology Training Room",
+      "type": "training_room",
+      "floor": 1,
+      "equipment": [
+        "projector",
+        "whiteboard",
+        "multiple_monitors",
+        "training_setup"
+      ],
+      "last_maintenance": "2025-08-08",
+      "status": "operational",
+      "temperature": 21.1,
+      "humidity": 58
+    },
+    {
+      "id": "central-focus-room-alpha",
+      "name": "Alpha Focus Room",
+      "type": "office",
+      "floor": 1,
+      "equipment": [
+        "monitor"
+      ],
+      "last_maintenance": "2025-07-25",
+      "status": "operational",
+      "temperature": 21.5,
+      "humidity": 36
+    },
+    {
+      "id": "central-focus-room-beta",
+      "name": "Beta Focus Room",
+      "type": "office",
+      "floor": 1,
+      "equipment": [
+        "monitor"
+      ],
+      "last_maintenance": "2025-08-10",
+      "status": "needs_attention",
+      "temperature": 23.8,
+      "humidity": 43
+    },
+    {
+      "id": "central-collaboration-space-creative",
+      "name": "Creative Collaboration Space",
+      "type": "meeting_room",
+      "floor": 2,
+      "equipment": [
+        "whiteboard",
+        "comfortable_seating",
+        "creative_tools"
+      ],
+      "last_maintenance": "2025-08-06",
+      "status": "operational",
+      "temperature": 21.0,
+      "humidity": 46
+    },
+    {
+      "id": "central-phone-booth-private",
+      "name": "Private Phone Booth",
+      "type": "office",
+      "floor": 1,
+      "equipment": [
+        "noise_canceling"
+      ],
+      "last_maintenance": "2025-07-18",
+      "status": "operational",
+      "temperature": 21.0,
+      "humidity": 37
+    },
+    {
+      "id": "library-study-space-collaborative",
+      "name": "Collaborative Study Space",
+      "type": "study_room",
+      "floor": 2,
+      "equipment": [
+        "tables",
+        "chairs",
+        "whiteboard"
+      ],
+      "last_maintenance": "2025-07-15",
+      "status": "needs_attention",
+      "temperature": 22.3,
+      "humidity": 55
+    },
+    {
+      "id": "drama-society-studio-main",
+      "name": "Main Drama Studio",
+      "type": "technical",
+      "floor": 1,
+      "equipment": [
+        "stage",
+        "lighting",
+        "sound_system",
+        "props_storage"
+      ],
+      "last_maintenance": "2025-08-24",
+      "status": "operational",
+      "temperature": 21.7,
+      "humidity": 59
+    }
+  ]
+}

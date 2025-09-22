@@ -1,0 +1,23 @@
+[
+  {
+    "room_id": "R001",
+    "task": "HVAC Filter Change",
+    "scheduled_date": "2025-09-15",
+    "priority": "medium",
+    "status": "pending"
+  },
+  {
+    "room_id": "R002",
+    "task": "UPS Battery Check",
+    "scheduled_date": "2025-09-05",
+    "priority": "high",
+    "status": "pending"
+  },
+  {
+    "room_id": "R003",
+    "task": "Temperature Control Repair",
+    "scheduled_date": "2025-09-02",
+    "priority": "high",
+    "status": "overdue"
+  }
+]

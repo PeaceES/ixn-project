@@ -1,0 +1,332 @@
+[
+  {
+    "timestamp": "2025-08-31 10:30:52",
+    "room_id": "R003",
+    "room_name": "Office Suite 3A",
+    "fault_type": "Maintenance",
+    "description": "Room marked as needing attention",
+    "severity": "High",
+    "posted_to_thread": false,
+    "error_message": "object ThreadMessage can't be used in 'await' expression"
+  },
+  {
+    "timestamp": "2025-08-31 10:35:06",
+    "room_id": "R003",
+    "room_name": "Office Suite 3A",
+    "fault_type": "Maintenance",
+    "description": "Room marked as needing attention",
+    "severity": "High",
+    "posted_to_thread": false,
+    "error_message": "object ThreadMessage can't be used in 'await' expression"
+  },
+  {
+    "timestamp": "2025-08-31 10:38:30",
+    "room_id": "R003",
+    "room_name": "Office Suite 3A",
+    "fault_type": "Maintenance",
+    "description": "Room marked as needing attention",
+    "severity": "High",
+    "posted_to_thread": false,
+    "error_message": "Cannot run the event loop while another loop is running"
+  },
+  {
+    "timestamp": "2025-08-31 10:40:33",
+    "room_id": "R003",
+    "room_name": "Office Suite 4A",
+    "fault_type": "Maintenance",
+    "description": "Room marked as needing attention",
+    "severity": "High",
+    "posted_to_thread": false,
+    "error_message": "object ThreadMessage can't be used in 'await' expression"
+  },
+  {
+    "timestamp": "2025-08-31 10:44:43",
+    "room_id": "R003",
+    "room_name": "Office Suite 5A",
+    "fault_type": "Maintenance",
+    "description": "Room marked as needing attention",
+    "severity": "High",
+    "posted_to_thread": false,
+    "error_message": "Cannot run the event loop while another loop is running"
+  },
+  {
+    "timestamp": "2025-08-31 10:47:21",
+    "room_id": "R003",
+    "room_name": "Office Suite 5A",
+    "fault_type": "Maintenance",
+    "description": "Room marked as needing attention",
+    "severity": "High",
+    "posted_to_thread": true,
+    "error_message": null
+  },
+  {
+    "timestamp": "2025-09-07 23:36:01",
+    "room_id": "central-lecture-hall-main",
+    "room_name": "Main Lecture Hall",
+    "fault_type": "Environmental",
+    "description": "Humidity out of range: 63% (30-60%)",
+    "severity": "Medium",
+    "posted_to_thread": true,
+    "error_message": null
+  },
+  {
+    "timestamp": "2025-09-07 23:37:26",
+    "room_id": "central-seminar-room-beta",
+    "room_name": "Beta Seminar Room",
+    "fault_type": "Environmental",
+    "description": "Humidity out of range: 61% (30-60%)",
+    "severity": "Medium",
+    "posted_to_thread": true,
+    "error_message": null
+  },
+  {
+    "timestamp": "2025-09-07 23:37:27",
+    "room_id": "cs-lab-programming",
+    "room_name": "Programming Lab",
+    "fault_type": "Maintenance",
+    "description": "Room marked as needing attention",
+    "severity": "High",
+    "posted_to_thread": true,
+    "error_message": null
+  },
+  {
+    "timestamp": "2025-09-07 23:37:27",
+    "room_id": "engineering-workshop-mechanical",
+    "room_name": "Mechanical Engineering Workshop",
+    "fault_type": "Maintenance",
+    "description": "Room marked as needing attention",
+    "severity": "High",
+    "posted_to_thread": true,
+    "error_message": null
+  },
+  {
+    "timestamp": "2025-09-07 23:37:28",
+    "room_id": "student-union-main-hall",
+    "room_name": "Student Union Main Hall",
+    "fault_type": "Maintenance",
+    "description": "Room marked as needing attention",
+    "severity": "High",
+    "posted_to_thread": true,
+    "error_message": null
+  },
+  {
+    "timestamp": "2025-09-07 23:37:28",
+    "room_id": "central-meeting-room-alpha",
+    "room_name": "Alpha Meeting Room",
+    "fault_type": "Maintenance",
+    "description": "Room marked as needing attention",
+    "severity": "High",
+    "posted_to_thread": true,
+    "error_message": null
+  },
+  {
+    "timestamp": "2025-09-07 23:37:29",
+    "room_id": "central-meeting-room-beta",
+    "room_name": "Beta Meeting Room",
+    "fault_type": "Maintenance",
+    "description": "Room marked as needing attention",
+    "severity": "High",
+    "posted_to_thread": true,
+    "error_message": null
+  },
+  {
+    "timestamp": "2025-09-07 23:37:29",
+    "room_id": "central-focus-room-beta",
+    "room_name": "Beta Focus Room",
+    "fault_type": "Maintenance",
+    "description": "Room marked as needing attention",
+    "severity": "High",
+    "posted_to_thread": true,
+    "error_message": null
+  },
+  {
+    "timestamp": "2025-09-07 23:37:30",
+    "room_id": "library-study-space-collaborative",
+    "room_name": "Collaborative Study Space",
+    "fault_type": "Maintenance",
+    "description": "Room marked as needing attention",
+    "severity": "High",
+    "posted_to_thread": true,
+    "error_message": null
+  },
+  {
+    "timestamp": "2025-09-13 23:19:49",
+    "room_id": "central-lecture-hall-main",
+    "room_name": "Main Lecture Hall",
+    "fault_type": "Environmental",
+    "description": "Humidity out of range: 63% (30-60%)",
+    "severity": "Medium",
+    "posted_to_thread": true,
+    "error_message": null
+  },
+  {
+    "timestamp": "2025-09-13 23:19:52",
+    "room_id": "central-seminar-room-beta",
+    "room_name": "Beta Seminar Room",
+    "fault_type": "Environmental",
+    "description": "Humidity out of range: 61% (30-60%)",
+    "severity": "Medium",
+    "posted_to_thread": true,
+    "error_message": null
+  },
+  {
+    "timestamp": "2025-09-13 23:19:53",
+    "room_id": "cs-lab-programming",
+    "room_name": "Programming Lab",
+    "fault_type": "Maintenance",
+    "description": "Room marked as needing attention",
+    "severity": "High",
+    "posted_to_thread": true,
+    "error_message": null
+  },
+  {
+    "timestamp": "2025-09-13 23:19:53",
+    "room_id": "engineering-workshop-mechanical",
+    "room_name": "Mechanical Engineering Workshop",
+    "fault_type": "Maintenance",
+    "description": "Room marked as needing attention",
+    "severity": "High",
+    "posted_to_thread": true,
+    "error_message": null
+  },
+  {
+    "timestamp": "2025-09-13 23:19:54",
+    "room_id": "student-union-main-hall",
+    "room_name": "Student Union Main Hall",
+    "fault_type": "Maintenance",
+    "description": "Room marked as needing attention",
+    "severity": "High",
+    "posted_to_thread": true,
+    "error_message": null
+  },
+  {
+    "timestamp": "2025-09-13 23:19:54",
+    "room_id": "central-meeting-room-alpha",
+    "room_name": "Alpha Meeting Room",
+    "fault_type": "Maintenance",
+    "description": "Room marked as needing attention",
+    "severity": "High",
+    "posted_to_thread": true,
+    "error_message": null
+  },
+  {
+    "timestamp": "2025-09-13 23:19:55",
+    "room_id": "central-meeting-room-beta",
+    "room_name": "Beta Meeting Room",
+    "fault_type": "Maintenance",
+    "description": "Room marked as needing attention",
+    "severity": "High",
+    "posted_to_thread": true,
+    "error_message": null
+  },
+  {
+    "timestamp": "2025-09-13 23:19:55",
+    "room_id": "central-focus-room-beta",
+    "room_name": "Beta Focus Room",
+    "fault_type": "Maintenance",
+    "description": "Room marked as needing attention",
+    "severity": "High",
+    "posted_to_thread": true,
+    "error_message": null
+  },
+  {
+    "timestamp": "2025-09-13 23:19:56",
+    "room_id": "library-study-space-collaborative",
+    "room_name": "Collaborative Study Space",
+    "fault_type": "Maintenance",
+    "description": "Room marked as needing attention",
+    "severity": "High",
+    "posted_to_thread": true,
+    "error_message": null
+  },
+  {
+    "timestamp": "2025-09-13 23:34:02",
+    "room_id": "central-lecture-hall-main",
+    "room_name": "Main Lecture Hall",
+    "fault_type": "Environmental",
+    "description": "Humidity out of range: 63% (30-60%)",
+    "severity": "Medium",
+    "posted_to_thread": true,
+    "error_message": null
+  },
+  {
+    "timestamp": "2025-09-13 23:34:04",
+    "room_id": "central-seminar-room-beta",
+    "room_name": "Beta Seminar Room",
+    "fault_type": "Environmental",
+    "description": "Humidity out of range: 61% (30-60%)",
+    "severity": "Medium",
+    "posted_to_thread": true,
+    "error_message": null
+  },
+  {
+    "timestamp": "2025-09-13 23:34:05",
+    "room_id": "cs-lab-programming",
+    "room_name": "Programming Lab",
+    "fault_type": "Maintenance",
+    "description": "Room marked as needing attention",
+    "severity": "High",
+    "posted_to_thread": true,
+    "error_message": null
+  },
+  {
+    "timestamp": "2025-09-13 23:34:06",
+    "room_id": "engineering-workshop-mechanical",
+    "room_name": "Mechanical Engineering Workshop",
+    "fault_type": "Maintenance",
+    "description": "Room marked as needing attention",
+    "severity": "High",
+    "posted_to_thread": true,
+    "error_message": null
+  },
+  {
+    "timestamp": "2025-09-13 23:34:06",
+    "room_id": "student-union-main-hall",
+    "room_name": "Student Union Main Hall",
+    "fault_type": "Maintenance",
+    "description": "Room marked as needing attention",
+    "severity": "High",
+    "posted_to_thread": true,
+    "error_message": null
+  },
+  {
+    "timestamp": "2025-09-13 23:34:06",
+    "room_id": "central-meeting-room-alpha",
+    "room_name": "Alpha Meeting Room",
+    "fault_type": "Maintenance",
+    "description": "Room marked as needing attention",
+    "severity": "High",
+    "posted_to_thread": true,
+    "error_message": null
+  },
+  {
+    "timestamp": "2025-09-13 23:34:07",
+    "room_id": "central-meeting-room-beta",
+    "room_name": "Beta Meeting Room",
+    "fault_type": "Maintenance",
+    "description": "Room marked as needing attention",
+    "severity": "High",
+    "posted_to_thread": true,
+    "error_message": null
+  },
+  {
+    "timestamp": "2025-09-13 23:34:07",
+    "room_id": "central-focus-room-beta",
+    "room_name": "Beta Focus Room",
+    "fault_type": "Maintenance",
+    "description": "Room marked as needing attention",
+    "severity": "High",
+    "posted_to_thread": true,
+    "error_message": null
+  },
+  {
+    "timestamp": "2025-09-13 23:34:08",
+    "room_id": "library-study-space-collaborative",
+    "room_name": "Collaborative Study Space",
+    "fault_type": "Maintenance",
+    "description": "Room marked as needing attention",
+    "severity": "High",
+    "posted_to_thread": true,
+    "error_message": null
+  }
+]

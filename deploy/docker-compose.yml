@@ -1,0 +1,122 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: calendar
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: localpassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./database/procedures.sql:/docker-entrypoint-initdb.d/02-procedures.sql
+      - ./database/seed.sql:/docker-entrypoint-initdb.d/03-seed.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend Agent API
+  agent-api:
+    build: ./backend-agent
+    ports:
+      - "8000:8000"
+    environment:
+      PORT: 8000
+      PROJECT_CONNECTION_STRING: ${PROJECT_CONNECTION_STRING}
+      MODEL_DEPLOYMENT_NAME: ${MODEL_DEPLOYMENT_NAME}
+      AZURE_OPENAI_ENDPOINT: ${AZURE_OPENAI_ENDPOINT}
+      AZURE_OPENAI_API_KEY: ${AZURE_OPENAI_API_KEY}
+      # Azure AD Service Principal credentials for authentication
+      AZURE_CLIENT_ID: ${AZURE_CLIENT_ID}
+      AZURE_TENANT_ID: ${AZURE_TENANT_ID}
+      AZURE_CLIENT_SECRET: ${AZURE_CLIENT_SECRET}
+      SQL_CS: "postgresql://postgres:localpassword@postgres:5432/calendar"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend-agent:/app
+    command: uvicorn api:app --reload --host 0.0.0.0 --port 8000
+
+  # Backend Web Server
+  web-server:
+    build: ./backend-web
+    ports:
+      - "8502:8502"
+    environment:
+      FLASK_SECRET_KEY: "dev-secret-key"
+      FLASK_DEBUG: "True"
+      AGENT_API_URL: "http://agent-api:8000"
+      SQL_CS: "postgresql://postgres:localpassword@postgres:5432/calendar"
+      PORT: 8502
+    depends_on:
+      - postgres
+      - agent-api
+    volumes:
+      - ./backend-web:/app
+
+  # Frontend (using nginx for local development)
+  frontend:
+    image: nginx:alpine
+    ports:
+      - "3000:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    environment:
+      WEB_SERVER_URL: "http://localhost:8502"
+      WEBSOCKET_URL: "http://localhost:8502"
+
+  # Communications Agent
+  communications-agent:
+    build: ./communications-agent
+    environment:
+      PROJECT_CONNECTION_STRING: ${PROJECT_CONNECTION_STRING}
+      MODEL_DEPLOYMENT_NAME: ${MODEL_DEPLOYMENT_NAME}
+      AZURE_OPENAI_ENDPOINT: ${AZURE_OPENAI_ENDPOINT}
+      AZURE_OPENAI_API_KEY: ${AZURE_OPENAI_API_KEY}
+      AZURE_CLIENT_ID: ${AZURE_CLIENT_ID}
+      AZURE_TENANT_ID: ${AZURE_TENANT_ID}
+      AZURE_CLIENT_SECRET: ${AZURE_CLIENT_SECRET}
+      SQL_CS: "postgresql://postgres:localpassword@postgres:5432/calendar"
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY}
+      SENDGRID_FROM_EMAIL: ${SENDGRID_FROM_EMAIL}
+      USER_DIRECTORY_URL: ${USER_DIRECTORY_URL}
+      SHARED_THREAD_ID: ${SHARED_THREAD_ID}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./communications-agent:/app
+    restart: unless-stopped
+
+  # Maintenance Agent
+  maintenance-agent:
+    build: ./maintenance-agent
+    environment:
+      PROJECT_CONNECTION_STRING: ${PROJECT_CONNECTION_STRING}
+      MODEL_DEPLOYMENT_NAME: ${MODEL_DEPLOYMENT_NAME}
+      AZURE_OPENAI_ENDPOINT: ${AZURE_OPENAI_ENDPOINT}
+      AZURE_OPENAI_API_KEY: ${AZURE_OPENAI_API_KEY}
+      AZURE_CLIENT_ID: ${AZURE_CLIENT_ID}
+      AZURE_TENANT_ID: ${AZURE_TENANT_ID}
+      AZURE_CLIENT_SECRET: ${AZURE_CLIENT_SECRET}
+      SQL_CS: "postgresql://postgres:localpassword@postgres:5432/calendar"
+      SHARED_THREAD_ID: ${SHARED_THREAD_ID}
+      MONITOR_INTERVAL_SECONDS: "300"
+      FAULT_DETECTION_ENABLED: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./maintenance-agent:/app
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

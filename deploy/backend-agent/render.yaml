@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: calendar-agent-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: PROJECT_CONNECTION_STRING
+        sync: false  # Set in Render dashboard
+      - key: MODEL_DEPLOYMENT_NAME
+        sync: false  # Set in Render dashboard
+      - key: AZURE_OPENAI_ENDPOINT
+        sync: false  # Set in Render dashboard
+      - key: AZURE_OPENAI_API_KEY
+        sync: false  # Set in Render dashboard
+      - key: AZURE_OPENAI_API_VERSION
+        value: "2023-05-15"
+      - key: SQL_CS
+        sync: false  # PostgreSQL connection string from Supabase
+    healthCheckPath: /health
+    autoDeploy: true

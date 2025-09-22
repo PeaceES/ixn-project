@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar Scheduling Agent</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Socket.IO client library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                <div>
+                    <h1>🗓️ Calendar Scheduling Agent</h1>
+                    <p class="subtitle">AI-powered room booking and calendar management</p>
+                </div>
+                <div style="text-align: right; min-width: 200px;">
+                    <div style="background: white; padding: 10px 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 10px;">
+                        <strong>👤 <span id="user-name">User</span></strong><br>
+                        <small style="color: #6c757d;"><span id="user-email">user@example.com</span></small><br>
+                        <small style="color: #007bff; text-transform: capitalize;"><span id="user-role">Guest</span></small>
+                    </div>
+                    <a href="login.html" id="logout-btn" style="background: #dc3545; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 0.9rem;">
+                        🚪 Logout
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-container">
+            <!-- Top Control Panel - Horizontal Layout -->
+            <div class="control-panel">
+                <div class="card status-card mini-card">
+                    <h3>System Status</h3>
+                    <div class="status-grid compact">
+                        <div class="status-item">
+                            <span class="status-label">Web:</span>
+                            <span class="status-value status-active">Active</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Agent:</span>
+                            <span class="status-value status-pending" id="agent-status">Not Started</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Calendar:</span>
+                            <span class="status-value status-pending" id="calendar-status">Checking...</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card agent-card mini-card">
+                    <h3>Agent Controls</h3>
+                    <div class="button-group">
+                        <button class="btn btn-success" id="start-agent-btn">
+                            ▶️ Start Agent
+                        </button>
+                        <button class="btn btn-danger" id="stop-agent-btn">
+                            ⏹️ Stop Agent
+                        </button>
+                        <button class="btn btn-warning" id="restart-agent-btn">
+                            🔄 Restart
+                        </button>
+                    </div>
+                    <div class="agent-info">
+                        <small id="agent-info-text"></small>
+                    </div>
+                </div>
+
+                <div class="card quick-stats mini-card">
+                    <h3>Today's Overview</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-value" id="today-events-count">0</span>
+                            <span class="stat-label">Events</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="available-rooms-count">0</span>
+                            <span class="stat-label">Available</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="chat-count">0</span>
+                            <span class="stat-label">Chats</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="content-area">
+                <!-- Chat Interface -->
+                <div class="card chat-card">
+                    <div class="card-header">
+                        <h2>💬 Chat with Agent</h2>
+                        <span class="connection-status" id="connection-status">
+                            <span class="status-indicator" id="connection-indicator"></span>
+                            <span id="connection-text">Connecting...</span>
+                        </span>
+                    </div>
+                    <div class="chat-container" id="chat-container">
+                        <div class="chat-welcome" id="chat-welcome">
+                            <h3>Welcome to Calendar Scheduling Agent! 👋</h3>
+                            <p>I can help you with:</p>
+                            <ul>
+                                <li>📅 Viewing and managing calendar events</li>
+                                <li>🏢 Booking meeting rooms and spaces</li>
+                                <li>🔍 Checking room availability</li>
+                                <li>👥 Group-based booking permissions</li>
+                                <li>📊 Event analytics and visualizations</li>
+                            </ul>
+                            <p>Start the agent and ask me anything about scheduling!</p>
+                        </div>
+                    </div>
+                    <div class="chat-input-container">
+                        <input type="text" 
+                               id="chat-input" 
+                               placeholder="Type your message here..." 
+                               disabled>
+                        <button id="send-btn" class="btn btn-primary" disabled>
+                            📤 Send
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Side Panels -->
+                <div class="side-panels">
+                    <!-- Calendar Preview -->
+                    <div class="card calendar-card">
+                        <div class="card-header">
+                            <h3>📅 Today's Schedule</h3>
+                            <button class="btn btn-sm btn-secondary" id="refresh-calendar-btn">
+                                🔄 Refresh
+                            </button>
+                        </div>
+                        <div class="calendar-content" id="calendar-content">
+                            <div class="calendar-date" id="calendar-date"></div>
+                            <div class="events-list" id="events-list">
+                                <p class="no-events">No events scheduled for today</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="card quick-actions-card">
+                        <h3>⚡ Quick Actions</h3>
+                        <div class="quick-actions">
+                            <button class="quick-action-btn" data-action="view-rooms">
+                                🏢 View All Rooms
+                            </button>
+                            <button class="quick-action-btn" data-action="check-availability">
+                                🔍 Check Availability
+                            </button>
+                            <button class="quick-action-btn" data-action="my-events">
+                                📋 My Events
+                            </button>
+                            <button class="quick-action-btn" data-action="book-room">
+                                ➕ Book a Room
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- System Logs (Collapsible) -->
+                    <div class="card logs-card">
+                        <div class="card-header collapsible" id="logs-header">
+                            <h3>📜 System Logs</h3>
+                            <span class="collapse-indicator">▼</span>
+                        </div>
+                        <div class="logs-content" id="logs-content" style="display: none;">
+                            <div class="log-entries" id="log-entries"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Calendar Scheduling Agent © 2024 | Powered by Azure AI</p>
+        </footer>
+    </div>
+
+    <!-- Notification container -->
+    <div id="notification-container"></div>
+
+    <!-- Load configuration first -->
+    <script src="js/config.js"></script>
+    <!-- Load calendar functionality -->
+    <script src="js/calendar.js"></script>
+    <!-- Load main application -->
+    <script src="js/app.js"></script>
+</body>
+</html>

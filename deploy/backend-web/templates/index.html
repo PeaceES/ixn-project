@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar Scheduling Agent</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Socket.IO client library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                <div>
+                    <h1>🗓️ Calendar Scheduling Agent</h1>
+                    <p class="subtitle">AI-powered room booking and calendar management</p>
+                </div>
+                <div style="text-align: right; min-width: 200px;">
+                    <div style="background: white; padding: 10px 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 10px;">
+                        <strong>👤 {{ current_user.name }}</strong><br>
+                        <small style="color: #6c757d;">{{ current_user.email }}</small><br>
+                        <small style="color: #007bff; text-transform: capitalize;">{{ current_user.role }}</small>
+                    </div>
+                    <a href="{{ url_for('logout') }}" style="background: #dc3545; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 0.9rem;">
+                        🚪 Logout
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-container">
+            <!-- Top Control Panel - Horizontal Layout -->
+            <div class="control-panel">
+                <div class="card status-card mini-card">
+                    <h3>System Status</h3>
+                    <div class="status-grid compact">
+                        <div class="status-item">
+                            <span class="status-label">Web:</span>
+                            <span class="status-value status-active">Active</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Agent:</span>
+                            <span class="status-value status-pending" id="agent-status">Not Started</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Calendar:</span>
+                            <span class="status-value status-pending" id="calendar-status">Checking...</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card control-card mini-card">
+                    <h3>Agent Controls</h3>
+                    <div class="button-group horizontal">
+                        <button id="start-agent" class="btn btn-primary btn-small" disabled>
+                            ✔️ Start
+                        </button>
+                        <button id="stop-agent" class="btn btn-secondary btn-small" disabled>
+                            🛑 Stop
+                        </button>
+                        <button id="restart-agent" class="btn btn-warning btn-small" disabled>
+                            🔄 Restart
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="card actions-card mini-card">
+                    <h3>Quick Actions</h3>
+                    <div class="quick-actions horizontal">
+                        <button class="action-btn btn-small" id="view-calendar-btn">
+                            📅 Calendar
+                        </button>
+                        <button class="action-btn btn-small" id="check-rooms-btn">
+                            🏢 Rooms
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Chat Interface - Full Width -->
+            <div class="card chat-card full-width">
+                <h2>Interactive Chat Interface</h2>
+                <div class="chat-container">
+                    <!-- Output Controls with Toggle -->
+                    <div class="output-toggle">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="show-intermediate-toggle" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span>Show intermediate steps and reasoning</span>
+                    </div>
+                    <div class="chat-output" id="chat-output">
+                        <div class="message system-message">
+                            <strong>System:</strong> WebSocket connection status: <span id="connection-status">Connecting...</span>
+                        </div>
+                        <div class="message info-message">
+                            <strong>Info:</strong> Agent output will stream here in real-time when running.
+                        </div>
+                    </div>
+                    <div class="chat-input-container">
+                        <input 
+                            type="text" 
+                            id="chat-input" 
+                            placeholder="Type your message to the agent..."
+                            disabled
+                        >
+                        <button id="send-message" class="btn btn-primary" disabled>Send</button>
+                    </div>
+                    <div class="output-controls">
+                        <button id="clear-output" class="btn btn-secondary">Clear Output</button>
+                        <button id="scroll-to-bottom" class="btn btn-secondary">Scroll to Bottom</button>
+                        <label class="toggle-label">
+                            <input type="checkbox" id="show-intermediate" checked> Show intermediate steps
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Calendar and Room Features - Full Width Side by Side -->
+            <div class="bottom-features">
+                <div class="card calendar-card">
+                    <div class="calendar-header-controls">
+                        <h2>📅 Calendar Overview</h2>
+                        <button id="refresh-calendar-btn" class="btn btn-secondary btn-small">
+                            🔄 Refresh
+                        </button>
+                    </div>
+                    <div id="calendar-widget" class="calendar-widget">
+                        <!-- Calendar will be rendered here by JavaScript -->
+                    </div>
+                    <div id="selected-date-events" class="selected-date-events">
+                        <p class="help-text">Click on a date to see events</p>
+                    </div>
+                </div>
+                <div class="card room-card">
+                    <h2>🏢 Room Availability</h2>
+                    <div id="room-availability" class="room-availability">
+                        <!-- Room list will be rendered here by JavaScript -->
+                    </div>
+                    <div id="room-details" class="room-details">
+                        <p class="help-text">Click on a room to see details</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Calendar Scheduling Agent v1.0 | Built with Flask + SocketIO + HTML/JS</p>
+            <p class="stage-info"><strong>Stage 5 Complete:</strong> Calendar integration is now live!</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/calendar.js') }}"></script>
+</body>
+</html>

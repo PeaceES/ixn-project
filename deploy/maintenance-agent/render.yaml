@@ -1,0 +1,30 @@
+services:
+  - type: worker
+    name: maintenance-agent
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: ./deploy/maintenance-agent
+    envVars:
+      - key: PROJECT_CONNECTION_STRING
+        sync: false
+      - key: MODEL_DEPLOYMENT_NAME
+        sync: false
+      - key: AZURE_OPENAI_ENDPOINT
+        sync: false
+      - key: AZURE_OPENAI_API_KEY
+        sync: false
+      - key: AZURE_CLIENT_ID
+        sync: false
+      - key: AZURE_TENANT_ID
+        sync: false
+      - key: AZURE_CLIENT_SECRET
+        sync: false
+      - key: SQL_CS
+        sync: false
+      - key: SHARED_THREAD_ID
+        sync: false
+      - key: MONITOR_INTERVAL_SECONDS
+        value: "300"
+      - key: FAULT_DETECTION_ENABLED
+        value: "true"
+    plan: free

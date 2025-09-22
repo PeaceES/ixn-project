@@ -19,8 +19,8 @@ COPY . .
 # Create necessary directories
 RUN mkdir -p logs static/css static/js templates
 
-# Expose port
-EXPOSE 8502
+# Railway provides PORT env variable, we'll use it dynamically
+# EXPOSE directive is informational, Railway handles port exposure
 
 # Run the application
 CMD ["python", "web_server.py"]

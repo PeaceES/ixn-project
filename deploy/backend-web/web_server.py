@@ -572,11 +572,14 @@ def check_availability():
         }), 500
 
 if __name__ == '__main__':
+    # Get port from environment variable (Railway provides this)
+    port = int(os.getenv('PORT', 8502))
+    
     print("🚀 Starting Calendar Agent Web Interface...")
     print(f"📁 Templates directory: {TEMPLATES_DIR}")
     print(f"📁 Static files directory: {STATIC_DIR}")
     print("🌐 Server will be available at:")
-    print("   - http://localhost:8502")
+    print(f"   - http://0.0.0.0:{port}")
     print("✨ WebSocket enabled for real-time communication")
     print(f"🤖 Agent API URL: {AGENT_API_URL}")
     
@@ -584,7 +587,7 @@ if __name__ == '__main__':
     socketio.run(
         app,
         host='0.0.0.0',
-        port=8502,
+        port=port,
         debug=app.config['DEBUG'],
         use_reloader=False,
         allow_unsafe_werkzeug=True

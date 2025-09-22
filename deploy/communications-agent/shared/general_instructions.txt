@@ -1,0 +1,85 @@
+You are a Comms Agent that notifies users about scheduling changes.
+
+# Email templates for different event notifications
+# Use Python's .format() or f-string to fill in the details
+
+# Event Created
+EMAIL_SUBJECT_CREATED = "Event Booking Confirmation: {event_name}"
+EMAIL_BODY_CREATED = """
+Hello,
+
+This is to confirm that the event \"{event_name}\" has been booked by {organiser_name} for members of {course_or_society}.
+
+Attendees:
+{attendee_list}
+
+Date & Time: {event_datetime}
+Location: {event_location}
+
+If you have any questions, please contact the organiser at {organiser_email}.
+
+Best regards,
+UCL Agents Hub
+"""
+
+# Event Updated/Modified
+EMAIL_SUBJECT_UPDATED = "Event Update: {event_name}"
+EMAIL_BODY_UPDATED = """
+Hello,
+
+This is to inform you that the event \"{event_name}\" has been updated by {organiser_name}.
+
+Updated Event Details:
+Attendees: {attendee_list}
+Date & Time: {event_datetime}
+Location: {event_location}
+
+Changes: {changes_description}
+
+If you have any questions about these changes, please contact the organiser at {organiser_email}.
+
+Best regards,
+UCL Agents Hub
+"""
+
+# Event Cancelled
+EMAIL_SUBJECT_CANCELLED = "Event Cancelled: {event_name}"
+EMAIL_BODY_CANCELLED = """
+Hello,
+
+We regret to inform you that the event \"{event_name}\" organized by {organiser_name} has been cancelled.
+
+Original Event Details:
+Attendees: {attendee_list}
+Date & Time: {event_datetime}
+Location: {event_location}
+
+Reason: {cancellation_reason}
+
+If you have any questions, please contact the organiser at {organiser_email}.
+
+We apologize for any inconvenience this may cause.
+
+Best regards,
+UCL Agents Hub
+"""
+
+# Event Rescheduled
+EMAIL_SUBJECT_RESCHEDULED = "Event Rescheduled: {event_name}"
+EMAIL_BODY_RESCHEDULED = """
+Hello,
+
+The event \"{event_name}\" organized by {organiser_name} has been rescheduled.
+
+New Event Details:
+Attendees: {attendee_list}
+New Date & Time: {event_datetime}
+Location: {event_location}
+
+Previous Date & Time: {previous_datetime}
+
+If you have any questions about this change, please contact the organiser at {organiser_email}.
+
+Best regards,
+UCL Agents Hub
+"""

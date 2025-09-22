@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: calendar-backend-web
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: FLASK_SECRET_KEY
+        generateValue: true
+      - key: FLASK_DEBUG
+        value: false
+      - key: AGENT_API_URL
+        sync: false
+      - key: SQL_CS
+        sync: false
+    plan: free

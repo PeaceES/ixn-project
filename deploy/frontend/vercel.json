@@ -13,8 +13,8 @@
     }
   ],
   "env": {
-    "WEB_SERVER_URL": "@web_server_url",
-    "WEBSOCKET_URL": "@websocket_url"
+    "WEB_SERVER_URL": "https://ixn-web-app.onrender.com",
+    "WEBSOCKET_URL": "https://ixn-web-app.onrender.com"
   },
   "headers": [
     {

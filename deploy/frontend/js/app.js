@@ -32,7 +32,11 @@ class CalendarAgentUI {
         console.log('Initializing WebSocket connection...');
         
         // Connect to SocketIO server
-        this.socket = io();
+        const socketUrl = window.APP_CONFIG?.WEBSOCKET_URL || '';
+        this.socket = io(socketUrl, {
+            transports: ['websocket', 'polling'],
+            withCredentials: true
+        });
         
         // Connection event handlers
         this.socket.on('connect', () => {
@@ -370,7 +374,8 @@ class CalendarAgentUI {
     async checkSystemStatus() {
         try {
             // Check web interface API
-            const response = await fetch('/api/status');
+            const apiUrl = window.APP_CONFIG?.WEB_SERVER_URL || '';
+            const response = await fetch(`${apiUrl}/api/status`);
             const data = await response.json();
             
             this.updateStatus('Web Interface', 'active');
@@ -407,7 +412,8 @@ class CalendarAgentUI {
         this.showNotification('Stopping agent...', 'info');
         
         try {
-            const response = await fetch('/api/agent/stop', { method: 'POST' });
+            const apiUrl = window.APP_CONFIG?.WEB_SERVER_URL || '';
+            const response = await fetch(`${apiUrl}/api/agent/stop`, { method: 'POST' });
             const data = await response.json();
             
             if (data.success) {
@@ -427,13 +433,14 @@ class CalendarAgentUI {
         
         try {
             // Stop first
-            await fetch('/api/agent/stop', { method: 'POST' });
+            const apiUrl = window.APP_CONFIG?.WEB_SERVER_URL || '';
+            await fetch(`${apiUrl}/api/agent/stop`, { method: 'POST' });
             
             // Wait a moment
             await new Promise(resolve => setTimeout(resolve, 1000));
             
             // Start again
-            const response = await fetch('/api/agent/start', { method: 'POST' });
+            const response = await fetch(`${apiUrl}/api/agent/start`, { method: 'POST' });
             const data = await response.json();
             
             if (data.success) {
@@ -452,7 +459,8 @@ class CalendarAgentUI {
     async checkCalendarServer() {
         try {
             // Check if our calendar API endpoints are working
-            const response = await fetch('/api/calendar/rooms');
+            const apiUrl = window.APP_CONFIG?.WEB_SERVER_URL || '';
+            const response = await fetch(`${apiUrl}/api/calendar/rooms`);
             if (response.ok) {
                 this.updateStatus('Calendar Server', 'active');
             } else {

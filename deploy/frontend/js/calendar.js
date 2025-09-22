@@ -40,7 +40,8 @@ class CalendarManager {
 
     async loadRooms() {
         try {
-            const response = await fetch('/api/calendar/rooms');
+            const apiUrl = window.APP_CONFIG?.WEB_SERVER_URL || '';
+            const response = await fetch(`${apiUrl}/api/calendar/rooms`);
             if (response.ok) {
                 const data = await response.json();
                 this.rooms = data.rooms || [];
@@ -62,7 +63,8 @@ class CalendarManager {
             const endDate = new Date();
             endDate.setDate(endDate.getDate() + 30); // Load to 30 days ahead
 
-            const response = await fetch(`/api/calendar/events?start=${startDate.toISOString()}&end=${endDate.toISOString()}`);
+            const apiUrl = window.APP_CONFIG?.WEB_SERVER_URL || '';
+            const response = await fetch(`${apiUrl}/api/calendar/events?start=${startDate.toISOString()}&end=${endDate.toISOString()}`);
             if (response.ok) {
                 const data = await response.json();
                 this.events = data.events || [];
@@ -385,7 +387,8 @@ class CalendarManager {
     // Quick action methods
     async createQuickEvent(title, roomId, startTime, duration = 60) {
         try {
-            const response = await fetch('/api/calendar/events', {
+            const apiUrl = window.APP_CONFIG?.WEB_SERVER_URL || '';
+            const response = await fetch(`${apiUrl}/api/calendar/events`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

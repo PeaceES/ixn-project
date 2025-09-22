@@ -6,6 +6,7 @@ Modified for remote agent API communication
 from flask import Flask, render_template, jsonify, request, redirect, url_for, flash, session
 from flask_socketio import SocketIO, emit, disconnect
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+from flask_cors import CORS
 import os
 import time
 import json
@@ -19,6 +20,9 @@ from services.compat_sql_store import get_org_structure, get_user_by_id_or_email
 app = Flask(__name__, 
             static_folder='static',
             template_folder='templates')
+
+# Configure CORS for regular HTTP requests
+CORS(app, origins=["https://ixn-project-frontend.vercel.app", "http://localhost:*", "https://*.vercel.app"])
 
 # Initialize SocketIO
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')

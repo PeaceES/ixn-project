@@ -5,6 +5,10 @@ flask-login>=0.6.0
 flask-cors>=4.0.0
 python-socketio>=5.11.0
 
+# Production WSGI server
+gunicorn>=21.2.0
+eventlet>=0.33.3
+
 # HTTP client for agent API
 httpx>=0.27.2
 

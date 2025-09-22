@@ -22,5 +22,5 @@ RUN mkdir -p logs static/css static/js templates
 # Railway provides PORT env variable, we'll use it dynamically
 # EXPOSE directive is informational, Railway handles port exposure
 
-# Run the application
-CMD ["python", "web_server.py"]
+# Run the application with gunicorn using configuration file
+CMD ["gunicorn", "-c", "gunicorn_config.py", "web_server:app"]

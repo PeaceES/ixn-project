@@ -3,11 +3,9 @@ FROM python:3.12-slim
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies for pyodbc
+# Install system dependencies for PostgreSQL
 RUN apt-get update && apt-get install -y \
     gcc \
-    g++ \
-    unixodbc-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
